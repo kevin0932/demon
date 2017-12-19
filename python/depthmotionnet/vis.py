@@ -1,17 +1,17 @@
 #
 #  DeMoN - Depth Motion Network
 #  Copyright (C) 2017  Benjamin Ummenhofer, Huizhong Zhou
-#  
+#
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation, either version 3 of the License, or
 #  (at your option) any later version.
-#  
+#
 #  This program is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
-#  
+#
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
@@ -23,7 +23,7 @@ from .helpers import angleaxis_to_rotation_matrix
 def compute_point_cloud_from_depthmap( depth, K, R, t, normals=None, colors=None ):
     """Creates a point cloud numpy array and optional normals and colors arrays
 
-    depth: numpy.ndarray 
+    depth: numpy.ndarray
         2d array with depth values
 
     K: numpy.ndarray
@@ -50,7 +50,7 @@ def compute_point_cloud_from_depthmap( depth, K, R, t, normals=None, colors=None
 def create_camera_polydata(R, t, only_polys=False):
     """Creates a vtkPolyData object with a camera mesh"""
     import vtk
-    cam_points = np.array([ 
+    cam_points = np.array([
         [0, 0, 0],
         [-1,-1, 1.5],
         [ 1,-1, 1.5],
@@ -62,7 +62,7 @@ def create_camera_polydata(R, t, only_polys=False):
         [ 1,-0.5,1.5],
         [ 1, 0.5,1.5],
         [ 1.2, 0, 1.5]]
-    ) 
+    )
     cam_points = (0.25*cam_points - t).dot(R)
 
     vpoints = vtk.vtkPoints()
@@ -71,12 +71,12 @@ def create_camera_polydata(R, t, only_polys=False):
         vpoints.SetPoint(i, cam_points[i])
     vpoly = vtk.vtkPolyData()
     vpoly.SetPoints(vpoints)
-    
+
     poly_cells = vtk.vtkCellArray()
 
     if not only_polys:
         line_cells = vtk.vtkCellArray()
-        
+
         line_cells.InsertNextCell( 5 );
         line_cells.InsertCellPoint( 1 );
         line_cells.InsertCellPoint( 2 );
@@ -159,10 +159,10 @@ def create_camera_actor(R, t):
 
 def create_pointcloud_polydata(points, colors=None):
     """Creates a vtkPolyData object with the point cloud from numpy arrays
-    
+
     points: numpy.ndarray
         pointcloud with shape (n,3)
-    
+
     colors: numpy.ndarray
         uint8 array with colors for each point. shape is (n,3)
 
@@ -175,7 +175,7 @@ def create_pointcloud_polydata(points, colors=None):
         vpoints.SetPoint(i, points[i])
     vpoly = vtk.vtkPolyData()
     vpoly.SetPoints(vpoints)
-    
+
     if not colors is None:
         vcolors = vtk.vtkUnsignedCharArray()
         vcolors.SetNumberOfComponents(3)
@@ -186,23 +186,23 @@ def create_pointcloud_polydata(points, colors=None):
         vpoly.GetPointData().SetScalars(vcolors)
 
     vcells = vtk.vtkCellArray()
-    
+
     for i in range(points.shape[0]):
         vcells.InsertNextCell(1)
         vcells.InsertCellPoint(i)
-        
+
     vpoly.SetVerts(vcells)
-    
+
     return vpoly
 
 
 
 def create_pointcloud_actor(points, colors=None):
     """Creates a vtkActor with the point cloud from numpy arrays
-    
+
     points: numpy.ndarray
         pointcloud with shape (n,3)
-    
+
     colors: numpy.ndarray
         uint8 array with colors for each point. shape is (n,3)
 
@@ -243,6 +243,7 @@ def visualize_prediction( inverse_depth, intrinsics=None, normals=None, rotation
         Image with shape (3,h,w) in the range [-0.5,0.5].
     """
     import vtk
+    print("vtk is imported!")
     depth = (1/inverse_depth).squeeze()
 
     w = depth.shape[-1]
@@ -278,22 +279,43 @@ def visualize_prediction( inverse_depth, intrinsics=None, normals=None, rotation
         img = None
 
     pointcloud = compute_point_cloud_from_depthmap(depth, K, R1, t1, n, img)
+    print("pointcloud['points'].shape = ", pointcloud['points'].shape)
+    print("pointcloud['colors'].shape = ", pointcloud['colors'].shape)
+    if normals!=None:
+        print("pointcloud['normals'].shape = ", pointcloud['normals'].shape)
+    # filter the points by depth, for visualization purposes!
+    if normals!=None:
+        tmpDataMat = np.concatenate((pointcloud['points'],pointcloud['colors'],pointcloud['normals']), axis=1)
+    else:
+        tmpDataMat = np.concatenate((pointcloud['points'],pointcloud['colors']), axis=1)
+
+    Zthres = 6
+    tmpDataMat = tmpDataMat[tmpDataMat[:,2]<Zthres]
+    print("point cloud is filtered beyond z = ", Zthres)
+    pointcloud['points'] = tmpDataMat[:,0:3]
+    pointcloud['colors'] = tmpDataMat[:,3:6]
+    if normals!=None:
+        pointcloud['normals'] = tmpDataMat[:,6:9]
+    print("pointcloud['points'].shape = ", pointcloud['points'].shape)
+    print("pointcloud['colors'].shape = ", pointcloud['colors'].shape)
+    if normals!=None:
+        print("pointcloud['normals'].shape = ", pointcloud['normals'].shape)
 
     renderer = vtk.vtkRenderer()
     renderer.SetBackground(0, 0, 0)
 
     pointcloud_actor = create_pointcloud_actor(
-        points=pointcloud['points'], 
+        points=pointcloud['points'],
         colors=pointcloud['colors'] if 'colors' in pointcloud else None,
         )
     renderer.AddActor(pointcloud_actor)
 
     cam1_actor = create_camera_actor(R1,t1)
     renderer.AddActor(cam1_actor)
-    
+
     cam2_actor = create_camera_actor(R2,t2)
     renderer.AddActor(cam2_actor)
-    
+
     axes = vtk.vtkAxesActor()
     axes.GetXAxisCaptionActor2D().SetHeight(0.05)
     axes.GetYAxisCaptionActor2D().SetHeight(0.05)
@@ -306,18 +328,20 @@ def visualize_prediction( inverse_depth, intrinsics=None, normals=None, rotation
     renwin.SetWindowName("Point Cloud Viewer")
     renwin.SetSize(800,600)
     renwin.AddRenderer(renderer)
-    
- 
+
+
     # An interactor
     interactor = vtk.vtkRenderWindowInteractor()
     interstyle = vtk.vtkInteractorStyleTrackballCamera()
     interactor.SetInteractorStyle(interstyle)
     interactor.SetRenderWindow(renwin)
- 
+
     # Start
     interactor.Initialize()
     interactor.Start()
-    
+
+    return pointcloud
+
 
 def export_prediction_to_ply( output_prefix, inverse_depth, intrinsics=None, normals=None, rotation=None, translation=None, image=None ):
     """Exports the network predictions to ply files meant for external visualization
@@ -378,8 +402,8 @@ def export_prediction_to_ply( output_prefix, inverse_depth, intrinsics=None, nor
 
     pointcloud = compute_point_cloud_from_depthmap(depth, K, R1, t1, n, img)
 
-    pointcloud_polydata = create_pointcloud_polydata( 
-        points=pointcloud['points'], 
+    pointcloud_polydata = create_pointcloud_polydata(
+        points=pointcloud['points'],
         colors=pointcloud['colors'] if 'colors' in pointcloud else None,
         )
     plywriter = vtk.vtkPLYWriter()
@@ -387,13 +411,13 @@ def export_prediction_to_ply( output_prefix, inverse_depth, intrinsics=None, nor
     plywriter.SetInputData(pointcloud_polydata)
     plywriter.SetArrayName('Colors')
     plywriter.Write()
-    
+
     cam1_polydata = create_camera_polydata(R1,t1, True)
     plywriter = vtk.vtkPLYWriter()
     plywriter.SetFileName(output_prefix + 'cam1.ply')
     plywriter.SetInputData(cam1_polydata)
     plywriter.Write()
-    
+
     cam2_polydata = create_camera_polydata(R2,t2, True)
     plywriter = vtk.vtkPLYWriter()
     plywriter.SetFileName(output_prefix + 'cam2.ply')
@@ -404,7 +428,7 @@ def export_prediction_to_ply( output_prefix, inverse_depth, intrinsics=None, nor
 
 def transform_pointcloud_points(points, T):
     """Transforms the pointcloud with T
-    
+
     points: numpy.ndarray
         pointcloud with shape (n,3)
 
@@ -418,3 +442,5 @@ def transform_pointcloud_points(points, T):
     tmp[:,3] = 1
     return T.dot(tmp.transpose())[0:3].transpose()
 
+if __name__ == "__main__":
+    main()
