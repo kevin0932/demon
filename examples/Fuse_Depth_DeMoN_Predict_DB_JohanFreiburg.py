@@ -19,12 +19,17 @@ import sys
 
 import tensorflow as tf
 from depthmotionnet.vis import *
+# from depthmotionnet.vis import visualize_prediction
 import pkg_resources
 
 #import numpy as np
 import scipy.ndimage.interpolation as interp
 import scipy.misc as misc
 
+from matplotlib import pyplot
+from mpl_toolkits.mplot3d import Axes3D
+
+import vtk
 
 _FLOAT_EPS_4 = np.finfo(float).eps * 4.0
 
@@ -89,6 +94,39 @@ def read_images_text(path):
                 angleaxis = np.array(tuple(map(float, elems[19:22])))
                 # print("rotmat.shape = ", rotmat.shape)
                 images[image_id] = Image(id=image_id, camera_id=camera_id, name=image_name, qvec=qvec, tvec=tvec, rotmat=rotmat, angleaxis=angleaxis)
+    return images
+
+def read_images_colmap_format_text(path):
+    #   IMAGE_ID, QW, QX, QY, QZ, TX, TY, TZ, CAMERA_ID, NAME
+    #   POINTS2D[] as (X, Y, POINT3D_ID)
+    images = {}
+    featureLine = False
+    with open(path, "r") as fid:
+        while True:
+            line = fid.readline()
+            if not line:
+                break
+            line = line.strip()
+            if featureLine == True:
+                featureLine = False
+                continue
+            if len(line) > 0 and line[0] != "#" and featureLine != True:
+                elems = line.split()
+                image_id = int(elems[0])
+                camera_id = int(elems[8])
+                image_name = elems[9]
+                qvec = np.array(tuple(map(float, elems[1:5])))
+                tvec = np.array(tuple(map(float, elems[5:8])))
+                rotmat_row0 = np.array(tuple(map(float, elems[10:13])))
+                rotmat_row1 = np.array(tuple(map(float, elems[13:16])))
+                rotmat_row2 = np.array(tuple(map(float, elems[16:19])))
+                rotmat = np.vstack( (rotmat_row0, rotmat_row1) )
+                rotmat = np.vstack( (rotmat, rotmat_row2) )
+                # angleaxis = np.array(tuple(map(float, elems[19:22])))
+                angleaxis = np.array([0,0,0])
+                # print("rotmat.shape = ", rotmat.shape)
+                images[image_id] = Image(id=image_id, camera_id=camera_id, name=image_name, qvec=qvec, tvec=tvec, rotmat=rotmat, angleaxis=angleaxis)
+                featureLine = True
     return images
 
 # def read_relative_poses_text(path):
@@ -995,6 +1033,138 @@ def rotmat_To_angleaxis(image_pair12_rotmat):
 def TheiaClamp( f, a, b):
     return max(a, min(f, b))
 
+# https://codereview.stackexchange.com/questions/79032/generating-a-3d-point-cloud
+def point_cloud(depth):
+    """Transform a depth image into a point cloud with one point for each
+    pixel in the image, using the camera transform for a camera
+    centred at cx, cy with field of view fx, fy.
+
+    depth is a 2-D ndarray with shape (rows, cols) containing
+    depths from 1 to 254 inclusive. The result is a 3-D array with
+    shape (rows, cols, 3). Pixels with invalid depth in the input have
+    NaN for the z-coordinate in the result.
+
+    """
+    # cx = 0.5
+    # cy = 0.5
+    # fx = 2457.60/3072
+    # fy = 2457.60/2304
+
+    cx = 1536/12.0
+    cy = 1152/12.0
+    fx = 2457.60/12.0
+    fy = 2457.60/12.0
+
+    rows, cols = depth.shape
+    c, r = np.meshgrid(np.arange(cols), np.arange(rows), sparse=True)
+    valid = (depth > 0) & (depth < 255)
+    z = np.where(valid, depth / 256.0, np.nan)
+    x = np.where(valid, z * (c - cx) / fx, 0)
+    y = np.where(valid, z * (r - cy) / fy, 0)
+    return np.dstack((x, y, z))
+
+
+def angleaxis_to_rotation_matrix(aa):
+    """Converts the 3 element angle axis representation to a 3x3 rotation matrix
+
+    aa: numpy.ndarray with 1 dimension and 3 elements
+
+    Returns a 3x3 numpy.ndarray
+    """
+    angle = np.sqrt(aa.dot(aa))
+
+    if angle > 1e-6:
+        c = np.cos(angle);
+        s = np.sin(angle);
+        u = np.array([aa[0]/angle, aa[1]/angle, aa[2]/angle]);
+
+        R = np.empty((3,3))
+        R[0,0] = c+u[0]*u[0]*(1-c);      R[0,1] = u[0]*u[1]*(1-c)-u[2]*s; R[0,2] = u[0]*u[2]*(1-c)+u[1]*s;
+        R[1,0] = u[1]*u[0]*(1-c)+u[2]*s; R[1,1] = c+u[1]*u[1]*(1-c);      R[1,2] = u[1]*u[2]*(1-c)-u[0]*s;
+        R[2,0] = u[2]*u[0]*(1-c)-u[1]*s; R[2,1] = u[2]*u[1]*(1-c)+u[0]*s; R[2,2] = c+u[2]*u[2]*(1-c);
+    else:
+        R = np.eye(3)
+    return R
+
+def read_global_poses_theia_output(path, path_img_id_map):
+    image_id_name_pair = {}
+    with open(path_img_id_map, "r") as fid1:
+        while True:
+            line = fid1.readline()
+            if not line:
+                break
+            line = line.strip()
+            if len(line) > 0 and line[0] != "#":
+                elems = line.split()
+                image_id = int(elems[0])
+                image_name = (elems[1])
+                print("image_id = ", image_id, "; image_name = ", image_name)
+                image_id_name_pair[image_id] = image_name
+
+    images = {}
+    dummy_image_id = 1
+    with open(path, "r") as fid:
+        while True:
+            line = fid.readline()
+            if not line:
+                break
+            line = line.strip()
+            if len(line) > 0 and line[0] != "#":
+                elems = line.split()
+                image_id = int(elems[0])
+                camera_id = image_id
+                image_name = image_id_name_pair[image_id]
+                R_angleaxis = np.array(tuple(map(float, elems[1:4])), dtype=np.float64)
+                tvec = np.array(tuple(map(float, elems[4:7])))
+                #rotmat_To_angleaxis(image_pair12_rotmat)
+                rotmat = angleaxis_to_rotation_matrix(R_angleaxis)
+                images[image_id] = Image(id=image_id, camera_id=camera_id, name=image_name, qvec=np.array([1,0,0,0]), tvec=tvec, rotmat=rotmat, angleaxis=R_angleaxis)
+
+                dummy_image_id += 1
+
+    print("total pairs = ", dummy_image_id-1)
+    return images
+
+ImagePairTheia = collections.namedtuple("ImagePair", ["id1", "name1", "id2", "name2", "R_rotmat", "R_angleaxis", "t_vec"])
+
+def read_relative_poses_theia_output(path, path_img_id_map):
+    #122 122 124 124 -0.00737405 0.26678 -0.0574713 -0.798498 -0.0794296 -0.596734
+    image_id_name_pair = {}
+    with open(path_img_id_map, "r") as fid1:
+        while True:
+            line = fid1.readline()
+            if not line:
+                break
+            line = line.strip()
+            if len(line) > 0 and line[0] != "#":
+                elems = line.split()
+                image_id = int(elems[0])
+                image_name = (elems[1])
+                print("image_id = ", image_id, "; image_name = ", image_name)
+                image_id_name_pair[image_id] = image_name
+
+    image_pair_gt = {}
+    dummy_image_pair_id = 1
+    with open(path, "r") as fid:
+        while True:
+            line = fid.readline()
+            if not line:
+                break
+            line = line.strip()
+            if len(line) > 0 and line[0] != "#":
+                elems = line.split()
+                image_id1 = int(elems[1])
+                image_id2 = int(elems[3])
+                R_angleaxis = np.array(tuple(map(float, elems[8:11])), dtype=np.float64)
+                t_vec = np.array(tuple(map(float, elems[13:16])), dtype=np.float64)
+                R_rotmat = np.array(tuple(map(float, elems[17:26])), dtype=np.float64)
+                R_rotmat = np.reshape(R_rotmat, [3,3])
+                image_pair_gt[dummy_image_pair_id] = ImagePairTheia(id1=image_id1, name1=image_id_name_pair[image_id1], id2=image_id2, name2=image_id_name_pair[image_id2], R_rotmat=R_rotmat, R_angleaxis=R_angleaxis, t_vec=t_vec)
+                dummy_image_pair_id += 1
+
+    print("total num of input pairs = ", dummy_image_pair_id-1)
+    return image_pair_gt
+
 def main():
     args = parse_args()
 
@@ -1006,9 +1176,16 @@ def main():
     images = dict()
     image_pairs = set()
 
-    GTfilepath = '/home/kevin/JohannesCode/southbuilding_RtAngleAxis_groundtruth_from_colmap.txt'
-    imagesGT = read_images_text(GTfilepath)
+    TheiaRtfilepath = '/home/kevin/JohannesCode/theia_trial_demon/intermediate_results/RelativePoses_after_step9_BA.txt'
+    TheiaIDNamefilepath = '/home/kevin/JohannesCode/theia_trial_demon/intermediate_results/viewid_imagename_pairs_file.txt'
+    TheiaRelativePosesGT = read_relative_poses_theia_output(TheiaRtfilepath,TheiaIDNamefilepath)
+    TheiaGlobalPosesfilepath = '/home/kevin/JohannesCode/theia_trial_demon/intermediate_results/after_step9_BA.txt'
+    TheiaGlobalPosesGT = read_global_poses_theia_output(TheiaGlobalPosesfilepath,TheiaIDNamefilepath)
 
+
+
+    ColmapGTfilepath = '/home/kevin/JohannesCode/ws1/sparse/0/textfiles_final/images.txt'
+    imagesGT = read_images_colmap_format_text(ColmapGTfilepath)
     RotationAngularErrors = {}
     TranslationAngularErrors = {}
 
@@ -1016,6 +1193,10 @@ def main():
     data = h5py.File(args.filtered_demon_path)
     # data_ToBeFused = data
 
+    #PointClouds = {}
+    viewNum = 3
+
+    it = 0
     for image_pair12 in data.keys():
         print("Processing", image_pair12)
 
@@ -1024,7 +1205,7 @@ def main():
 
         image_name1, image_name2 = image_pair12.split("---")
         image_pair21 = "{}---{}".format(image_name2, image_name1)
-        # image_pairs.add(image_pair12)
+        image_pairs.add(image_pair12)
         # image_pairs.add(image_pair21)
         #
         # if image_pair21 not in data:
@@ -1059,19 +1240,117 @@ def main():
                     image=input_data['image_pair'][0,0:3] if data_format=='channels_first' else input_data['image_pair'].transpose([0,3,1,2])[0,0:3],
                     rotation=pred_rotmat12_angleaxis,
                     translation=pred_trans12)
-        #
-    	# # from depthmotionnet.vis import *
-    	# try:
-        #     # from depthmotionnet.vis import *
-        #     visualize_prediction(
-        #         inverse_depth=result['depth_upsampled'],
-        #         # inverse_depth=(1/result['predict_depth0']),
-        #         # intrinsics = np.array([2457.60/3072, 2457.60/2304, 0.5, 0.5]),#################################
-        #         image=input_data['image_pair'][0,0:3] if data_format=='channels_first' else input_data['image_pair'].transpose([0,3,1,2])[0,0:3],
-        #         rotation=rotation,
-        #         translation=translation)
-        # except ImportError as err:
-        #     print("Cannot visualize as pointcloud.", err)
+        # ColmapExtrinsics_T = np.eye(4)
+        # for ids,val in imagesGT.items():
+        #     if val.name == image_name1:
+        #         #ColmapExtrinsics_R = val.rotmat
+        #         #ColmapExtrinsics_t = val.tvec
+        #         ColmapExtrinsics_T[0:3,0:3] = val.rotmat
+        #         ColmapExtrinsics_T[0:3,3] = val.tvec
+        # tmp_PointCloud['points'] = transform_pointcloud_points(tmp_PointCloud['points'], ColmapExtrinsics_T.T)
+
+        if it==0:
+            init_translation_norm = 1
+        for ids,val in TheiaRelativePosesGT.items():
+            if val.name1 == image_name1 and val.name2 == image_name2:
+                if it==0:
+                    init_translation_norm = np.linalg.norm(val.t_vec)
+
+                transScale = np.linalg.norm(val.t_vec) / init_translation_norm
+                print("transScale = ", transScale)
+
+        TheiaExtrinsics_T = np.eye(4)
+        for ids,val in TheiaGlobalPosesGT.items():
+            if val.name == image_name1:
+                TheiaExtrinsics_T[0:3,0:3] = val.rotmat
+                TheiaExtrinsics_T[0:3,3] = -np.dot(val.rotmat, val.tvec)
+
+        # tmp_PointCloud['points'] = transform_pointcloud_points(tmp_PointCloud['points'], TheiaExtrinsics_T.T)
+        #tmp_PointCloud['points'] = transScale * transform_pointcloud_points(tmp_PointCloud['points'], TheiaExtrinsics_T.T)
+        #tmp_PointCloud['points'] = transform_pointcloud_points(tmp_PointCloud['points'], TheiaExtrinsics_T.T) / transScale
+        tmp_PointCloud['points'] = transform_pointcloud_points(tmp_PointCloud['points'], TheiaExtrinsics_T.T) #* transScale
+
+        # print("tmp_PointCloud['points'].shape = ", tmp_PointCloud['points'].shape)
+        print("tmp_PointCloud = ", tmp_PointCloud)
+        print("type(tmp_PointCloud) = ", type(tmp_PointCloud))
+        print("type(tmp_PointCloud['points']) = ", type(tmp_PointCloud['points']))
+        if it==0:
+            PointClouds = tmp_PointCloud
+        else:
+            PointClouds['points'] = np.concatenate((PointClouds['points'],tmp_PointCloud['points']), axis=0)
+            PointClouds['colors'] = np.concatenate((PointClouds['colors'],tmp_PointCloud['colors']), axis=0)
+        print("PointClouds['points'].shape = ", PointClouds['points'].shape)
+        it += 1
+        if it>=viewNum:
+            break
+
+        # pc = point_cloud(1/pred_invDepth121)
+        # print("pc.shape = ", pc.shape)
+        # pc = np.reshape(pc, (pc.shape[0]*pc.shape[1],pc.shape[2]))
+        # print("pc.shape = ", pc.shape)
+        # # print("np.reshape(pc[:,:,0], (pc.shape[0]*pc.shape[1])).shape = ", np.reshape(pc[:,:,0], (pc.shape[0]*pc.shape[1])).shape)
+        # fig = pyplot.figure()
+        # ax = Axes3D(fig)
+        # ax.scatter(pc[:,0], pc[:,1], pc[:,2])
+        # pyplot.show()
+
+    # plot all point clouds in the same coordinate
+    renderer = vtk.vtkRenderer()
+    renderer.SetBackground(0, 0, 0)
+
+    pointcloud_actor = create_pointcloud_actor(
+       points=PointClouds['points'],
+       colors=PointClouds['colors'] if 'colors' in PointClouds else None,
+       )
+    renderer.AddActor(pointcloud_actor)
+
+    # # it = 0
+    # for ids,val in imagesGT.items():
+    #     cam_actor = create_camera_actor(val.rotmat, val.tvec)
+    #     renderer.AddActor(cam_actor)
+    #     # it += 1
+    #     # if it>viewNum:
+    #     #     break
+    for image_pair12 in data.keys():
+        print("Processing", image_pair12)
+
+        if image_pair12 in image_pairs:
+            image_name1, image_name2 = image_pair12.split("---")
+            # # colmap
+            # for ids,val in imagesGT.items():
+            # theia
+            for ids,val in TheiaGlobalPosesGT.items():
+                if val.name==image_name1:
+                    # # colmap
+                    # cam_actor = create_camera_actor(val.rotmat, val.tvec)
+
+                    # theia
+                    cam_actor = create_camera_actor(val.rotmat, -np.dot(val.rotmat, val.tvec))
+                    renderer.AddActor(cam_actor)
+
+    axes = vtk.vtkAxesActor()
+    axes.GetXAxisCaptionActor2D().SetHeight(0.05)
+    axes.GetYAxisCaptionActor2D().SetHeight(0.05)
+    axes.GetZAxisCaptionActor2D().SetHeight(0.05)
+    axes.SetCylinderRadius(0.03)
+    axes.SetShaftTypeToCylinder()
+    renderer.AddActor(axes)
+
+    renwin = vtk.vtkRenderWindow()
+    renwin.SetWindowName("Point Cloud Viewer")
+    renwin.SetSize(800,600)
+    renwin.AddRenderer(renderer)
+
+
+    # An interactor
+    interactor = vtk.vtkRenderWindowInteractor()
+    interstyle = vtk.vtkInteractorStyleTrackballCamera()
+    interactor.SetInteractorStyle(interstyle)
+    interactor.SetRenderWindow(renwin)
+
+    # Start
+    interactor.Initialize()
+    interactor.Start()
 
 if __name__ == "__main__":
     main()

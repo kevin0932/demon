@@ -243,7 +243,6 @@ def visualize_prediction( inverse_depth, intrinsics=None, normals=None, rotation
         Image with shape (3,h,w) in the range [-0.5,0.5].
     """
     import vtk
-    print("vtk is imported!")
     depth = (1/inverse_depth).squeeze()
 
     w = depth.shape[-1]
@@ -289,7 +288,7 @@ def visualize_prediction( inverse_depth, intrinsics=None, normals=None, rotation
     else:
         tmpDataMat = np.concatenate((pointcloud['points'],pointcloud['colors']), axis=1)
 
-    Zthres = 6
+    Zthres = 60
     tmpDataMat = tmpDataMat[tmpDataMat[:,2]<Zthres]
     print("point cloud is filtered beyond z = ", Zthres)
     pointcloud['points'] = tmpDataMat[:,0:3]
@@ -300,6 +299,22 @@ def visualize_prediction( inverse_depth, intrinsics=None, normals=None, rotation
     print("pointcloud['colors'].shape = ", pointcloud['colors'].shape)
     if normals!=None:
         print("pointcloud['normals'].shape = ", pointcloud['normals'].shape)
+
+    # filter the points by RGB color, for visualization purposes (here just remove white points assuming that those are from sky)!
+    #tmpDataMat = tmpDataMat[tmpDataMat[:,3]>254 & tmpDataMat[:,4]>254 & tmpDataMat[:,5]>254]
+    mask = (tmpDataMat[:,3]<255) | (tmpDataMat[:,4]<255) |(tmpDataMat[:,5]<255)
+    tmpDataMat = tmpDataMat[mask,:]
+    print("point cloud is filtered by its white color")
+    pointcloud['points'] = tmpDataMat[:,0:3]
+    pointcloud['colors'] = tmpDataMat[:,3:6]
+    if normals!=None:
+        pointcloud['normals'] = tmpDataMat[:,6:9]
+    print("pointcloud['points'].shape = ", pointcloud['points'].shape)
+    print("pointcloud['colors'].shape = ", pointcloud['colors'].shape)
+    if normals!=None:
+        print("pointcloud['normals'].shape = ", pointcloud['normals'].shape)
+
+    #return pointcloud
 
     renderer = vtk.vtkRenderer()
     renderer.SetBackground(0, 0, 0)
@@ -341,7 +356,6 @@ def visualize_prediction( inverse_depth, intrinsics=None, normals=None, rotation
     interactor.Start()
 
     return pointcloud
-
 
 def export_prediction_to_ply( output_prefix, inverse_depth, intrinsics=None, normals=None, rotation=None, translation=None, image=None ):
     """Exports the network predictions to ply files meant for external visualization
@@ -442,5 +456,5 @@ def transform_pointcloud_points(points, T):
     tmp[:,3] = 1
     return T.dot(tmp.transpose())[0:3].transpose()
 
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     main()
