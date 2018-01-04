@@ -178,10 +178,10 @@ def main():
             file2_name, file2_ext = os.path.splitext(file2_path)
             # Check if file is an image file
             if file1_ext not in image_exts:
-                print("Skipping " + file + " (not an image file)")
+                print("Skipping " + file1 + " (not an image file)")
                 continue
             if file2_ext not in image_exts:
-                print("Skipping " + file + " (not an image file)")
+                print("Skipping " + file2 + " (not an image file)")
                 continue
             if file1_name == file2_name:
                 print("Skipping identical files: " + file1 + "---" + file2 + "...")
