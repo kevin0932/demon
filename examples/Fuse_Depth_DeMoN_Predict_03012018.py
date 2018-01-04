@@ -571,18 +571,22 @@ def main():
     images = dict()
     image_pairs = set()
 
+    # reading theia intermediate output relative poses from textfile
     TheiaRtfilepath = '/home/kevin/JohannesCode/theia_trial_demon/intermediate_results/RelativePoses_after_step7_global_position_estimation.txt'
     TheiaIDNamefilepath = '/home/kevin/JohannesCode/theia_trial_demon/intermediate_results/viewid_imagename_pairs_file.txt'
     TheiaRelativePosesGT = read_relative_poses_theia_output(TheiaRtfilepath,TheiaIDNamefilepath)
+    # reading theia intermediate output global poses from textfile
     TheiaGlobalPosesfilepath = '/home/kevin/JohannesCode/theia_trial_demon/intermediate_results/after_step7_global_position_estimation.txt'
     TheiaGlobalPosesGT = read_global_poses_theia_output(TheiaGlobalPosesfilepath,TheiaIDNamefilepath)
 
-    ColmapGTfilepath = '/home/kevin/JohannesCode/ws1/sparse/0/textfiles_final/images.txt'
-    imagesGT = read_images_colmap_format_text(ColmapGTfilepath)
+    # # reading colmap output as ground truth from textfile
+    # ColmapGTfilepath = '/home/kevin/JohannesCode/ws1/sparse/0/textfiles_final/images.txt'
+    # imagesGT = read_images_colmap_format_text(ColmapGTfilepath)
 
+    # the .h5 file contains the filtered DeMoN prediction so that only one pair is kept for each input view
     data = h5py.File(args.filtered_demon_path)
 
-    viewNum = 150
+    viewNum = 150 # set to value larger than the number of input views
     translation_scales = {}
 
     for image_pair12 in data.keys():
