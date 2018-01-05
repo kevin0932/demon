@@ -130,8 +130,8 @@ target_K[1,2] = h*normalized_intrinsics[3]
 # h_large = 8*h
 # w_large = 12.1*w
 # h_large = 12.05*h
-w_large = 12.1*w
-h_large = 12.05*h
+w_large = 7.8125*w
+h_large = 7.8125*h
 target_K_large = np.eye(3)
 target_K_large[0,0] = w_large*normalized_intrinsics[0]
 target_K_large[1,1] = h_large*normalized_intrinsics[1]
@@ -158,8 +158,8 @@ if True:
             # Kevin: visualization
             # visualize_views(tmp_views)
             cnt += 1
-        if cnt >= 2:
-            break
+        # if cnt >= 2:
+        #     break
     distances = compute_view_distances(views)
 
     pairs_to_compute = set()
@@ -238,7 +238,7 @@ if True:
         group['depth_upsampled'] = result['predict_depth0'].squeeze()
 
         # # a colormap and a normalization instance
-        cmap = plt.cm.jet
+        # cmap = plt.cm.jet
         # plt.imsave(os.path.join(outdir, "graydepthmap", id_image_list[pair[0]][1].name + "---" + id_image_list[pair[1]][1].name), result['predict_depth0'].squeeze(), cmap='Greys')
         # plt.imsave(os.path.join(outdir, "vizdepthmap", id_image_list[pair[0]][1].name + "---" + id_image_list[pair[1]][1].name), result['predict_depth0'].squeeze(), cmap=cmap)
         # plt.imshow(result['predict_depth0'].squeeze(), cmap='Greys')

@@ -171,8 +171,8 @@ def create_views(cameras, images, image_dir, depth_dir):
     for image_id, image in images.items():
         camera = cameras[image.cam_id]
 
-        # if camera.model != 'PINHOLE':
-        if camera.model != 'SIMPLE_RADIAL':
+        if camera.model != 'PINHOLE':
+        # if camera.model != 'SIMPLE_RADIAL':
             raise RuntimeError('Wrong camera model "'+camera.model+'"')
 
         K = np.zeros((3,3),np.float64)
