@@ -611,6 +611,9 @@ def main():
 
         image_name1, image_name2 = image_pair12.split("---")
         image_pair21 = "{}---{}".format(image_name2, image_name1)
+        # # if image_name1 == 'P1180141.JPG' or image_name1 == 'P1180142.JPG' or image_name1 == 'P1180143.JPG' or image_name1 == 'P1180144.JPG' or image_name1 == 'P1180145.JPG':
+        # if image_name1 != 'P1180216.JPG':
+        #     continue
 
         if image_name1 not in translation_scales.keys():
             continue
@@ -655,7 +658,8 @@ def main():
         for ids,val in TheiaGlobalPosesGT.items():
             if val.name == image_name1:
                 TheiaExtrinsics_4by4[0:3,0:3] = val.rotmat
-                TheiaExtrinsics_4by4[0:3,3] = -np.dot(val.rotmat, val.tvec)
+                #TheiaExtrinsics_4by4[0:3,0:3] = val.rotmat.T
+                TheiaExtrinsics_4by4[0:3,3] = -np.dot(val.rotmat, val.tvec) # theia output camera position in world frame instead of extrinsic t
 
         # tmp_PointCloud = make_pointcloud_prediction_in_global_coordinate(
         #             inverse_depth=pred_invDepth121,
@@ -674,6 +678,10 @@ def main():
                     inverse_depth=pred_invDepth121,
                     # inverse_depth=(1/result['predict_depth0']),
                     # intrinsics = np.array([2457.60/3072, 2457.60/2304, 0.5, 0.5]),#################################
+                    # intrinsics = np.array([2457.60/256, 2457.60/192, 0.5, 0.5]),#################################
+                    # intrinsics = np.array([2457.60/3099, 2457.60/2314, 0.5, 0.5]),#################################
+                    # intrinsics = np.array([0.89115971*256/3072, 1.18821287*192/2304, 0.5, 0.5]),#################################
+                    intrinsics = np.array([0.89115971, 1.18821287, 0.5, 0.5]), # sun3d intrinsics
                     image=input_data['image_pair'][0,0:3] if data_format=='channels_first' else input_data['image_pair'].transpose([0,3,1,2])[0,0:3],
                     R1=TheiaExtrinsics_4by4[0:3,0:3],
                     t1=TheiaExtrinsics_4by4[0:3,3],

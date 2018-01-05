@@ -107,10 +107,25 @@ plt.show()
 # try to visualize the point cloud
 try:
     from depthmotionnet.vis import *
-    visualize_prediction(
+    import vtk
+    tmpPC = visualize_prediction(
+    # visualize_prediction(
         inverse_depth=result['predict_depth0'],
         image=input_data['image_pair'][0,0:3] if data_format=='channels_first' else input_data['image_pair'].transpose([0,3,1,2])[0,0:3],
         rotation=rotation,
         translation=translation)
+    # export all point clouds in the same global coordinate to a local .ply file (for external visualization)
+    # output_prefix = './'
+    pointcloud_polydata = create_pointcloud_polydata(
+        points=tmpPC['points'],
+        colors=tmpPC['colors'] if 'colors' in tmpPC else None,
+        )
+    plywriter = vtk.vtkPLYWriter()
+    plywriter.SetFileName('DeMoN_Chair_Example_pointcloud.ply')
+    plywriter.SetInputData(pointcloud_polydata)
+    # plywriter.SetFileTypeToASCII()
+    plywriter.SetArrayName('Colors')
+    plywriter.Write()
+
 except ImportError as err:
     print("Cannot visualize as pointcloud.", err)
