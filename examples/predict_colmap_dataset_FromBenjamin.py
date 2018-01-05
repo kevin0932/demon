@@ -86,9 +86,12 @@ def compute_view_overlap( view1, view2 ):
 
 # weights_dir = '/home/ummenhof/projects/demon/weights'
 weights_dir = '/home/kevin/anaconda_tensorflow_demon_ws/demon/weights'
-outdir = '/home/kevin/DeMoN_Prediction/south_building'
-outfile = '/home/kevin/DeMoN_Prediction/south_building/south_building_predictions.h5'
-# outfile = '/home/kevin/DeMoN_Prediction/south_building/south_building_predictions_v1_05012018.h5'
+# outdir = '/home/kevin/DeMoN_Prediction/south_building'
+# outfile = '/home/kevin/DeMoN_Prediction/south_building/south_building_predictions.h5'
+## outfile = '/home/kevin/DeMoN_Prediction/south_building/south_building_predictions_v1_05012018.h5'
+
+outdir = '/home/kevin/ThesisDATA/ToyDataset_Desk/demon_predictions'
+outfile = '/home/kevin/ThesisDATA/ToyDataset_Desk/demon_predictions/toyexample_labIndoor_predictions.h5'
 
 outimagedir_small = os.path.join(outdir,'images_demon_small')
 outimagedir_large = os.path.join(outdir,'images_demon')
@@ -102,7 +105,8 @@ os.makedirs(os.path.join(outdir,'vizdepthmap'), exist_ok=True)
 
 
 # recondir = '/misc/lmbraid12/depthmotionnet/datasets/mvs_colmap/south-building/mvs/'
-recondir = '/home/kevin/JohannesCode/ws1/'
+# recondir = '/home/kevin/JohannesCode/ws1/'
+recondir = '/home/kevin/ThesisDATA/ToyDataset_Desk/dense/'
 
 cameras = colmap.read_cameras_txt(os.path.join(recondir,'sparse','cameras.txt'))
 
@@ -124,6 +128,8 @@ target_K[1,2] = h*normalized_intrinsics[3]
 
 # w_large = 8*w
 # h_large = 8*h
+# w_large = 12.1*w
+# h_large = 12.05*h
 w_large = 12.1*w
 h_large = 12.05*h
 target_K_large = np.eye(3)

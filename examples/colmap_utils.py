@@ -176,17 +176,19 @@ def create_views(cameras, images, image_dir, depth_dir):
             raise RuntimeError('Wrong camera model "'+camera.model+'"')
 
         K = np.zeros((3,3),np.float64)
-        # # maybe it is compatible with old version of colmap or camera model of 'PINHOLE'
-        # K[0,0] = camera.params[0]
-        # K[1,1] = camera.params[1]
-        # K[0,2] = camera.params[2]
-        # K[1,2] = camera.params[3]
-        # # compatible with camera model of 'SIMPLE_RADIAL'
+        # compatible with camera model of 'PINHOLE' (when you use colmap command-line interface and export text result in the 'sparse' folder under the directory of 'dense')
         K[0,0] = camera.params[0]
-        K[1,1] = camera.params[0]
-        K[0,2] = camera.params[1]
-        K[1,2] = camera.params[2]
-        # camera.params[3] is the radial distortion parameter, so it is skipped!
+        K[1,1] = camera.params[1]
+        K[0,2] = camera.params[2]
+        K[1,2] = camera.params[3]
+
+        # # # compatible with camera model of 'SIMPLE_RADIAL' (when you export text result from sparse folder by colmap autoreconstruction)
+        # K[0,0] = camera.params[0]
+        # K[1,1] = camera.params[0]
+        # K[0,2] = camera.params[1]
+        # K[1,2] = camera.params[2]
+        # # camera.params[3] is the radial distortion parameter, so it is skipped!
+
         K[2,2] = 1
 
         R = quaternion_to_rotation_matrix(image.q).astype(np.float64)
