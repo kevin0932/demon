@@ -571,33 +571,33 @@ def main():
     images = dict()
     image_pairs = set()
 
-    # reading theia intermediate output relative poses from textfile
-    TheiaRtfilepath = '/home/kevin/JohannesCode/theia_trial_demon/intermediate_results/RelativePoses_after_step7_global_position_estimation.txt'
-    TheiaIDNamefilepath = '/home/kevin/JohannesCode/theia_trial_demon/intermediate_results/viewid_imagename_pairs_file.txt'
-    TheiaRelativePosesGT = read_relative_poses_theia_output(TheiaRtfilepath,TheiaIDNamefilepath)
-    # reading theia intermediate output global poses from textfile
-    TheiaGlobalPosesfilepath = '/home/kevin/JohannesCode/theia_trial_demon/intermediate_results/after_step7_global_position_estimation.txt'
-    TheiaGlobalPosesGT = read_global_poses_theia_output(TheiaGlobalPosesfilepath,TheiaIDNamefilepath)
+    # # reading theia intermediate output relative poses from textfile
+    # TheiaRtfilepath = '/home/kevin/JohannesCode/theia_trial_demon/intermediate_results/RelativePoses_after_step7_global_position_estimation.txt'
+    # TheiaIDNamefilepath = '/home/kevin/JohannesCode/theia_trial_demon/intermediate_results/viewid_imagename_pairs_file.txt'
+    # TheiaRelativePosesGT = read_relative_poses_theia_output(TheiaRtfilepath,TheiaIDNamefilepath)
+    # # reading theia intermediate output global poses from textfile
+    # TheiaGlobalPosesfilepath = '/home/kevin/JohannesCode/theia_trial_demon/intermediate_results/after_step7_global_position_estimation.txt'
+    # TheiaGlobalPosesGT = read_global_poses_theia_output(TheiaGlobalPosesfilepath,TheiaIDNamefilepath)
 
-    # # reading colmap output as ground truth from textfile
-    # ColmapGTfilepath = '/home/kevin/JohannesCode/ws1/sparse/0/textfiles_final/images.txt'
-    # imagesGT = read_images_colmap_format_text(ColmapGTfilepath)
-
+    # reading colmap output as ground truth from textfile
+    ColmapGTfilepath = '/home/kevin/JohannesCode/ws1/sparse/0/textfiles_final/images.txt'
+    imagesGT = read_images_colmap_format_text(ColmapGTfilepath)
+    print("imagesGT = ", imagesGT)
     # the .h5 file contains the filtered DeMoN prediction so that only one pair is kept for each input view
     data = h5py.File(args.filtered_demon_path)
 
-    viewNum = 6 # set to value larger than the number of input views
+    viewNum = 150 # set to value larger than the number of input views
     translation_scales = {}
 
-    for image_pair12 in data.keys():
-        image_name1, image_name2 = image_pair12.split("---")
-        for ids,val in TheiaRelativePosesGT.items():
-            if val.name1 == image_name1 and val.name2 == image_name2:
-                transScale = np.linalg.norm(val.t_vec)
-                translation_scales[image_name1] = transScale
-                print("translation_scales[image_name1] = ", transScale)
-                # translation_scales[image_name2] = transScale
-                # print("translation_scales[image_name2] = ", transScale)
+    # for image_pair12 in data.keys():
+    #     image_name1, image_name2 = image_pair12.split("---")
+    #     for ids,val in TheiaRelativePosesGT.items():
+    #         if val.name1 == image_name1 and val.name2 == image_name2:
+    #             transScale = np.linalg.norm(val.t_vec)
+    #             translation_scales[image_name1] = transScale
+    #             print("translation_scales[image_name1] = ", transScale)
+    #             # translation_scales[image_name2] = transScale
+    #             # print("translation_scales[image_name2] = ", transScale)
 
     it = 0
 
@@ -607,6 +607,7 @@ def main():
     appendFilterModel = vtk.vtkAppendPolyData()
 
     for image_pair12 in data.keys():
+        print("it = ", it)
         print("Processing", image_pair12)
 
         image_name1, image_name2 = image_pair12.split("---")
@@ -615,10 +616,10 @@ def main():
         # if image_name1 != 'P1180216.JPG':
         #     continue
 
-        if image_name1 not in translation_scales.keys():
-            continue
-        if image_name2 not in translation_scales.keys():
-            continue
+        # if image_name1 not in translation_scales.keys():
+        #     continue
+        # if image_name2 not in translation_scales.keys():
+        #     continue
 
         image_pairs.add(image_pair12)
 
@@ -632,9 +633,6 @@ def main():
         pred_trans12 = data[image_pair12]['translation'].value
         pred_invDepth121 = data[image_pair12]['depth_upsampled'].value
 
-        plt.imshow(pred_invDepth121, cmap='Greys')
-        plt.show()
-
         imagepath1 = os.path.join(args.images_path, image_name1)
         imagepath2 = os.path.join(args.images_path, image_name2)
 
@@ -646,23 +644,40 @@ def main():
         # print("max depth = ", np.max(1/pred_invDepth121))
         print("pred_trans12 = ", pred_trans12)
 
-        for ids,val in TheiaRelativePosesGT.items():
-            # if val.name1 == init_image_name1 and val.name2 == init_image_name2:
-            #     init_scale = np.linalg.norm(val.t_vec)
-            if val.name1 == image_name1 and val.name2 == image_name2:
-                transScale = np.linalg.norm(val.t_vec)
-                # transScale = np.linalg.norm(val.t_vec) / init_scale
-                # transScale = init_scale / np.linalg.norm(val.t_vec)
-                # translation_scales[image_name1] = transScale
-                print("transScale = ", transScale)
+        # for ids,val in TheiaRelativePosesGT.items():
+        #     # if val.name1 == init_image_name1 and val.name2 == init_image_name2:
+        #     #     init_scale = np.linalg.norm(val.t_vec)
+        #     if val.name1 == image_name1 and val.name2 == image_name2:
+        #         transScale = np.linalg.norm(val.t_vec)
+        #         # transScale = np.linalg.norm(val.t_vec) / init_scale
+        #         # transScale = init_scale / np.linalg.norm(val.t_vec)
+        #         # translation_scales[image_name1] = transScale
+        #         print("transScale = ", transScale)
+        #
+        #
+        # TheiaExtrinsics_4by4 = np.eye(4)
+        # for ids,val in TheiaGlobalPosesGT.items():
+        #     if val.name == image_name1:
+        #         TheiaExtrinsics_4by4[0:3,0:3] = val.rotmat
+        #         #TheiaExtrinsics_4by4[0:3,0:3] = val.rotmat.T
+        #         TheiaExtrinsics_4by4[0:3,3] = -np.dot(val.rotmat, val.tvec) # theia output camera position in world frame instead of extrinsic t
 
-
-        TheiaExtrinsics_4by4 = np.eye(4)
-        for ids,val in TheiaGlobalPosesGT.items():
+        ColmapExtrinsics_4by4 = np.eye(4)
+        ColmapExtrinsics2_4by4 = np.eye(4)
+        for ids,val in imagesGT.items():
             if val.name == image_name1:
-                TheiaExtrinsics_4by4[0:3,0:3] = val.rotmat
-                #TheiaExtrinsics_4by4[0:3,0:3] = val.rotmat.T
-                TheiaExtrinsics_4by4[0:3,3] = -np.dot(val.rotmat, val.tvec) # theia output camera position in world frame instead of extrinsic t
+                #ColmapExtrinsics_R = val.rotmat
+                #ColmapExtrinsics_t = val.tvec
+                ColmapExtrinsics_4by4[0:3,0:3] = val.rotmat
+                ColmapExtrinsics_4by4[0:3,3] = val.tvec
+                print("ColmapExtrinsics_4by4 = ", ColmapExtrinsics_4by4)
+            if val.name == image_name2:
+                #ColmapExtrinsics_R = val.rotmat
+                #ColmapExtrinsics_t = val.tvec
+                ColmapExtrinsics2_4by4[0:3,0:3] = val.rotmat
+                ColmapExtrinsics2_4by4[0:3,3] = val.tvec
+        transScale = np.linalg.norm(-np.dot(ColmapExtrinsics_4by4[0:3,0:3].T, ColmapExtrinsics_4by4[0:3,3]) + np.dot(ColmapExtrinsics2_4by4[0:3,0:3].T, ColmapExtrinsics2_4by4[0:3,3]))
+
 
         # tmp_PointCloud = make_pointcloud_prediction_in_global_coordinate(
         #             inverse_depth=pred_invDepth121,
@@ -686,8 +701,10 @@ def main():
                     # intrinsics = np.array([0.89115971*256/3072, 1.18821287*192/2304, 0.5, 0.5]),#################################
                     intrinsics = np.array([0.89115971, 1.18821287, 0.5, 0.5]), # sun3d intrinsics
                     image=input_data['image_pair'][0,0:3] if data_format=='channels_first' else input_data['image_pair'].transpose([0,3,1,2])[0,0:3],
-                    R1=TheiaExtrinsics_4by4[0:3,0:3],
-                    t1=TheiaExtrinsics_4by4[0:3,3],
+                    #R1=TheiaExtrinsics_4by4[0:3,0:3],
+                    #t1=TheiaExtrinsics_4by4[0:3,3],
+                    R1=ColmapExtrinsics_4by4[0:3,0:3],
+                    t1=ColmapExtrinsics_4by4[0:3,3],
                     rotation=pred_rotmat12_angleaxis,
                     translation=pred_trans12,
                     scale=transScale)
@@ -771,10 +788,10 @@ def main():
 
     # export all point clouds in the same global coordinate to a local .ply file (for external visualization)
     output_prefix = './'
-    pointcloud_polydata = create_pointcloud_polydata(
-        points=PointClouds['points'],
-        colors=PointClouds['colors'] if 'colors' in PointClouds else None,
-        )
+    # pointcloud_polydata = create_pointcloud_polydata(
+    #     points=PointClouds['points'],
+    #     colors=PointClouds['colors'] if 'colors' in PointClouds else None,
+    #     )
     plywriter = vtk.vtkPLYWriter()
     plywriter.SetFileName(output_prefix + 'points.ply')
     plywriter.SetInputData(appendFilterPC.GetOutput())
@@ -789,19 +806,19 @@ def main():
         if image_pair12 in image_pairs:
             image_name1, image_name2 = image_pair12.split("---")
             # # colmap
-            # for ids,val in imagesGT.items():
+            for ids,val in imagesGT.items():
             # theia
-            for ids,val in TheiaGlobalPosesGT.items():
+            # for ids,val in TheiaGlobalPosesGT.items():
                 if val.name==image_name1:
                     # # colmap
-                    # cam_actor = create_camera_actor(val.rotmat, val.tvec)
-                    # cam_polydata = create_camera_polydata(val.rotmat,val.tvec, True)
+                    cam_actor = create_camera_actor(val.rotmat, val.tvec)
+                    cam_polydata = create_camera_polydata(val.rotmat,val.tvec, True)
 
                     # theia
-                    cam_actor = create_camera_actor(val.rotmat, -np.dot(val.rotmat, val.tvec))
+                    # cam_actor = create_camera_actor(val.rotmat, -np.dot(val.rotmat, val.tvec))
                     # cam_actor.GetProperty().SetColor(0.5, 0.5, 1.0)
                     renderer.AddActor(cam_actor)
-                    cam_polydata = create_camera_polydata(val.rotmat,-np.dot(val.rotmat, val.tvec), True)
+                    # cam_polydata = create_camera_polydata(val.rotmat,-np.dot(val.rotmat, val.tvec), True)
                     appendFilter.AddInputData(cam_polydata)
                     # appendFilterModel.AddInputData(cam_polydata)
     appendFilter.Update()

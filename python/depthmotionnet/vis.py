@@ -281,6 +281,8 @@ def visualize_prediction( inverse_depth, intrinsics=None, normals=None, R1=None,
 
     w = depth.shape[-1]
     h = depth.shape[-2]
+    # w = depth.shape[-1]*12
+    # h = depth.shape[-2]*12
 
     if intrinsics is None:
         intrinsics = np.array([0.89115971, 1.18821287, 0.5, 0.5]) # sun3d intrinsics
@@ -290,6 +292,14 @@ def visualize_prediction( inverse_depth, intrinsics=None, normals=None, R1=None,
     K[1,1] = intrinsics[1]*h
     K[0,2] = intrinsics[2]*w
     K[1,2] = intrinsics[3]*h
+    # K[0,0] = 0.89115971*3072
+    # K[1,1] = 1.18821287*2304
+    # K[0,2] = 3072/2
+    # K[1,2] = 2304/2
+    # K[0,0] = 0.89115971*256
+    # K[1,1] = 1.18821287*192
+    # K[0,2] = 256/2
+    # K[1,2] = 192/2
 
     if not R1 is None and not t1 is None:
         R1 = R1
@@ -317,9 +327,9 @@ def visualize_prediction( inverse_depth, intrinsics=None, normals=None, R1=None,
         img = None
 
     # pointcloud = compute_point_cloud_from_depthmap(depth, K, R1, t1, n, img)
-    # pointcloud = compute_point_cloud_from_depthmap_scaled(depth, K, R1, t1, n, img, scale)
+    pointcloud = compute_point_cloud_from_depthmap_scaled(depth, K, R1, t1, n, img, scale)
     # pointcloud = compute_point_cloud_from_depthmap_scaled(depth, K, R1, t1, n, img, 1/scale)
-    pointcloud = compute_point_cloud_from_depthmap_scaled(depth, K, R1, t1, n, img, 1)
+    # pointcloud = compute_point_cloud_from_depthmap_scaled(depth, K, R1, t1, n, img, 1)
     # print("pointcloud['points'].shape = ", pointcloud['points'].shape)
     # print("pointcloud['colors'].shape = ", pointcloud['colors'].shape)
     # if normals!=None:

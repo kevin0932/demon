@@ -1,22 +1,23 @@
 #
 #  DeMoN - Depth Motion Network
 #  Copyright (C) 2017  Benjamin Ummenhofer, Huizhong Zhou
-#  
+#
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation, either version 3 of the License, or
 #  (at your option) any later version.
-#  
+#
 #  This program is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
-#  
+#
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 import pyximport; pyximport.install()
 import numpy as np
+from matplotlib import pyplot as plt    # kevin
 
 from .view import View
 
@@ -43,7 +44,7 @@ def compute_visible_points_mask( view1, view2, borderx=0, bordery=0 ):
 
 
 def compute_depth_ratios( view1, view2 ):
-    """Projects each point defined in view1 to view2 and computes the ratio of 
+    """Projects each point defined in view1 to view2 and computes the ratio of
     the depth value of the projected point and the stored depth value in view2.
 
 
@@ -61,7 +62,7 @@ def compute_depth_ratios( view1, view2 ):
 
 def check_depth_consistency( view, rest_of_the_views, depth_ratio_threshold=0.9, min_valid_threshold=0.5, min_depth_consistent=0.7 ):
     """Checks if the depth of view is consistent with the rest_of_the_views
-    
+
     view: View namedtuple
         Reference view
 
@@ -96,7 +97,7 @@ def check_depth_consistency( view, rest_of_the_views, depth_ratio_threshold=0.9,
 
 def create_image_overview( views ):
     """Creates a small overview image showing the RGB images of all views
-    
+
     views: list of View  or  list of list of View
 
     Returns a PIL.Image
@@ -151,8 +152,8 @@ def visualize_views( views ):
     renwin.SetWindowName("Viewer (press 'm' to change colors, use '.' and ',' to adjust opacity)")
     renwin.SetSize(800,600)
     renwin.AddRenderer(renderer)
-    
- 
+
+
     # An interactor
     interactor = vtk.vtkRenderWindowInteractor()
     interstyle = vtk.vtkInteractorStyleTrackballCamera()
@@ -160,7 +161,7 @@ def visualize_views( views ):
     interactor.SetRenderWindow(renwin)
 
     colors = ((1,0,0), (0,0,1), (0,1,1), (1,0,1), (1,1,0), (1,1,1), (0,1,0))
- 
+
     pointcloud_polydatas = []
     pointcloud_actors = []
     for idx, view in enumerate(views):
@@ -171,8 +172,8 @@ def visualize_views( views ):
 
 
         pointcloud = vis.compute_point_cloud_from_depthmap(view.depth, view.K, view.R, view.t, colors=img_arr)
-        pointcloud_polydata = vis.create_pointcloud_polydata( 
-            points=pointcloud['points'], 
+        pointcloud_polydata = vis.create_pointcloud_polydata(
+            points=pointcloud['points'],
             colors=pointcloud['colors'] if 'colors' in pointcloud else None,
         )
         pointcloud_polydatas.append(pointcloud_polydata)
@@ -184,7 +185,7 @@ def visualize_views( views ):
         pointcloud_actors.append(pc_actor)
         pc_actor.SetMapper(pc_mapper)
         pc_actor.GetProperty().SetPointSize(2)
-        
+
 
         color = colors[idx%len(colors)]
 
@@ -211,7 +212,7 @@ def visualize_views( views ):
             for actor in pointcloud_actors:
                 opacity = actor.GetProperty().GetOpacity()
                 opacity = min(1.0, opacity - 0.1)
-                
+
                 actor.GetProperty().SetOpacity(opacity)
         if "comma" == obj.GetKeySym():
             for actor in pointcloud_actors:
@@ -219,16 +220,160 @@ def visualize_views( views ):
                 opacity = max(0.0, opacity + 0.1)
                 actor.GetProperty().SetOpacity(opacity)
         renwin.Render()
-            
+
     change_point_properties.current_active_scalars = "Colors"
 
     interactor.AddObserver('KeyReleaseEvent', change_point_properties)
-    
+
     # Start
     interactor.Initialize()
     interactor.Start()
 
     interactor.RemoveAllObservers()
     del change_point_properties
-    
 
+
+### added from Ben's code
+def adjust_intrinsics(view, K_new, width_new, height_new):
+    """Creates a new View with the specified intrinsics and image dimensions.
+    The skew parameter K[0,1] will be ignored.
+
+    view: View namedtuple
+        The view tuple
+
+    K_new: numpy.ndarray
+        3x3 calibration matrix with the new intrinsics
+
+    width_new: int
+        The new image width
+
+    height_new: int
+        The new image height
+
+    Returns a View tuple with adjusted image, depth and intrinsics
+    """
+    from PIL import Image
+    from skimage.transform import resize
+    from .helpers import safe_crop_image, safe_crop_array2d
+
+    #original parameters
+    fx = view.K[0,0]    # 2457.60
+    fy = view.K[1,1]    # 2457.60
+    cx = view.K[0,2]    # 1536
+    cy = view.K[1,2]    # 1152
+    width = view.image.width    # 3072
+    height = view.image.height  # 2304
+    # print("in lmbspecialops")
+    # print("view.K = ", view.K)
+    # print(fx, " ", fy, " ", cx, " ", cy, " ", width, " ", height)
+
+    #target param
+    fx_new = K_new[0,0] # 0.89115971*256=228.136886
+    fy_new = K_new[1,1] # 1.18821287*192=228.136871
+    cx_new = K_new[0,2] # 128
+    cy_new = K_new[1,2] # 96
+
+    scale_x = fx_new/fx # 228.1369/2457.6=0.09282914
+    scale_y = fy_new/fy # 228.1369/2457.6=0.09282914
+    # print(fx_new, " ", fy_new, " ", cx_new, " ", cy_new, " ", scale_x, " ", scale_y)
+
+    #resize to get the right focal length
+    width_resize = int(width*scale_x)   # 0.09282914*3072=285.17118 => 285
+    height_resize = int(height*scale_y) # 0.09282914*2304=213.878339 => 213
+    # principal point position in the resized image
+    cx_resize = cx*scale_x  # 0.09282914*1536=142.585559
+    cy_resize = cy*scale_y  # 0.09282914*1152=106.939169
+    # print(width_resize, " ", height_resize, " ", cx_resize, " ", cy_resize)
+    # view.image.show()
+    # return
+    img_resize = view.image.resize((width_resize, height_resize), Image.BILINEAR if scale_x > 1 else Image.LANCZOS)
+    # img_resize.show()
+    if not view.depth is None:
+        max_depth    = np.max(view.depth)
+        depth_resize = view.depth / max_depth
+        depth_resize[depth_resize < 0.] = 0.
+        depth_resize = resize(depth_resize, (height_resize,width_resize), 0,mode='constant') * max_depth
+    else:
+        depth_resize = None
+
+    #crop to get the right principle point and resolution
+    # print(cx_resize, " ", cx_new, " ", cy_resize, " ", cy_new)
+    x0 = int(round(cx_resize - cx_new)) # int(round(142.585559-128) = 15
+    y0 = int(round(cy_resize - cy_new)) # int(round(106.939169-96) = 11
+    x1 = x0 + int(width_new)
+    y1 = y0 + int(height_new)
+    # print(x0, " ", x1, " ", y0, " ", y1)
+    if x0 < 0 or y0 < 0 or x1 > width_resize or y1 > height_resize:
+        print('Warning: Adjusting intrinsics adds a border to the image')
+        print("cropping is outside the new image size")
+        img_new = safe_crop_image(img_resize,(x0,y0,x1,y1),(127,127,127))
+        if not depth_resize is None:
+            depth_new = safe_crop_array2d(depth_resize,(x0,y0,x1,y1),0).astype(np.float32)
+        else:
+            depth_new = None
+    else:
+        img_new = img_resize.crop((x0,y0,x1,y1))
+        print("cropping is within the new image size")
+        # img_new.show()
+        if not depth_resize is None:
+            depth_new = depth_resize[y0:y1,x0:x1].astype(np.float32)
+            # plt.imshow(depth_new, cmap='Greys')
+            # plt.show()
+        else:
+            depth_new = None
+    # print("adjust_intrinsics function return view successfully!")
+    return View(R=view.R, t=view.t, K=K_new, image=img_new, depth=depth_new, depth_metric=view.depth_metric)
+
+
+def compute_view_distances( views ):
+    """Computes the spatial distances between views
+    views: List of View namedtuple
+    Returns the spatial distance as distance matrix
+    """
+    from scipy.spatial.distance import pdist, squareform
+    positions = np.empty((len(views),3))
+    for i, view in enumerate(views):
+        C = -view.R.transpose().dot(view.t)
+        positions[i] = C
+    return squareform(pdist(positions,'euclidean'))
+
+def compute_view_angle( view1, view2 ):
+    """Computes the viewing direction angle between two views
+    view1: View namedtuple
+        First view
+    view2: View namedtuple
+        Second view
+    Returns the angle in radians
+    """
+    dot = np.clip(view1.R[2,:].dot(view2.R[2,:]), -1, 1)
+    return np.arccos(dot)
+
+
+def create_image_overview( views ):
+    """Creates a small overview image showing the RGB images of all views
+
+    views: list of View  or  list of list of View
+    Returns a PIL.Image
+    """
+    assert isinstance(views, list)
+    from .helpers import concat_images_vertical, concat_images_horizontal
+    max_height = 100 # maximum height of individual images
+
+    def resize_image(img):
+        if img.size[1] > max_height:
+            new_width = int(img.size[0]*(max_height/img.size[1]))
+            return img.resize((new_width,max_height))
+        else:
+            return img
+
+    column_images = []
+    for col in views:
+        if isinstance(col,list):
+            tmp_images = []
+            for row in col:
+                tmp_images.append(resize_image(row.image))
+            col_img = concat_images_vertical(tmp_images)
+            column_images.append(col_img)
+        elif isinstance(col,View):
+            column_images.append(resize_image(col.image))
+    return concat_images_horizontal(column_images)
