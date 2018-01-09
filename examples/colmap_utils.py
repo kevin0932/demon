@@ -173,6 +173,7 @@ def create_views(cameras, images, image_dir, depth_dir):
 
         if camera.model != 'PINHOLE':
         # if camera.model != 'SIMPLE_RADIAL':
+        # if camera.model != 'OPENCV':    # gerrard-hall
             raise RuntimeError('Wrong camera model "'+camera.model+'"')
 
         K = np.zeros((3,3),np.float64)
@@ -183,11 +184,21 @@ def create_views(cameras, images, image_dir, depth_dir):
         K[1,2] = camera.params[3]
 
         # # # compatible with camera model of 'SIMPLE_RADIAL' (when you export text result from sparse folder by colmap autoreconstruction)
-        # K[0,0] = camera.params[0]
-        # K[1,1] = camera.params[0]
-        # K[0,2] = camera.params[1]
-        # K[1,2] = camera.params[2]
+        # # K[0,0] = camera.params[0]
+        # # K[1,1] = camera.params[0]
+        # K[0,0] = camera.params[0]/1.984  # redmond   # add a scale for focal length if image_undistorter in colmap output a different image size from origimal image size
+        # K[1,1] = camera.params[0]/1.984  # redmond   # add a scale for focal length if image_undistorter in colmap output a different image size from origimal image size
+        # K[0,2] = camera.params[1] # pc should also be scaled in the image size was changed during image_undistortion
+        # K[1,2] = camera.params[2] # pc should also be scaled in the image size was changed during image_undistortion
         # # camera.params[3] is the radial distortion parameter, so it is skipped!
+
+        # # # compatible with camera model of 'OPENCV' (when you export text result from sparse folder by colmap autoreconstruction)
+        # # K[0,0] = camera.params[0]
+        # # K[1,1] = camera.params[0]
+        # K[0,0] = camera.params[0]# factor added in the cameras.txt 2.808  # gerrard-hall   # add a scale for focal length if image_undistorter in colmap output a different image size from origimal image size
+        # K[1,1] = camera.params[0]# factor added in the cameras.txt 1.984  # gerrard-hall   # add a scale for focal length if image_undistorter in colmap output a different image size from origimal image size
+        # K[0,2] = camera.params[1]   # pc should also be scaled in the image size was changed during image_undistortion
+        # K[1,2] = camera.params[2]   # pc should also be scaled in the image size was changed during image_undistortion
 
         K[2,2] = 1
 

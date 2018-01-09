@@ -580,13 +580,17 @@ def main():
     # TheiaGlobalPosesGT = read_global_poses_theia_output(TheiaGlobalPosesfilepath,TheiaIDNamefilepath)
 
     # reading colmap output as ground truth from textfile
-    ColmapGTfilepath = '/home/kevin/JohannesCode/ws1/sparse/0/textfiles_final/images.txt'
+    # ColmapGTfilepath = '/home/kevin/JohannesCode/ws1/sparse/0/textfiles_final/images.txt'
+    # ColmapGTfilepath = '/home/kevin/ThesisDATA/person-hall/sparse/images.txt'
+    # ColmapGTfilepath = '/home/kevin/ThesisDATA/gerrard-hall/sparse/images.txt'
+    # ColmapGTfilepath = '/home/kevin/ThesisDATA/CVG_Datasets_3Dsymmetric/barcelona_Dataset/dense/sparse/images.txt'
+    ColmapGTfilepath = '/home/kevin/ThesisDATA/CVG_Datasets_3Dsymmetric/redmond_Dataset/dense/sparse/images.txt'
     imagesGT = read_images_colmap_format_text(ColmapGTfilepath)
-    print("imagesGT = ", imagesGT)
+    # print("imagesGT = ", imagesGT)
     # the .h5 file contains the filtered DeMoN prediction so that only one pair is kept for each input view
     data = h5py.File(args.filtered_demon_path)
 
-    viewNum = 150 # set to value larger than the number of input views
+    viewNum = 300000 # set to value larger than the number of input views
     translation_scales = {}
 
     # for image_pair12 in data.keys():
@@ -632,6 +636,7 @@ def main():
         # pred_rotmat12 = data[image_pair12]["rotation_matrix"].value
         pred_trans12 = data[image_pair12]['translation'].value
         pred_invDepth121 = data[image_pair12]['depth_upsampled'].value
+        pred_scale = data[image_pair12]['scale'].value
 
         imagepath1 = os.path.join(args.images_path, image_name1)
         imagepath2 = os.path.join(args.images_path, image_name2)
@@ -670,15 +675,21 @@ def main():
                 #ColmapExtrinsics_t = val.tvec
                 ColmapExtrinsics_4by4[0:3,0:3] = val.rotmat
                 ColmapExtrinsics_4by4[0:3,3] = val.tvec
-                print("ColmapExtrinsics_4by4 = ", ColmapExtrinsics_4by4)
+                # print("ColmapExtrinsics_4by4 = ", ColmapExtrinsics_4by4)
             if val.name == image_name2:
                 #ColmapExtrinsics_R = val.rotmat
                 #ColmapExtrinsics_t = val.tvec
                 ColmapExtrinsics2_4by4[0:3,0:3] = val.rotmat
                 ColmapExtrinsics2_4by4[0:3,3] = val.tvec
         transScale = np.linalg.norm(-np.dot(ColmapExtrinsics_4by4[0:3,0:3].T, ColmapExtrinsics_4by4[0:3,3]) + np.dot(ColmapExtrinsics2_4by4[0:3,0:3].T, ColmapExtrinsics2_4by4[0:3,3]))
-
-
+        print("pred_scale = ", pred_scale, "; calculated_scale_from_globalSfM transScale = ", transScale)
+        if it==0:
+            scaleRecordMat = np.array([pred_scale, transScale])
+            # scaleRecordMat = np.reshape(scaleRecordMat,[1,2])
+        else:
+            # scaleRecordMat = np.concatenate((scaleRecordMat, np.array([pred_scale, transScale])), axis=0)
+            scaleRecordMat = np.vstack((scaleRecordMat, np.array([pred_scale, transScale])))
+        print("scaleRecordMat.shape = ", scaleRecordMat.shape)
         # tmp_PointCloud = make_pointcloud_prediction_in_global_coordinate(
         #             inverse_depth=pred_invDepth121,
         #             intrinsics = np.array([2457.60/3072, 2457.60/2304, 0.5, 0.5]),#################################
@@ -708,6 +719,7 @@ def main():
                     rotation=pred_rotmat12_angleaxis,
                     translation=pred_trans12,
                     scale=transScale)
+                    # scale=pred_scale/transScale)
 
         # # ColmapExtrinsics_T = np.eye(4)
         # # for ids,val in imagesGT.items():
@@ -784,85 +796,93 @@ def main():
         # ax.scatter(pc[:,0], pc[:,1], pc[:,2])
         # pyplot.show()
 
-    appendFilterPC.Update()
+    # plot the scatter 2D data of scale records, to find out the correlation between the predicted scales and the calculated scales from global SfM
+    plt.scatter(scaleRecordMat[:,0],scaleRecordMat[:,1])
+    plt.ylabel('scales calculated from global SfM/Colmap')
+    plt.xlabel('scales predicted by DeMoN')
+    plt.grid(True)
+    plt.axis('equal')
+    plt.show()
 
-    # export all point clouds in the same global coordinate to a local .ply file (for external visualization)
-    output_prefix = './'
-    # pointcloud_polydata = create_pointcloud_polydata(
-    #     points=PointClouds['points'],
-    #     colors=PointClouds['colors'] if 'colors' in PointClouds else None,
-    #     )
-    plywriter = vtk.vtkPLYWriter()
-    plywriter.SetFileName(output_prefix + 'points.ply')
-    plywriter.SetInputData(appendFilterPC.GetOutput())
-    # plywriter.SetInputData(pointcloud_polydata)
-    # plywriter.SetFileTypeToASCII()
-    plywriter.SetArrayName('Colors')
-    plywriter.Write()
-
-    # Append all camera polydata
-    appendFilter = vtk.vtkAppendPolyData()
-    for image_pair12 in data.keys():
-        if image_pair12 in image_pairs:
-            image_name1, image_name2 = image_pair12.split("---")
-            # # colmap
-            for ids,val in imagesGT.items():
-            # theia
-            # for ids,val in TheiaGlobalPosesGT.items():
-                if val.name==image_name1:
-                    # # colmap
-                    cam_actor = create_camera_actor(val.rotmat, val.tvec)
-                    cam_polydata = create_camera_polydata(val.rotmat,val.tvec, True)
-
-                    # theia
-                    # cam_actor = create_camera_actor(val.rotmat, -np.dot(val.rotmat, val.tvec))
-                    # cam_actor.GetProperty().SetColor(0.5, 0.5, 1.0)
-                    renderer.AddActor(cam_actor)
-                    # cam_polydata = create_camera_polydata(val.rotmat,-np.dot(val.rotmat, val.tvec), True)
-                    appendFilter.AddInputData(cam_polydata)
-                    # appendFilterModel.AddInputData(cam_polydata)
-    appendFilter.Update()
+    # appendFilterPC.Update()
+    #
+    # # export all point clouds in the same global coordinate to a local .ply file (for external visualization)
+    # output_prefix = './'
+    # # pointcloud_polydata = create_pointcloud_polydata(
+    # #     points=PointClouds['points'],
+    # #     colors=PointClouds['colors'] if 'colors' in PointClouds else None,
+    # #     )
+    # plywriter = vtk.vtkPLYWriter()
+    # plywriter.SetFileName(output_prefix + 'points.ply')
+    # plywriter.SetInputData(appendFilterPC.GetOutput())
+    # # plywriter.SetInputData(pointcloud_polydata)
+    # # plywriter.SetFileTypeToASCII()
+    # plywriter.SetArrayName('Colors')
+    # plywriter.Write()
+    #
+    # # Append all camera polydata
+    # appendFilter = vtk.vtkAppendPolyData()
+    # for image_pair12 in data.keys():
+    #     if image_pair12 in image_pairs:
+    #         image_name1, image_name2 = image_pair12.split("---")
+    #         # # colmap
+    #         for ids,val in imagesGT.items():
+    #         # theia
+    #         # for ids,val in TheiaGlobalPosesGT.items():
+    #             if val.name==image_name1:
+    #                 # # colmap
+    #                 cam_actor = create_camera_actor(val.rotmat, val.tvec)
+    #                 cam_polydata = create_camera_polydata(val.rotmat,val.tvec, True)
+    #
+    #                 # theia
+    #                 # cam_actor = create_camera_actor(val.rotmat, -np.dot(val.rotmat, val.tvec))
+    #                 # cam_actor.GetProperty().SetColor(0.5, 0.5, 1.0)
+    #                 renderer.AddActor(cam_actor)
+    #                 # cam_polydata = create_camera_polydata(val.rotmat,-np.dot(val.rotmat, val.tvec), True)
+    #                 appendFilter.AddInputData(cam_polydata)
+    #                 # appendFilterModel.AddInputData(cam_polydata)
+    # appendFilter.Update()
+    # # appendFilterModel.Update()
+    # # appendFilterModel = vtk.vtkAppendPolyData()
+    # appendFilterModel.AddInputData(appendFilterPC.GetOutput())
+    # appendFilterModel.AddInputData(appendFilter.GetOutput())
     # appendFilterModel.Update()
-    # appendFilterModel = vtk.vtkAppendPolyData()
-    appendFilterModel.AddInputData(appendFilterPC.GetOutput())
-    appendFilterModel.AddInputData(appendFilter.GetOutput())
-    appendFilterModel.Update()
-    plywriterCam = vtk.vtkPLYWriter()
-    plywriterCam.SetFileName(output_prefix + 'cameras.ply')
-    plywriterCam.SetInputData(appendFilter.GetOutput())
-    # plywriterCam.SetFileTypeToASCII()
-    plywriterCam.Write()
-
-    plywriterModel = vtk.vtkPLYWriter()
-    plywriterModel.SetFileName(output_prefix + 'fused_point_clouds.ply')
-    plywriterModel.SetInputData(appendFilterModel.GetOutput())
-    # plywriterModel.SetFileTypeToASCII()
-    plywriterModel.SetArrayName('Colors')
-    plywriterModel.Write()
-
-    axes = vtk.vtkAxesActor()
-    axes.GetXAxisCaptionActor2D().SetHeight(0.05)
-    axes.GetYAxisCaptionActor2D().SetHeight(0.05)
-    axes.GetZAxisCaptionActor2D().SetHeight(0.05)
-    axes.SetCylinderRadius(0.03)
-    axes.SetShaftTypeToCylinder()
-    renderer.AddActor(axes)
-
-    renwin = vtk.vtkRenderWindow()
-    renwin.SetWindowName("Point Cloud Viewer")
-    renwin.SetSize(800,600)
-    renwin.AddRenderer(renderer)
-
-
-    # An interactor
-    interactor = vtk.vtkRenderWindowInteractor()
-    interstyle = vtk.vtkInteractorStyleTrackballCamera()
-    interactor.SetInteractorStyle(interstyle)
-    interactor.SetRenderWindow(renwin)
-
-    # Start
-    interactor.Initialize()
-    interactor.Start()
+    # plywriterCam = vtk.vtkPLYWriter()
+    # plywriterCam.SetFileName(output_prefix + 'cameras.ply')
+    # plywriterCam.SetInputData(appendFilter.GetOutput())
+    # # plywriterCam.SetFileTypeToASCII()
+    # plywriterCam.Write()
+    #
+    # plywriterModel = vtk.vtkPLYWriter()
+    # plywriterModel.SetFileName(output_prefix + 'fused_point_clouds.ply')
+    # plywriterModel.SetInputData(appendFilterModel.GetOutput())
+    # # plywriterModel.SetFileTypeToASCII()
+    # plywriterModel.SetArrayName('Colors')
+    # plywriterModel.Write()
+    #
+    # axes = vtk.vtkAxesActor()
+    # axes.GetXAxisCaptionActor2D().SetHeight(0.05)
+    # axes.GetYAxisCaptionActor2D().SetHeight(0.05)
+    # axes.GetZAxisCaptionActor2D().SetHeight(0.05)
+    # axes.SetCylinderRadius(0.03)
+    # axes.SetShaftTypeToCylinder()
+    # renderer.AddActor(axes)
+    #
+    # renwin = vtk.vtkRenderWindow()
+    # renwin.SetWindowName("Point Cloud Viewer")
+    # renwin.SetSize(800,600)
+    # renwin.AddRenderer(renderer)
+    #
+    #
+    # # An interactor
+    # interactor = vtk.vtkRenderWindowInteractor()
+    # interstyle = vtk.vtkInteractorStyleTrackballCamera()
+    # interactor.SetInteractorStyle(interstyle)
+    # interactor.SetRenderWindow(renwin)
+    #
+    # # Start
+    # interactor.Initialize()
+    # interactor.Start()
 
 if __name__ == "__main__":
     main()

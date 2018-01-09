@@ -98,6 +98,8 @@ rotation = result['predict_rotation']
 print('rotation = ', rotation)
 translation = result['predict_translation']
 print('translation = ', translation)
+predict_scale = result['predict_scale']
+print('predict_scale = ', predict_scale)
 result = refine_net.eval(input_data['image1'],result['predict_depth2'])
 
 

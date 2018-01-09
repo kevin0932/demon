@@ -1,17 +1,17 @@
 #
 #  DeMoN - Depth Motion Network
 #  Copyright (C) 2017  Benjamin Ummenhofer, Huizhong Zhou
-#  
+#
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation, either version 3 of the License, or
 #  (at your option) any later version.
-#  
+#
 #  This program is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
-#  
+#
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
@@ -46,20 +46,20 @@ class BootstrapNet:
 
         with tf.variable_scope('netDM1'):
             self.netDM1_result = depthmotion_block_demon_original(
-                    image_pair=self.placeholder_image_pair, 
-                    image2_2=self.placeholder_image2_2, 
-                    prev_flow2=self.predict_flow2, 
-                    prev_flowconf2=self.netFlow1_result['predict_flowconf2'], 
+                    image_pair=self.placeholder_image_pair,
+                    image2_2=self.placeholder_image2_2,
+                    prev_flow2=self.predict_flow2,
+                    prev_flowconf2=self.netFlow1_result['predict_flowconf2'],
                     data_format=data_format
                     )
 
 
     def eval(self, image_pair, image2_2):
         """Runs the bootstrap network
-        
+
         image_pair: numpy.ndarray
             Array with shape [1,6,192,256] if data_format=='channels_first'
-            
+
             Image pair in the range [-0.5, 0.5]
 
         image2_2: numpy.ndarray
@@ -69,7 +69,7 @@ class BootstrapNet:
 
         Returns a dict with the preditions of the bootstrap net
         """
-        
+
         fetches = {
                 'predict_flow5': self.predict_flow5,
                 'predict_flow2': self.predict_flow2,
@@ -114,6 +114,7 @@ class IterativeNet:
 
         self.placeholder_rotation = tf.placeholder(dtype=tf.float32, shape=(1,3))
         self.placeholder_translation = tf.placeholder(dtype=tf.float32, shape=(1,3))
+        self.placeholder_scale = tf.placeholder(dtype=tf.float32, shape=(1,))
 
         with tf.variable_scope('netFlow2'):
             netFlow2_result = flow_block_demon_original(
@@ -135,8 +136,8 @@ class IterativeNet:
         with tf.variable_scope('netDM2'):
             self.netDM2_result = depthmotion_block_demon_original(
                     image_pair=self.placeholder_image_pair,
-                    image2_2=self.placeholder_image2_2, 
-                    prev_flow2=self.predict_flow2, 
+                    image2_2=self.placeholder_image2_2,
+                    prev_flow2=self.predict_flow2,
                     prev_flowconf2=self.netFlow2_result['predict_flowconf2'],
                     prev_rotation=self.placeholder_rotation,
                     prev_translation=self.placeholder_translation,
@@ -146,10 +147,10 @@ class IterativeNet:
 
     def eval(self, image_pair, image2_2, depth2, normal2, rotation, translation ):
         """Runs the iterative network
-        
+
         image_pair: numpy.ndarray
             Array with shape [1,6,192,256] if data_format=='channels_first'
-            
+
             Image pair in the range [-0.5, 0.5]
 
         image2_2: numpy.ndarray
@@ -171,7 +172,7 @@ class IterativeNet:
 
         Returns a dict with the preditions of the iterative net
         """
-
+        print("testing!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
         fetches = {
                 'predict_flow5': self.predict_flow5,
                 'predict_flow2': self.predict_flow2,
@@ -179,6 +180,8 @@ class IterativeNet:
                 'predict_normal2': self.netDM2_result['predict_normal2'],
                 'predict_rotation': self.netDM2_result['predict_rotation'],
                 'predict_translation': self.netDM2_result['predict_translation'],
+                ### add learned scale factor as one of the outputs
+                'predict_scale': self.netDM2_result['predict_scale'],
                 }
         feed_dict = {
                 self.placeholder_image_pair: image_pair,
@@ -216,7 +219,7 @@ class RefinementNet:
 
         with tf.variable_scope('netRefine'):
             self.netRefine_result = depth_refine_block_demon_original(
-                    image1=self.placeholder_image1, 
+                    image1=self.placeholder_image1,
                     depthmotion_predictions={
                         'predict_depth2': self.placeholder_depth2,
                         },
@@ -225,7 +228,7 @@ class RefinementNet:
 
     def eval(self, image1, depth2):
         """Runs the refinement network
-        
+
         image1: numpy.ndarray
             Array with the first image with shape [1,3,192,256] if data_format=='channels_first'
 
@@ -243,4 +246,3 @@ class RefinementNet:
                 self.placeholder_depth2: depth2,
                 }
         return self.session.run(fetches, feed_dict=feed_dict)
-
