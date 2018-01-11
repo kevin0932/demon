@@ -1,0 +1,187 @@
+##### Generate database.db from ground truth R, t
+python theia_colmap_transformation_system_check_JohanFreiburg.py --demon_path ./south-building-demon/south_building_predictions.h5 --database_path /home/kevin/JohannesCode/theia_sys_database_symFiltered/Johan_colmapGT_DeMoN_maxprojerr3_maxphotoerr15_08122017_noRt_symFiltered.db --databaseRt_path /home/kevin/JohannesCode/theia_sys_database_symFiltered/Johan_colmapGT_DeMoN_maxprojerr3_maxphotoerr15_08122017_symFiltered.db --max_reproj_error 3 --colmap_path /home/kevin/devel_lib/SfM/colmap/release/src/exe/ --images_path /home/kevin/JohannesCode/south-building/images --max_photometric_error 15 --relative_poses_Output_path /home/kevin/JohannesCode/theia_sys_database_symFiltered/Theiatest_relative_poses_GT_Johan_colmapGT_DeMoN_maxprojerr3_maxphotoerr15_08122017_symfiltered.txt  --focal_length 228.13688
+
+python theia_colmap_transformation_system_check_JohanFreiburg.py --demon_path ./south-building-demon/south_building_predictions.h5 --database_path /home/kevin/JohannesCode/theia_sys_database_symFiltered/Johan_colmapGT_DeMoN_maxprojerr3_maxphotoerr15_08122017_noRt_symFiltered_F.db --databaseRt_path /home/kevin/JohannesCode/theia_sys_database_symFiltered/Johan_colmapGT_DeMoN_maxprojerr3_maxphotoerr15_08122017_symFiltered_F.db --max_reproj_error 3 --colmap_path /home/kevin/devel_lib/SfM/colmap/release/src/exe/ --images_path /home/kevin/JohannesCode/south-building/images --max_photometric_error 15 --relative_poses_Output_path /home/kevin/JohannesCode/theia_sys_database_symFiltered/Theiatest_relative_poses_GT_Johan_colmapGT_DeMoN_maxprojerr3_maxphotoerr15_08122017_symfiltered_F.txt  --focal_length 204.8
+
+python theia_colmap_transformation_system_check_JohanFreiburg.py --demon_path ./south-building-demon/south_building_predictions.h5 --database_path /home/kevin/JohannesCode/theia_sys_database_symFiltered/Johan_colmapGT_DeMoN_maxprojerr1_maxphotoerrINF_13122017_noRt_symFiltered.db --databaseRt_path /home/kevin/JohannesCode/theia_sys_database_symFiltered/Johan_colmapGT_DeMoN_maxprojerr1_maxphotoerrINF_13122017_symFiltered.db --max_reproj_error 1 --colmap_path /home/kevin/devel_lib/SfM/colmap/release/src/exe/ --images_path /home/kevin/JohannesCode/south-building/images --max_photometric_error 15000000 --relative_poses_Output_path /home/kevin/JohannesCode/theia_sys_database_symFiltered/Theiatest_relative_poses_GT_Johan_colmapGT_DeMoN_maxprojerr1_maxphotoerrINF_13122017_symfiltered.txt  --focal_length 228.13688
+
+
+
+python theia_colmap_transformation_system_check_JohanFreiburg.py --demon_path ./south-building-demon/south_building_predictions.h5 --database_path /home/kevin/JohannesCode/theia_sys_database_symFiltered/Johan_colmapGT_DeMoN_maxprojerr2_maxphotoerrINF_18122017_noRt_F.db --databaseRt_path /home/kevin/JohannesCode/theia_sys_database_symFiltered/Johan_colmapGT_DeMoN_maxprojerr2_maxphotoerrINF_18122017_F.db --max_reproj_error 2 --colmap_path /home/kevin/devel_lib/SfM/colmap/release/src/exe/ --images_path /home/kevin/JohannesCode/south-building/images --max_photometric_error 15000000 --relative_poses_Output_path /home/kevin/JohannesCode/theia_sys_database_symFiltered/relative_poses_GT_Johan_colmapGT_DeMoN_maxprojerr2_maxphotoerrINF_18122017_F.txt  --focal_length 204.8
+
+
+
+
+
+
+python theia_colmap_transformation_system_check.py --demon_path ./KevinProcessedData_southbuilding/kevin_southbuilding_demon.h5 --database_path /home/kevin/JohannesCode/theia_sys_database_symFiltered/Kevin_colmapGT_DeMoN_maxprojerr1_maxphotoerr5_07122017_noRt_symFiltered.db --databaseRt_path /home/kevin/JohannesCode/theia_sys_database_symFiltered/Kevin_colmapGT_DeMoN_maxprojerr1_maxphotoerr5_07122017_symFiltered.db --max_reproj_error 1 --colmap_path /home/kevin/devel_lib/SfM/colmap/release/src/exe/ --images_path /home/kevin/JohannesCode/south-building/images --max_photometric_error 5 --relative_poses_Output_path /home/kevin/JohannesCode/theia_sys_database_symFiltered/Theiatest_relative_poses_GT_Kevin_colmapGT_DeMoN_maxprojerr1_maxphotoerr5_07122017_symfiltered.txt  --focal_length 228.13688			
+
+python theia_colmap_transformation_system_check.py --demon_path ./KevinProcessedData_southbuilding/kevin_southbuilding_demon.h5 --database_path /home/kevin/JohannesCode/theia_sys_database_symFiltered/Kevin_colmapGT_DeMoN_maxprojerr1_maxphotoerr5_07122017_noRt_symFiltered_F.db --databaseRt_path /home/kevin/JohannesCode/theia_sys_database_symFiltered/Kevin_colmapGT_DeMoN_maxprojerr1_maxphotoerr5_07122017_symFiltered_F.db --max_reproj_error 1 --colmap_path /home/kevin/devel_lib/SfM/colmap/release/src/exe/ --images_path /home/kevin/JohannesCode/south-building/images --max_photometric_error 5 --relative_poses_Output_path /home/kevin/JohannesCode/theia_sys_database_symFiltered/Theiatest_relative_poses_GT_Kevin_colmapGT_DeMoN_maxprojerr1_maxphotoerr5_07122017_symfiltered_F.txt  --focal_length 204.8
+
+
+python theia_colmap_transformation_system_check.py --demon_path ./KevinProcessedData_southbuilding/kevin_southbuilding_demon.h5 --database_path /home/kevin/JohannesCode/theia_sys_database_symFiltered/Kevin_colmapGT_DeMoN_maxprojerr1_maxphotoerr5_08122017_noRt_symFiltered_F.db --databaseRt_path /home/kevin/JohannesCode/theia_sys_database_symFiltered/Kevin_colmapGT_DeMoN_maxprojerr1_maxphotoerr5_08122017_symFiltered_F.db --max_reproj_error 1 --colmap_path /home/kevin/devel_lib/SfM/colmap/release/src/exe/ --images_path /home/kevin/JohannesCode/south-building/images --max_photometric_error 5 --relative_poses_Output_path /home/kevin/JohannesCode/theia_sys_database_symFiltered/Theiatest_relative_poses_GT_Kevin_colmapGT_DeMoN_maxprojerr1_maxphotoerr5_08122017_symfiltered_F.txt  --focal_length 204.8
+
+
+
+python theia_colmap_transformation_system_check.py --demon_path ./KevinProcessedData_southbuilding/kevin_southbuilding_demon.h5 --database_path /home/kevin/JohannesCode/theia_sys_database_symFiltered/Kevin_colmapGT_DeMoN_maxprojerr1_maxphotoerr2_aa25_10122017_noRt_symFiltered_F.db --databaseRt_path /home/kevin/JohannesCode/theia_sys_database_symFiltered/Kevin_colmapGT_DeMoN_maxprojerr1_maxphotoerr2_aa25_10122017_symFiltered_F.db --max_reproj_error 1 --colmap_path /home/kevin/devel_lib/SfM/colmap/release/src/exe/ --images_path /home/kevin/JohannesCode/south-building/images --max_photometric_error 2 --relative_poses_Output_path /home/kevin/JohannesCode/theia_sys_database_symFiltered/Theiatest_relative_poses_GT_Kevin_colmapGT_DeMoN_maxprojerr1_maxphotoerr2_aa25_10122017_symfiltered_F.txt  --focal_length 204.8
+
+
+##### Generate database.db from DeMoN prediction R, t
+
+python DeMoN_Predict_DB_JohanFreiburg.py --demon_path ./south-building-demon/south_building_predictions.h5 --database_path /home/kevin/JohannesCode/theia_sys_DeMoN_db_symFiltered/Johan_colmapGT_DeMoN_maxprojerr1_maxphotoerr5_12122017_noRt_symFiltered.db --databaseRt_path /home/kevin/JohannesCode/theia_sys_DeMoN_db_symFiltered/Johan_colmapGT_DeMoN_maxprojerr1_maxphotoerr5_12122017_symFiltered.db --max_reproj_error 1 --colmap_path /home/kevin/devel_lib/SfM/colmap/release/src/exe/ --images_path /home/kevin/JohannesCode/south-building/images --max_photometric_error 5 --relative_poses_Output_path /home/kevin/JohannesCode/theia_sys_DeMoN_db_symFiltered/Theiatest_relative_poses_GT_Johan_colmapGT_DeMoN_maxprojerr1_maxphotoerr5_12122017_symfiltered.txt  --focal_length 228.13688
+
+python DeMoN_Predict_DB_JohanFreiburg.py --demon_path ./south-building-demon/south_building_predictions.h5 --database_path /home/kevin/JohannesCode/theia_sys_DeMoN_db_symFiltered/Johan_colmapGT_DeMoN_maxprojerr2_maxphotoerrINF_12122017_noRt_symFiltered.db --databaseRt_path /home/kevin/JohannesCode/theia_sys_DeMoN_db_symFiltered/Johan_colmapGT_DeMoN_maxprojerr2_maxphotoerrINF_12122017_symFiltered.db --max_reproj_error 2 --colmap_path /home/kevin/devel_lib/SfM/colmap/release/src/exe/ --images_path /home/kevin/JohannesCode/south-building/images --max_photometric_error 50000000000 --relative_poses_Output_path /home/kevin/JohannesCode/theia_sys_DeMoN_db_symFiltered/Theiatest_relative_poses_GT_Johan_colmapGT_DeMoN_maxprojerr2_maxphotoerrINF_12122017_symfiltered.txt  --focal_length 228.13688
+
+python DeMoN_Predict_DB_JohanFreiburg.py --demon_path ./south-building-demon/south_building_predictions.h5 --database_path /home/kevin/JohannesCode/theia_sys_DeMoN_db_symFiltered/Johan_colmapGT_DeMoN_maxprojerr1_maxphotoerr5_12122017_noRt_symFiltered_F.db --databaseRt_path /home/kevin/JohannesCode/theia_sys_DeMoN_db_symFiltered/Johan_colmapGT_DeMoN_maxprojerr1_maxphotoerr5_12122017_symFiltered_F.db --max_reproj_error 1 --colmap_path /home/kevin/devel_lib/SfM/colmap/release/src/exe/ --images_path /home/kevin/JohannesCode/south-building/images --max_photometric_error 5 --relative_poses_Output_path /home/kevin/JohannesCode/theia_sys_DeMoN_db_symFiltered/Theiatest_relative_poses_GT_Johan_colmapGT_DeMoN_maxprojerr1_maxphotoerr5_12122017_symfiltered_F.txt  --focal_length 204.8
+
+# transpose R
+python RTranspose_DeMoN_Predict_DB_JohanFreiburg.py --demon_path ./south-building-demon/south_building_predictions.h5 --database_path /home/kevin/JohannesCode/theia_sys_DeMoN_TransposeR/Johan_colmapGT_DeMoN_maxreprojerr2_maxphotoerrINF_14122017_noRt.db --databaseRt_path /home/kevin/JohannesCode/theia_sys_DeMoN_TransposeR/Johan_colmapGT_DeMoN_maxprojerr2_maxphotoerrINF_14122017.db --max_reproj_error 2 --colmap_path /home/kevin/devel_lib/SfM/colmap/release/src/exe/ --images_path /home/kevin/JohannesCode/south-building/images --max_photometric_error 50000000000 --relative_poses_Output_path /home/kevin/JohannesCode/theia_sys_DeMoN_TransposeR/Johan_colmapGT_DeMoN_maxprojerr2_maxphotoerrINF_14122017.txt  --focal_length 228.13688
+
+
+python DeMoN_Predict_DB.py --demon_path ./KevinProcessedData_southbuilding/kevin_southbuilding_demon.h5 --database_path /home/kevin/JohannesCode/theia_sys_DeMoN_db_symFiltered/Kevin_colmapGT_DeMoN_maxprojerr1_maxphotoerr5_12122017_noRt_symFiltered.db --databaseRt_path /home/kevin/JohannesCode/theia_sys_DeMoN_db_symFiltered/Kevin_colmapGT_DeMoN_maxprojerr1_maxphotoerr5_12122017_symFiltered.db --max_reproj_error 1 --colmap_path /home/kevin/devel_lib/SfM/colmap/release/src/exe/ --images_path /home/kevin/JohannesCode/south-building/images --max_photometric_error 5 --relative_poses_Output_path /home/kevin/JohannesCode/theia_sys_DeMoN_db_symFiltered/Theiatest_relative_poses_GT_Kevin_colmapGT_DeMoN_maxprojerr1_maxphotoerr5_12122017_symfiltered.txt  --focal_length 228.13688
+
+python DeMoN_Predict_DB.py --demon_path ./KevinProcessedData_southbuilding/kevin_southbuilding_demon.h5 --database_path /home/kevin/JohannesCode/theia_sys_DeMoN_db_symFiltered/Kevin_colmapGT_DeMoN_maxprojerr2_maxphotoerrINF_12122017_noRt_symFiltered.db --databaseRt_path /home/kevin/JohannesCode/theia_sys_DeMoN_db_symFiltered/Kevin_colmapGT_DeMoN_maxprojerr2_maxphotoerrINF_12122017_symFiltered.db --max_reproj_error 2 --colmap_path /home/kevin/devel_lib/SfM/colmap/release/src/exe/ --images_path /home/kevin/JohannesCode/south-building/images --max_photometric_error 5000000000 --relative_poses_Output_path /home/kevin/JohannesCode/theia_sys_DeMoN_db_symFiltered/Theiatest_relative_poses_GT_Kevin_colmapGT_DeMoN_maxprojerr2_maxphotoerrINF_12122017_symfiltered.txt  --focal_length 228.13688
+
+python DeMoN_Predict_DB.py --demon_path ./KevinProcessedData_southbuilding/kevin_southbuilding_demon.h5 --database_path /home/kevin/JohannesCode/theia_sys_DeMoN_db_symFiltered/Kevin_colmapGT_DeMoN_maxprojerr1_maxphotoerr5_12122017_noRt_symFiltered_F.db --databaseRt_path /home/kevin/JohannesCode/theia_sys_DeMoN_db_symFiltered/Kevin_colmapGT_DeMoN_maxprojerr1_maxphotoerr5_12122017_symFiltered_F.db --max_reproj_error 1 --colmap_path /home/kevin/devel_lib/SfM/colmap/release/src/exe/ --images_path /home/kevin/JohannesCode/south-building/images --max_photometric_error 5 --relative_poses_Output_path /home/kevin/JohannesCode/theia_sys_DeMoN_db_symFiltered/Theiatest_relative_poses_GT_Kevin_colmapGT_DeMoN_maxprojerr1_maxphotoerr5_12122017_symfiltered_F.txt  --focal_length 204.8
+
+
+##### Run reconstruction !
+/home/kevin/devel_lib/SfM/TheiaSfM/theia-release/bin/build_reconstruction --flagfile=/home/kevin/JohannesCode/theia_trial_demon/flag_texts/southbuilding_theia_build_reconstruction_flags.txt 2>&1 | tee southbuilding_fromImage_lowesratio080_minnumInllers30_05122017_Calibr2737.log
+
+
+
+
+
+
+##### View reconstruction !
+/home/kevin/devel_lib/SfM/TheiaSfM/theia-release/bin/view_reconstruction --reconstruction=-0
+
+
+
+
+##### View global camera poses !
+/home/kevin/devel_lib/SfM/TheiaSfM/theia-release/bin/view_camera_poses --camera_poses=/home/kevin/JohannesCode/theia_trial_demon/intermediate_results/after_step9_BA.txt
+
+/home/kevin/devel_lib/SfM/TheiaSfM/theia-release/bin/view_camera_poses --camera_poses=/home/kevin/JohannesCode/theia_trial_demon/intermediate_results/after_step7_global_position_estimation.txt
+
+/home/kevin/devel_lib/SfM/TheiaSfM/theia-release/bin/view_camera_poses_from_colmap_result --camera_poses=/home/kevin/JohannesCode/ws1/sparse/0/textfiles_final/images.txt
+
+
+##### Check output reconstruction stat (Theia)!
+/home/kevin/devel_lib/SfM/TheiaSfM/theia-release/bin/compute_reconstruction_statistics --reconstruction=/home/kevin/JohannesCode/theia_trial_demon/output_reconstructions/-0 --logtostderr
+
+/home/kevin/devel_lib/SfM/TheiaSfM/theia-release/bin/compute_reconstruction_statistics --reconstruction=/home/kevin/JohannesCode/theia_trial_demon/output_reconstruction_southbuilding/-0_optimalSoFar --logtostderr
+
+
+
+##### Compare theia output with intput relative poses
+python compare_theia_result_relative_poses_with_theia_input_matches.py --relative_poses_theia_input /home/kevin/JohannesCode/theia_trial_demon/intermediate_results/viewgraph_edges_checkfile.txt --relative_poses_theia_output /home/kevin/JohannesCode/theia_trial_demon/intermediate_results/RelativePoses_after_step7_global_position_estimation.txt
+
+python compare_theia_result_relative_poses_with_theia_input_matches.py --relative_poses_theia_input /home/kevin/JohannesCode/theia_trial_demon/intermediate_results/viewgraph_edges_checkfile.txt --relative_poses_theia_output /home/kevin/JohannesCode/theia_trial_demon/intermediate_results/RelativePoses_after_step9_BA.txt
+
+
+##### Compare DeMoN output with colmap resulting relative poses
+python compare_DeMoN_Prediction_relative_poses_with_ground_truth.py --relative_poses_colmap_result /home/kevin/JohannesCode/ws1/sparse/0/textfiles_RelativePoses/relative_poses.txt --relative_poses_demon_prediction /home/kevin/JohannesCode/south-building-demon/south_building_predictions.h5
+
+
+python compare_DeMoN_Prediction_relative_poses_with_ground_truth.py --relative_poses_colmap_result /home/kevin/JohannesCode/ws1/sparse/0/textfiles_RelativePoses/relative_poses.txt --relative_poses_demon_prediction /home/kevin/JohannesCode/KevinProcessedData_southbuilding/kevin_southbuilding_demon.h5
+
+
+##### Compare theia output with colmap resulting relative poses
+python compare_theia_result_relative_poses_with_ground_truth.py --relative_poses_GT /home/kevin/JohannesCode/ws1/sparse/0/textfiles_RelativePoses/relative_poses.txt --relative_poses_theia_output /home/kevin/JohannesCode/theia_trial_demon/intermediate_results/RelativePoses_after_step9_BA.txt
+
+python compare_theia_result_relative_poses_with_ground_truth.py --relative_poses_GT /home/kevin/JohannesCode/ws1/sparse/0/textfiles_final/relative_poses.txt --relative_poses_theia_output /home/kevin/JohannesCode/theia_trial_demon/intermediate_results/RelativePoses_after_step9_BA.txt
+
+
+##### Theia Built-in function to evaluate the quality of reconstruction with regard to the input match file!
+/home/kevin/devel_lib/SfM/TheiaSfM/theia-release/bin/compute_matching_relative_pose_errors --matches=/home/kevin/JohannesCode/theia_trial_demon/matchfiles/testfile_Johan_colmapGT_DeMoN_maxprojerr1_maxphotoerr5_08122017_symFiltered_F_Norm.cereal --reconstruction=/home/kevin/JohannesCode/theia_trial_demon/output_reconstructions/-0 --logtostderr
+
+
+
+
+python RTranspose_DeMoN_Predict_DB.py --demon_path ./KevinProcessedData_southbuilding/kevin_southbuilding_demon.h5 --database_path /home/kevin/JohannesCode/theia_sys_DeMoN_TransposeR/Kevin_colmapGT_DeMoN_maxreprojerr2_maxphotoerrINF_16122017_noRt.db --databaseRt_path /home/kevin/JohannesCode/theia_sys_DeMoN_TransposeR/Kevin_colmapGT_DeMoN_maxprojerr2_maxphotoerrINF_16122017.db --max_reproj_error 2 --colmap_path /home/kevin/devel_lib/SfM/colmap/release/src/exe/ --images_path /home/kevin/JohannesCode/south-building/images --max_photometric_error 50000000000 --relative_poses_Output_path /home/kevin/JohannesCode/theia_sys_DeMoN_TransposeR/Kevin_colmapGT_DeMoN_maxprojerr2_maxphotoerrINF_16122017.txt  --focal_length 228.13688
+
+python config3_theia_colmap_transformation_system_check_JohanFreiburg.py --demon_path ./south-building-demon/south_building_predictions.h5 --database_path /home/kevin/JohannesCode/theia_sys_database_config3/Johan_colmapGT_DeMoN_maxprojerr2_maxphotoerrINF_16122017_noRt.db --databaseRt_path /home/kevin/JohannesCode/theia_sys_database_config3/Johan_colmapGT_DeMoN_maxprojerr2_maxphotoerrINF_16122017.db --max_reproj_error 2 --colmap_path /home/kevin/devel_lib/SfM/colmap/release/src/exe/ --images_path /home/kevin/JohannesCode/south-building/images --max_photometric_error 15000000 --relative_poses_Output_path /home/kevin/JohannesCode/theia_sys_database_config3/relative_poses_GT_Johan_colmapGT_DeMoN_maxprojerr2_maxphotoerrINF_16122017.txt  --focal_length 228.13688
+
+
+
+
+python theia_colmap_transformation_system_check_JohanFreiburg.py --demon_path ./south-building-demon/south_building_predictions.h5 --database_path /home/kevin/JohannesCode/theia_sys_database_symFiltered/Johan_colmapGT_DeMoN_maxprojerr2_maxphotoerrINF_18122017_noRt_F.db --databaseRt_path /home/kevin/JohannesCode/theia_sys_database_symFiltered/Johan_colmapGT_DeMoN_maxprojerr2_maxphotoerrINF_18122017_F.db --max_reproj_error 2 --colmap_path /home/kevin/devel_lib/SfM/colmap/release/src/exe/ --images_path /home/kevin/JohannesCode/south-building/images --max_photometric_error 15000000 --relative_poses_Output_path /home/kevin/JohannesCode/theia_sys_database_symFiltered/relative_poses_GT_Johan_colmapGT_DeMoN_maxprojerr2_maxphotoerrINF_18122017_F.txt  --focal_length 204.8
+
+
+python Generate_Reliable_Single_data4Fusion_Depth_DeMoN_Predict_DB_JohanFreiburg.py --images_path /home/kevin/JohannesCode/south-building/images/ --demon_path /home/kevin/JohannesCode/south-building-demon/south_building_predictions.h5 --output_h5_dir_path /home/kevin/JohannesCode/south-building-demon/
+
+
+python Generate_Reliable_Single_data4Fusion_Depth_DeMoN_Predict_DB.py --images_path /home/kevin/JohannesCode/south-building/images/ --demon_path /home/kevin/JohannesCode/KevinProcessedData_southbuilding/kevin_southbuilding_demon.h5 --output_h5_dir_path /home/kevin/JohannesCode/KevinProcessedData_southbuilding/
+
+
+###### add DeMon's prediction relative poses Rt into theia's output matchfile
+./bin/read_DeMoN_relativeRt_to_theia_output_matchfile
+
+
+
+###### add Colmap's resultant relative poses Rt into theia's output matchfile
+./bin/read_colmap_relativeRt_to_theia_output_matchfile
+
+
+
+
+###### Fuse DeMoN's output pointcloud into a single model (visualization and .PLY)
+python Fuse_Depth_DeMoN_Predict_DB_JohanFreiburg.py --filtered_demon_path /home/kevin/JohannesCode/south-building-demon/fuse_southbuilding_demon.h5 --images_path /home/kevin/JohannesCode/south-building/images
+
+
+
+###########################################################################################################################################################################################################################
+###########################################################################################################################################################################################################################
+
+### New Commonly-Used Commands
+
+source activate tensorflow_demon
+
+
+./bin/remove_missing_pairs_based_on_reading_DeMoN_relativeRt_to_theia_output_matchfile --matchfile=/home/kevin/JohannesCode/ws1/TheiaReconstructionFromImage/fromImages/southbuilding_from_images_undistorted_defaultParams_06012018.cereal
+
+
+./bin/read_DeMoN_relativeRt_to_theia_output_matchfile --matchfile=/home/kevin/JohannesCode/ws1/TheiaReconstructionFromImage/fromImages/southbuilding_from_images_undistorted_defaultParams_06012018.cereal
+
+./bin/read_colmap_relativeRt_to_theia_output_matchfile --matchfile=/home/kevin/JohannesCode/ws1/TheiaReconstructionFromImage/fromImages/southbuilding_from_images_undistorted_defaultParams_06012018.cereal --colmap_global_poses_images_textfile=/home/kevin/JohannesCode/ws1/dense/0/sparse/images.txt
+
+
+python depth_experiment_v1_colmapdepthscale.py
+
+/home/kevin/devel_lib/SfM/TheiaSfM/theia-release/bin/build_reconstruction --flagfile=/home/kevin/ThesisDATA/gerrard-hall/TheiaReconstructionFromImage/southbuilding_theia_build_reconstruction_flags_v1_DefaultParams.txt
+
+/home/kevin/devel_lib/SfM/TheiaSfM/theia-release/bin/compute_reconstruction_statistics --reconstruction=-0 --logtostderr
+
+/home/kevin/devel_lib/SfM/TheiaSfM/theia-release/bin/view_reconstruction --reconstruction=-0
+
+
+python predict_with_DeMoN_FromBenjamin.py
+
+
+python Fuse_symPairs_06012018.py --images_path /home/kevin/ThesisDATA/gerrard-hall/demon_prediction/images_demon_small/ --filtered_demon_path /home/kevin/ThesisDATA/gerrard-hall/demon_prediction/gerrard_hall_predictions.h5
+
+
+
+python Fuse_One2Multi_06012018.py --images_path /home/kevin/ThesisDATA/gerrard-hall/demon_prediction/images_demon_small/ --filtered_demon_path /home/kevin/ThesisDATA/gerrard-hall/demon_prediction/gerrard_hall_predictions.h5
+
+
+
+python Fuse_Depth_DeMoN_Predict_03012018.py --images_path /home/kevin/ThesisDATA/gerrard-hall/demon_prediction/images_demon_small/ --filtered_demon_path /home/kevin/ThesisDATA/gerrard-hall/demon_prediction/predSym_RChoice_fuse_gerrard_hall_predictions_v1_780.h5
+
+
+
+
+python extract_colmap_intrinsics_to_theia_calibrationfile.py
+
+
+python JohannesCode/DeMoN_Predict_DB_ExhaustivePairs_JohanFreiburg.py --demon_path /home/kevin/ThesisDATA/person-hall/demon_prediction/person_hall_predictions.h5 --database_path /home/kevin/ThesisDATA/person-hall/demon_prediction/personhall_noRt.db --databaseRt_path /home/kevin/ThesisDATA/person-hall/demon_prediction/personhall_Rt.db --colmap_path /home/kevin/devel_lib/SfM/colmap/release/src/exe/ --relative_poses_Output_path /home/kevin/ThesisDATA/person-hall/demon_prediction/relativeposes_DB_generation.txt  --focal_length 204.8
+
+python /home/kevin/devel_lib/SfM/colmap/scripts/python/use_colmap_asGTwithAngleAxis_by_read_model.py /home/kevin/JohannesCode/ws1/dense/0/sparse/ .txt
+
+python JohannesCode/DeMoN_Predict_DB_ExhaustivePairs_JohanFreiburg_cleaned.py --demon_path /home/kevin/ThesisDATA/CVG_Datasets_3Dsymmetric/barcelona_Dataset/demon_prediction/CVG_barcelona_predictions.h5 --database_path /home/kevin/ThesisDATA/CVG_Datasets_3Dsymmetric/barcelona_Dataset/demon_prediction/barcelona_noRt.db --databaseRt_path /home/kevin/ThesisDATA/CVG_Datasets_3Dsymmetric/barcelona_Dataset/demon_prediction/barcelona_Rt.db --colmap_path /home/kevin/devel_lib/SfM/colmap/release/src/exe/ --relative_poses_Output_path /home/kevin/ThesisDATA/CVG_Datasets_3Dsymmetric/barcelona_Dataset/demon_prediction/relativeposes_DB_generation.txt  --focal_length 204.8
+
+
+
+
+
