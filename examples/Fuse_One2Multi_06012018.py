@@ -594,7 +594,7 @@ def main():
     # the .h5 file contains the filtered DeMoN prediction so that only one pair is kept for each input view
     data = h5py.File(args.filtered_demon_path)
 
-    viewNum = 1 # set to value larger than the number of input views
+    viewNum = 100 # set to value larger than the number of input views
     translation_scales = {}
 
     for image_pair12 in data.keys():
@@ -621,7 +621,8 @@ def main():
         image_pair21 = "{}---{}".format(image_name2, image_name1)
         # # if image_name1 == 'P1180141.JPG' or image_name1 == 'P1180142.JPG' or image_name1 == 'P1180143.JPG' or image_name1 == 'P1180144.JPG' or image_name1 == 'P1180145.JPG':
         # if image_name1 != 'P1180216.JPG':
-        if image_name1 != 'IMG_2416.JPG':
+        # if image_name1 != 'IMG_2416.JPG':
+        if image_name1 != 'IMG_2336.JPG':
             continue
 
         if image_name1 not in translation_scales.keys():
@@ -699,8 +700,9 @@ def main():
                     t1=TheiaExtrinsics_4by4[0:3,3],
                     rotation=pred_rotmat12_angleaxis,
                     translation=pred_trans12,
-                    # scale=transScale)
-                    scale=1/data[image_pair12]['scale'].value)
+                    # scale=data[image_pair12]['scale'].value)
+                    scale=transScale)
+                    # scale=1/data[image_pair12]['scale'].value)
                     # scale=transScale/data[image_pair12]['scale'].value)
                     # scale=data[image_pair12]['scale'].value*transScale)
                     # scale=1)
@@ -779,7 +781,7 @@ def main():
         # ax = Axes3D(fig)
         # ax.scatter(pc[:,0], pc[:,1], pc[:,2])
         # pyplot.show()
-
+    print("it = ", it)
     appendFilterPC.Update()
 
     # export all point clouds in the same global coordinate to a local .ply file (for external visualization)

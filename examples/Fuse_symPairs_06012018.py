@@ -621,7 +621,9 @@ def main():
         image_pair21 = "{}---{}".format(image_name2, image_name1)
         # # if image_name1 == 'P1180141.JPG' or image_name1 == 'P1180142.JPG' or image_name1 == 'P1180143.JPG' or image_name1 == 'P1180144.JPG' or image_name1 == 'P1180145.JPG':
         # if image_name1 != 'P1180216.JPG':
-        if image_name1 != 'IMG_2416.JPG':
+        #if image_name1 != 'IMG_2416.JPG' or image_name2 != 'IMG_2415.JPG':
+        if image_name1 != 'IMG_2417.JPG' or image_name2 != 'IMG_2416.JPG':
+        #if image_name1 != 'IMG_2416.JPG' or image_name2 != 'IMG_2415.JPG':
             continue
 
         if image_name1 not in translation_scales.keys():
@@ -630,6 +632,8 @@ def main():
             continue
 
         image_pairs.add(image_pair12)
+        image_pairs.add(image_pair21)
+
 
         if it==0:
             init_image_name1 = image_name1
@@ -640,6 +644,12 @@ def main():
         # pred_rotmat12 = data[image_pair12]["rotation_matrix"].value
         pred_trans12 = data[image_pair12]['translation'].value
         pred_invDepth121 = data[image_pair12]['depth_upsampled'].value
+
+        pred_rotmat21 = data[image_pair21]["rotation"].value
+        pred_rotmat21_angleaxis = rotmat_To_angleaxis(pred_rotmat21)
+        # pred_rotmat21 = data[image_pair21]["rotation_matrix"].value
+        pred_trans21 = data[image_pair21]['translation'].value
+        pred_invDepth212 = data[image_pair21]['depth_upsampled'].value
 
         # plt.imshow(pred_invDepth121, cmap='Greys')
         # plt.show()
@@ -665,25 +675,17 @@ def main():
                 # translation_scales[image_name1] = transScale
                 print("transScale = ", transScale)
 
-
         TheiaExtrinsics_4by4 = np.eye(4)
+        TheiaExtrinsics2_4by4 = np.eye(4)
         for ids,val in TheiaGlobalPosesGT.items():
             if val.name == image_name1:
                 TheiaExtrinsics_4by4[0:3,0:3] = val.rotmat
                 #TheiaExtrinsics_4by4[0:3,0:3] = val.rotmat.T
                 TheiaExtrinsics_4by4[0:3,3] = -np.dot(val.rotmat, val.tvec) # theia output camera position in world frame instead of extrinsic t
-
-        # tmp_PointCloud = make_pointcloud_prediction_in_global_coordinate(
-        #             inverse_depth=pred_invDepth121,
-        #             intrinsics = np.array([2457.60/3072, 2457.60/2304, 0.5, 0.5]),#################################
-        #             image=input_data['image_pair'][0,0:3] if data_format=='channels_first' else input_data['image_pair'].transpose([0,3,1,2])[0,0:3],
-        #             R1=TheiaExtrinsics_4by4[0:3,0:3],
-        #             t1=TheiaExtrinsics_4by4[0:3,3],
-        #             scale=transScale)
-        #             # rotation=None,
-        #             # translation=None)
-        #             # rotation=rotmat_To_angleaxis(np.eye(3)),
-        #             # translation=np.zeros(3))
+            if val.name == image_name2:
+                TheiaExtrinsics2_4by4[0:3,0:3] = val.rotmat
+                #TheiaExtrinsics2_4by4[0:3,0:3] = val.rotmat.T
+                TheiaExtrinsics2_4by4[0:3,3] = -np.dot(val.rotmat, val.tvec) # theia output camera position in world frame instead of extrinsic t
 
         tmp_PointCloud = visualize_prediction(
         # tmp_PointCloud = make_pointcloud_prediction_in_global_coordinate(
@@ -700,47 +702,10 @@ def main():
                     rotation=pred_rotmat12_angleaxis,
                     translation=pred_trans12,
                     # scale=transScale)
-                    scale=1/data[image_pair12]['scale'].value)
+                    # scale=1/data[image_pair12]['scale'].value)
                     # scale=transScale/data[image_pair12]['scale'].value)
                     # scale=data[image_pair12]['scale'].value*transScale)
-                    # scale=1)
-
-        # # ColmapExtrinsics_T = np.eye(4)
-        # # for ids,val in imagesGT.items():
-        # #     if val.name == image_name1:
-        # #         #ColmapExtrinsics_R = val.rotmat
-        # #         #ColmapExtrinsics_t = val.tvec
-        # #         ColmapExtrinsics_T[0:3,0:3] = val.rotmat
-        # #         ColmapExtrinsics_T[0:3,3] = val.tvec
-        # # tmp_PointCloud['points'] = transform_pointcloud_points(tmp_PointCloud['points'], ColmapExtrinsics_T.T)
-        #
-        # # if it==0:
-        # #     init_translation_norm = 1
-        # # for ids,val in TheiaRelativePosesGT.items():
-        # #     if val.name1 == image_name1 and val.name2 == image_name2:
-        # #         if it==0:
-        # #             init_translation_norm = np.linalg.norm(val.t_vec)
-        # #
-        # #         transScale = np.linalg.norm(val.t_vec) / init_translation_norm
-        # #         print("transScale = ", transScale)
-
-        # # tmp_PointCloud['points'] = transform_pointcloud_points(tmp_PointCloud['points'], TheiaExtrinsics_4by4.T)
-        # # tmp_PointCloud['points'] = transScale * transform_pointcloud_points(tmp_PointCloud['points'], TheiaExtrinsics_4by4.T)
-        # # tmp_PointCloud['points'] = transform_pointcloud_points(tmp_PointCloud['points'], TheiaExtrinsics_4by4.T) / transScale
-        # # tmp_PointCloud['points'] = transform_pointcloud_points(tmp_PointCloud['points'], TheiaExtrinsics_4by4.T) * transScale
-        #
-        # # tmp_PointCloud['points'] = (tmp_PointCloud['points'] / translation_scales[image_name1])
-        # tmp_PointCloud['points'] = (tmp_PointCloud['points'] * translation_scales[image_name1])
-        #
-        #
-        # # tmp_PointCloud['points'] = transform_pointcloud_points(tmp_PointCloud['points'] / translation_scales[image_name1], TheiaExtrinsics_4by4.T)
-        # # tmp_PointCloud['points'] = transform_pointcloud_points(tmp_PointCloud['points'] * translation_scales[image_name1], TheiaExtrinsics_4by4.T)
-        # # tmp_PointCloud['points'] = transform_pointcloud_points(tmp_PointCloud['points'], TheiaExtrinsics_4by4.T)
-        # print("tmp_PointCloud['points'] = ", tmp_PointCloud['points'])
-        # tmp_PointCloud['points'] = transform_pc_to_global_coordinate(tmp_PointCloud['points'], TheiaExtrinsics_4by4.T)
-        # print("tmp_PointCloud['points'] = ", tmp_PointCloud['points'])
-
-        # transform_pc_to_global_coordinate(points_N_3, MatT_4_4)
+                    scale=1)
 
         # plot each point cloud in the global coordinate
         pointcloud_actor = create_pointcloud_actor(
@@ -756,16 +721,47 @@ def main():
         appendFilterPC.AddInputData(pc_polydata)
         appendFilterModel.AddInputData(pc_polydata)
 
-        # print("tmp_PointCloud['points'].shape = ", tmp_PointCloud['points'].shape)
-        # print("tmp_PointCloud = ", tmp_PointCloud)
-        # print("type(tmp_PointCloud) = ", type(tmp_PointCloud))
-        # print("type(tmp_PointCloud['points']) = ", type(tmp_PointCloud['points']))
         if it==0:
             PointClouds = tmp_PointCloud
         else:
             PointClouds['points'] = np.concatenate((PointClouds['points'],tmp_PointCloud['points']), axis=0)
             PointClouds['colors'] = np.concatenate((PointClouds['colors'],tmp_PointCloud['colors']), axis=0)
-        # print("PointClouds['points'].shape = ", PointClouds['points'].shape)
+
+
+        tmp_PointCloud = visualize_prediction(
+                    inverse_depth=pred_invDepth212,
+                    intrinsics = np.array([0.89115971, 1.18821287, 0.5, 0.5]), # sun3d intrinsics
+                    image=input_data['image_pair'][0,0:3] if data_format=='channels_first' else input_data['image_pair'].transpose([0,3,1,2])[0,0:3],
+                    R1=TheiaExtrinsics2_4by4[0:3,0:3],
+                    t1=TheiaExtrinsics2_4by4[0:3,3],
+                    rotation=pred_rotmat21_angleaxis,
+                    translation=pred_trans21,
+                    # scale=transScale)
+                    # scale=1/data[image_pair21]['scale'].value)
+                    # scale=transScale/data[image_pair21]['scale'].value)
+                    # scale=data[image_pair21]['scale'].value*transScale)
+                    scale=1)
+
+        # plot each point cloud in the global coordinate
+        pointcloud_actor = create_pointcloud_actor(
+           points=tmp_PointCloud['points'],
+           colors=tmp_PointCloud['colors'] if 'colors' in tmp_PointCloud else None,
+           )
+        renderer.AddActor(pointcloud_actor)
+
+        pc_polydata = create_pointcloud_polydata(
+                                                points=tmp_PointCloud['points'],
+                                                colors=tmp_PointCloud['colors'] if 'colors' in tmp_PointCloud else None,
+                                                )
+        appendFilterPC.AddInputData(pc_polydata)
+        appendFilterModel.AddInputData(pc_polydata)
+
+        PointClouds['points'] = np.concatenate((PointClouds['points'],tmp_PointCloud['points']), axis=0)
+        PointClouds['colors'] = np.concatenate((PointClouds['colors'],tmp_PointCloud['colors']), axis=0)
+
+
+        print("data[image_pair12]['scale'].value = ", data[image_pair12]['scale'].value, "; data[image_pair21]['scale'].value = ", data[image_pair21]['scale'].value)
+
         it += 1
         if it>=viewNum:
             break

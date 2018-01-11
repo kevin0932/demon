@@ -582,9 +582,9 @@ def main():
     # reading colmap output as ground truth from textfile
     # ColmapGTfilepath = '/home/kevin/JohannesCode/ws1/sparse/0/textfiles_final/images.txt'
     # ColmapGTfilepath = '/home/kevin/ThesisDATA/person-hall/sparse/images.txt'
-    # ColmapGTfilepath = '/home/kevin/ThesisDATA/gerrard-hall/sparse/images.txt'
+    ColmapGTfilepath = '/home/kevin/ThesisDATA/gerrard-hall/sparse/images.txt'
     # ColmapGTfilepath = '/home/kevin/ThesisDATA/CVG_Datasets_3Dsymmetric/barcelona_Dataset/dense/sparse/images.txt'
-    ColmapGTfilepath = '/home/kevin/ThesisDATA/CVG_Datasets_3Dsymmetric/redmond_Dataset/dense/sparse/images.txt'
+    # ColmapGTfilepath = '/home/kevin/ThesisDATA/CVG_Datasets_3Dsymmetric/redmond_Dataset/dense/sparse/images.txt'
     imagesGT = read_images_colmap_format_text(ColmapGTfilepath)
     # print("imagesGT = ", imagesGT)
     # the .h5 file contains the filtered DeMoN prediction so that only one pair is kept for each input view
@@ -797,9 +797,11 @@ def main():
         # pyplot.show()
 
     # plot the scatter 2D data of scale records, to find out the correlation between the predicted scales and the calculated scales from global SfM
-    plt.scatter(scaleRecordMat[:,0],scaleRecordMat[:,1])
+    # plt.scatter(scaleRecordMat[:,0],scaleRecordMat[:,1])
+    plt.scatter(1/scaleRecordMat[:,0],scaleRecordMat[:,1])
     plt.ylabel('scales calculated from global SfM/Colmap')
-    plt.xlabel('scales predicted by DeMoN')
+    # plt.xlabel('scales predicted by DeMoN')
+    plt.xlabel('inv_scales predicted by DeMoN')
     plt.grid(True)
     plt.axis('equal')
     plt.show()

@@ -87,28 +87,28 @@ def compute_view_overlap( view1, view2 ):
 # weights_dir = '/home/ummenhof/projects/demon/weights'
 weights_dir = '/home/kevin/anaconda_tensorflow_demon_ws/demon/weights'
 # outdir = '/home/kevin/DeMoN_Prediction/south_building'
-# outfile = '/home/kevin/DeMoN_Prediction/south_building/south_building_predictions.h5'
-## outfile = '/home/kevin/DeMoN_Prediction/south_building/south_building_predictions_v1_05012018.h5'
+# infile = '/home/kevin/DeMoN_Prediction/south_building/south_building_predictions.h5'
+## infile = '/home/kevin/DeMoN_Prediction/south_building/south_building_predictions_v1_05012018.h5'
 
 # outdir = '/home/kevin/ThesisDATA/gerrard-hall/demon_prediction'
 # outdir = '/home/kevin/ThesisDATA/person-hall/demon_prediction'
 # outdir = "/home/kevin/ThesisDATA/CVG_Datasets_3Dsymmetric/barcelona_Dataset/demon_prediction"
 # outdir = "/home/kevin/ThesisDATA/CVG_Datasets_3Dsymmetric/redmond_Dataset/demon_prediction"
 outdir = "/home/kevin/JohannesCode/ws1/demon_prediction"
-# outfile = '/home/kevin/ThesisDATA/gerrard-hall/demon_prediction/gerrard_hall_predictions.h5'
-# outfile = '/home/kevin/ThesisDATA/person-hall/demon_prediction/person_hall_predictions.h5'
-# outfile = "/home/kevin/ThesisDATA/CVG_Datasets_3Dsymmetric/barcelona_Dataset/demon_prediction/CVG_barcelona_predictions.h5"
-# outfile = "/home/kevin/ThesisDATA/CVG_Datasets_3Dsymmetric/redmond_Dataset/demon_prediction/CVG_redmond_predictions.h5"
-outfile = "/home/kevin/JohannesCode/ws1/demon_prediction/kevin_southbuilding_predictions_08012018.h5"
+# infile = '/home/kevin/ThesisDATA/gerrard-hall/demon_prediction/gerrard_hall_predictions.h5'
+# infile = '/home/kevin/ThesisDATA/person-hall/demon_prediction/person_hall_predictions.h5'
+# infile = "/home/kevin/ThesisDATA/CVG_Datasets_3Dsymmetric/barcelona_Dataset/demon_prediction/CVG_barcelona_predictions.h5"
+# infile = "/home/kevin/ThesisDATA/CVG_Datasets_3Dsymmetric/redmond_Dataset/demon_prediction/CVG_redmond_predictions.h5"
+infile = "/home/kevin/JohannesCode/ws1/demon_prediction/kevin_southbuilding_predictions_08012018.h5"
 
 
-outimagedir_small = os.path.join(outdir,'images_demon_small')
-outimagedir_large = os.path.join(outdir,'images_demon')
-os.makedirs(outdir, exist_ok=True)
-os.makedirs(outimagedir_small, exist_ok=True)
-os.makedirs(outimagedir_large, exist_ok=True)
-os.makedirs(os.path.join(outdir,'graydepthmap'), exist_ok=True)
-os.makedirs(os.path.join(outdir,'vizdepthmap'), exist_ok=True)
+# outimagedir_small = os.path.join(outdir,'images_demon_small')
+# outimagedir_large = os.path.join(outdir,'images_demon')
+# os.makedirs(outdir, exist_ok=True)
+# os.makedirs(outimagedir_small, exist_ok=True)
+# os.makedirs(outimagedir_large, exist_ok=True)
+# os.makedirs(os.path.join(outdir,'graydepthmap'), exist_ok=True)
+# os.makedirs(os.path.join(outdir,'vizdepthmap'), exist_ok=True)
 
 
 
@@ -140,34 +140,34 @@ target_K[1,1] = h*normalized_intrinsics[1]
 target_K[0,2] = w*normalized_intrinsics[2]
 target_K[1,2] = h*normalized_intrinsics[3]
 
-# w_large = 8*w
-# h_large = 8*h
-# w_large = 12.1*w
-# h_large = 12.05*h
-
+# # w_large = 8*w
+# # h_large = 8*h
+# # w_large = 12.1*w
+# # h_large = 12.05*h
+#
+# # w_large = 7.8125*w
+# # h_large = 7.8125*h
+# # #
+#
+# # # gerrard-hall, person-hall
 # w_large = 7.8125*w
-# h_large = 7.8125*h
-# #
+# h_large = 6.84896*h
+#
+# # # # barcelona cvg
+# # w_large = 7.8125*w
+# # h_large = 7.8125*h  # barcelona cvg
+#
+# # # # redmon cvg
+# # w_large = 7.8125*w
+# # h_large = 5.7917*h  # cvg redmond
+#
+# target_K_large = np.eye(3)
+# target_K_large[0,0] = w_large*normalized_intrinsics[0]
+# target_K_large[1,1] = h_large*normalized_intrinsics[1]
+# target_K_large[0,2] = w_large*normalized_intrinsics[2]
+# target_K_large[1,2] = h_large*normalized_intrinsics[3]
 
-# # gerrard-hall, person-hall
-w_large = 7.8125*w
-h_large = 6.84896*h
-
-# # # barcelona cvg
-# w_large = 7.8125*w
-# h_large = 7.8125*h  # barcelona cvg
-
-# # # redmon cvg
-# w_large = 7.8125*w
-# h_large = 5.7917*h  # cvg redmond
-
-target_K_large = np.eye(3)
-target_K_large[0,0] = w_large*normalized_intrinsics[0]
-target_K_large[1,1] = h_large*normalized_intrinsics[1]
-target_K_large[0,2] = w_large*normalized_intrinsics[2]
-target_K_large[1,2] = h_large*normalized_intrinsics[3]
-
-if True:
+if False:
     views = []
     id_image_list = []
     cnt = 0
@@ -236,89 +236,55 @@ if True:
     saver = tf.train.Saver()
     saver.restore(session,os.path.join(weights_dir,'demon_original'))
 
-    out = h5py.File(outfile)
+    data = h5py.File(infile)
 
-    for i, pair in enumerate(pairs_to_compute):
-        print(i, len(pairs_to_compute))
-        view1 = views[pair[0]]
-        view2 = views[pair[1]]
-        input_data = prepare_input_data(view1.image, view2.image, data_format)
+    # for image_id, image in images.items():
+    #     print(image_id, image)
+    # for i, pair in enumerate(pairs_to_compute):
+    #     print(i, len(pairs_to_compute))
+    for image_pair12 in data.keys():
+        print("Processing", image_pair12)
 
-        # run the network
-        result = bootstrap_net.eval(input_data['image_pair'], input_data['image2_2'])
-        for i in range(3):
-            result = iterative_net.eval(
-                input_data['image_pair'],
-                input_data['image2_2'],
-                result['predict_depth2'],
-                result['predict_normal2'],
-                result['predict_rotation'],
-                result['predict_translation']
-            )
-        group = out.require_group('{0}---{1}'.format(id_image_list[pair[0]][1].name, id_image_list[pair[1]][1].name))
-        group['normalized_intrinsics'] = normalized_intrinsics
-        group['depth'] = result['predict_depth2'].squeeze()
-        group['rotation'] = angleaxis_to_rotation_matrix(result['predict_rotation'].squeeze()).astype(np.float32)
-        group['translation'] = result['predict_translation'].squeeze().astype(np.float32)
-        group['flow'] = result['predict_flow2'].squeeze()
-        ### save the learned scale to the output as well
-        group['scale'] = result['predict_scale'].squeeze().astype(np.float32)
+        image_name1, image_name2 = image_pair12.split("---")
+        image_pair21 = "{}---{}".format(image_name2, image_name1)
 
-        result = refine_net.eval(input_data['image1'],result['predict_depth2'])
+        tmp_dict = {}
+        for image_id, image in images.items():
+            if image.name == image_name1:
+                tmp_dict[image_id] = image
+            if image.name == image_name2:
+                tmp_dict[image_id] = image
 
-        group['depth_upsampled'] = result['predict_depth0'].squeeze()
+        # tmp_dict = {image_id: image}
+        print("tmp_dict = ", tmp_dict)
+        tmp_views = colmap.create_views(cameras, tmp_dict, os.path.join(recondir,'images'), os.path.join(recondir,'stereo','depth_maps'))
 
-        # # a colormap and a normalization instance
-        # cmap = plt.cm.jet
-        # plt.imsave(os.path.join(outdir, "graydepthmap", id_image_list[pair[0]][1].name + "---" + id_image_list[pair[1]][1].name), result['predict_depth0'].squeeze(), cmap='Greys')
-        # plt.imsave(os.path.join(outdir, "vizdepthmap", id_image_list[pair[0]][1].name + "---" + id_image_list[pair[1]][1].name), result['predict_depth0'].squeeze(), cmap=cmap)
-        # plt.imshow(result['predict_depth0'].squeeze(), cmap='Greys')
-        # plt.imshow(result['predict_depth0'].squeeze(), cmap=cmap)
+        view1 = tmp_views[0]
+        view2 = tmp_views[1]
+
+        print("view1 = ", view1)
+
+        # input_data = prepare_input_data(view1.image, view2.image, data_format)
+        #
+        # # run the network
+        # result = bootstrap_net.eval(input_data['image_pair'], input_data['image2_2'])
+        # for i in range(3):
+        #     result = iterative_net.eval(
+        #         input_data['image_pair'],
+        #         input_data['image2_2'],
+        #         result['predict_depth2'],
+        #         result['predict_normal2'],
+        #         result['predict_rotation'],
+        #         result['predict_translation']
+        #     )
+        #
+        # result = refine_net.eval(input_data['image1'],result['predict_depth2'])
+
+        # a colormap and a normalization instance
+        cmap = plt.cm.jet
+        plt.imshow(data[image_pair12]["predict_depth0"], cmap='Greys')
 
         # vis2 = cv2.cvtColor(result['predict_depth0'].squeeze(), cv2.COLOR_GRAY2BGR)
         # #Displayed the image
         # cv2.imshow("WindowNameHere", vis2)
         # cv2.waitKey(0)
-
-    out.close()
-
-if False:
-# if True:
-    print("visualize some depth maps")
-    f = h5py.File(outfile, 'r')
-
-    # visualize some depth maps
-    d = None
-    d_list = []
-    # for k in f:
-    for k in f.keys():
-        if d is None:
-            d = f[k]['depth'][:]
-            print(d)
-            print(d.shape)
-            # print(type(d))
-            # # plt.figure(figsize=(20,18))
-            # plt.imshow(d, cmap='Greys')
-            imgplot = plt.imshow(d)
-            plt.colorbar()
-        elif d.shape[1] < 64*16:
-            d = np.concatenate((d, f[k]['depth'][:]),axis=1)
-        else:
-            d_list.append(d.copy())
-            d = None
-            if len(d_list) > 20:
-                break
-
-    print("len(d_list) = ", len(d_list))
-    d = None
-    for dd in d_list:
-        if d is None:
-            d = dd
-        else:
-            d = np.concatenate((d,dd),axis=0)
-
-    # plt.figure(figsize=(20,18))
-    # plt.imshow(d)
-    # # plt.imsave(d)
-
-    f.close()
