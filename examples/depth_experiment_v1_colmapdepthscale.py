@@ -258,11 +258,12 @@ if True:
         # tmp_dict = {image_id: image}
         print("tmp_dict = ", tmp_dict)
         tmp_views = colmap.create_views(cameras, tmp_dict, os.path.join(recondir,'images'), os.path.join(recondir,'stereo','depth_maps'))
+        tmp_views = adjust_intrinsics(tmp_views, target_K, w, h,)
 
         view1 = tmp_views[0]
         view2 = tmp_views[1]
 
-        print("view1 = ", view1)
+        # print("view1 = ", view1)
 
         # input_data = prepare_input_data(view1.image, view2.image, data_format)
         #
@@ -280,11 +281,19 @@ if True:
         #
         # result = refine_net.eval(input_data['image1'],result['predict_depth2'])
 
-        # a colormap and a normalization instance
-        cmap = plt.cm.jet
-        plt.imshow(data[image_pair12]["predict_depth0"], cmap='Greys')
+        # # a colormap and a normalization instance
+        # cmap = plt.cm.jet
+        # # plt.imshow(data[image_pair12]["depth_upsampled"], cmap='Greys')
+        # plt.imshow(view1.depth, cmap='Greys')
 
-        # vis2 = cv2.cvtColor(result['predict_depth0'].squeeze(), cv2.COLOR_GRAY2BGR)
+        vis2 = cv2.cvtColor(view1.depth, cv2.COLOR_GRAY2BGR)
+        #Displayed the image
+        cv2.imshow("WindowNameHere", vis2)
+        cv2.waitKey(0)
+
+        # vis2 = cv2.cvtColor(view2.depth, cv2.COLOR_GRAY2BGR)
         # #Displayed the image
         # cv2.imshow("WindowNameHere", vis2)
         # cv2.waitKey(0)
+
+        break
