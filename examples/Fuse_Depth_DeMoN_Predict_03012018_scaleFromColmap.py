@@ -581,8 +581,9 @@ def main():
 
     # reading colmap output as ground truth from textfile
     # ColmapGTfilepath = '/home/kevin/JohannesCode/ws1/sparse/0/textfiles_final/images.txt'
+    ColmapGTfilepath = '/home/kevin/JohannesCode/ws1/dense/0/sparse/images.txt'
     # ColmapGTfilepath = '/home/kevin/ThesisDATA/person-hall/sparse/images.txt'
-    ColmapGTfilepath = '/home/kevin/ThesisDATA/gerrard-hall/sparse/images.txt'
+    # ColmapGTfilepath = '/home/kevin/ThesisDATA/gerrard-hall/sparse/images.txt'
     # ColmapGTfilepath = '/home/kevin/ThesisDATA/CVG_Datasets_3Dsymmetric/barcelona_Dataset/dense/sparse/images.txt'
     # ColmapGTfilepath = '/home/kevin/ThesisDATA/CVG_Datasets_3Dsymmetric/redmond_Dataset/dense/sparse/images.txt'
     imagesGT = read_images_colmap_format_text(ColmapGTfilepath)
@@ -681,8 +682,15 @@ def main():
                 #ColmapExtrinsics_t = val.tvec
                 ColmapExtrinsics2_4by4[0:3,0:3] = val.rotmat
                 ColmapExtrinsics2_4by4[0:3,3] = val.tvec
-        transScale = np.linalg.norm(-np.dot(ColmapExtrinsics_4by4[0:3,0:3].T, ColmapExtrinsics_4by4[0:3,3]) + np.dot(ColmapExtrinsics2_4by4[0:3,0:3].T, ColmapExtrinsics2_4by4[0:3,3]))
-        print("pred_scale = ", pred_scale, "; calculated_scale_from_globalSfM transScale = ", transScale)
+
+        # transScale = np.linalg.norm(-np.dot(ColmapExtrinsics_4by4[0:3,0:3].T, ColmapExtrinsics_4by4[0:3,3]) + np.dot(ColmapExtrinsics2_4by4[0:3,0:3].T, ColmapExtrinsics2_4by4[0:3,3]))
+        transScale = np.linalg.norm(np.linalg.inv(ColmapExtrinsics2_4by4)[0:3,3] - np.linalg.inv(ColmapExtrinsics_4by4)[0:3,3])
+        print("transScale = ", transScale, "; demon scale = ", data[image_pair12]['scale'].value)
+        # print(np.linalg.inv(TheiaExtrinsics2_4by4)[0:3,3])
+        # print(np.linalg.inv(TheiaExtrinsics1_4by4)[0:3,3])
+        # print(np.linalg.inv(TheiaExtrinsics2_4by4))
+        # print(np.linalg.inv(TheiaExtrinsics1_4by4))
+        # print("pred_scale = ", pred_scale, "; calculated_scale_from_globalSfM transScale = ", transScale)
         if it==0:
             scaleRecordMat = np.array([pred_scale, transScale])
             # scaleRecordMat = np.reshape(scaleRecordMat,[1,2])
@@ -718,7 +726,8 @@ def main():
                     t1=ColmapExtrinsics_4by4[0:3,3],
                     rotation=pred_rotmat12_angleaxis,
                     translation=pred_trans12,
-                    scale=transScale)
+                    # scale=transScale)
+                    scale=1)
                     # scale=pred_scale/transScale)
 
         # # ColmapExtrinsics_T = np.eye(4)
@@ -797,94 +806,94 @@ def main():
         # pyplot.show()
 
     # plot the scatter 2D data of scale records, to find out the correlation between the predicted scales and the calculated scales from global SfM
-    # plt.scatter(scaleRecordMat[:,0],scaleRecordMat[:,1])
-    plt.scatter(1/scaleRecordMat[:,0],scaleRecordMat[:,1])
+    plt.scatter(scaleRecordMat[:,0],scaleRecordMat[:,1])
+    # plt.scatter(1/scaleRecordMat[:,0],scaleRecordMat[:,1])
     plt.ylabel('scales calculated from global SfM/Colmap')
-    # plt.xlabel('scales predicted by DeMoN')
-    plt.xlabel('inv_scales predicted by DeMoN')
+    plt.xlabel('scales predicted by DeMoN')
+    # plt.xlabel('inv_scales predicted by DeMoN')
     plt.grid(True)
     plt.axis('equal')
     plt.show()
 
-    # appendFilterPC.Update()
-    #
-    # # export all point clouds in the same global coordinate to a local .ply file (for external visualization)
-    # output_prefix = './'
-    # # pointcloud_polydata = create_pointcloud_polydata(
-    # #     points=PointClouds['points'],
-    # #     colors=PointClouds['colors'] if 'colors' in PointClouds else None,
-    # #     )
-    # plywriter = vtk.vtkPLYWriter()
-    # plywriter.SetFileName(output_prefix + 'points.ply')
-    # plywriter.SetInputData(appendFilterPC.GetOutput())
-    # # plywriter.SetInputData(pointcloud_polydata)
-    # # plywriter.SetFileTypeToASCII()
-    # plywriter.SetArrayName('Colors')
-    # plywriter.Write()
-    #
-    # # Append all camera polydata
-    # appendFilter = vtk.vtkAppendPolyData()
-    # for image_pair12 in data.keys():
-    #     if image_pair12 in image_pairs:
-    #         image_name1, image_name2 = image_pair12.split("---")
-    #         # # colmap
-    #         for ids,val in imagesGT.items():
-    #         # theia
-    #         # for ids,val in TheiaGlobalPosesGT.items():
-    #             if val.name==image_name1:
-    #                 # # colmap
-    #                 cam_actor = create_camera_actor(val.rotmat, val.tvec)
-    #                 cam_polydata = create_camera_polydata(val.rotmat,val.tvec, True)
-    #
-    #                 # theia
-    #                 # cam_actor = create_camera_actor(val.rotmat, -np.dot(val.rotmat, val.tvec))
-    #                 # cam_actor.GetProperty().SetColor(0.5, 0.5, 1.0)
-    #                 renderer.AddActor(cam_actor)
-    #                 # cam_polydata = create_camera_polydata(val.rotmat,-np.dot(val.rotmat, val.tvec), True)
-    #                 appendFilter.AddInputData(cam_polydata)
-    #                 # appendFilterModel.AddInputData(cam_polydata)
-    # appendFilter.Update()
-    # # appendFilterModel.Update()
-    # # appendFilterModel = vtk.vtkAppendPolyData()
-    # appendFilterModel.AddInputData(appendFilterPC.GetOutput())
-    # appendFilterModel.AddInputData(appendFilter.GetOutput())
+    appendFilterPC.Update()
+
+    # export all point clouds in the same global coordinate to a local .ply file (for external visualization)
+    output_prefix = './'
+    # pointcloud_polydata = create_pointcloud_polydata(
+    #     points=PointClouds['points'],
+    #     colors=PointClouds['colors'] if 'colors' in PointClouds else None,
+    #     )
+    plywriter = vtk.vtkPLYWriter()
+    plywriter.SetFileName(output_prefix + 'points.ply')
+    plywriter.SetInputData(appendFilterPC.GetOutput())
+    # plywriter.SetInputData(pointcloud_polydata)
+    # plywriter.SetFileTypeToASCII()
+    plywriter.SetArrayName('Colors')
+    plywriter.Write()
+
+    # Append all camera polydata
+    appendFilter = vtk.vtkAppendPolyData()
+    for image_pair12 in data.keys():
+        if image_pair12 in image_pairs:
+            image_name1, image_name2 = image_pair12.split("---")
+            # # colmap
+            for ids,val in imagesGT.items():
+            # theia
+            # for ids,val in TheiaGlobalPosesGT.items():
+                if val.name==image_name1:
+                    # # colmap
+                    cam_actor = create_camera_actor(val.rotmat, val.tvec)
+                    cam_polydata = create_camera_polydata(val.rotmat,val.tvec, True)
+
+                    # theia
+                    # cam_actor = create_camera_actor(val.rotmat, -np.dot(val.rotmat, val.tvec))
+                    # cam_actor.GetProperty().SetColor(0.5, 0.5, 1.0)
+                    renderer.AddActor(cam_actor)
+                    # cam_polydata = create_camera_polydata(val.rotmat,-np.dot(val.rotmat, val.tvec), True)
+                    appendFilter.AddInputData(cam_polydata)
+                    # appendFilterModel.AddInputData(cam_polydata)
+    appendFilter.Update()
     # appendFilterModel.Update()
-    # plywriterCam = vtk.vtkPLYWriter()
-    # plywriterCam.SetFileName(output_prefix + 'cameras.ply')
-    # plywriterCam.SetInputData(appendFilter.GetOutput())
-    # # plywriterCam.SetFileTypeToASCII()
-    # plywriterCam.Write()
-    #
-    # plywriterModel = vtk.vtkPLYWriter()
-    # plywriterModel.SetFileName(output_prefix + 'fused_point_clouds.ply')
-    # plywriterModel.SetInputData(appendFilterModel.GetOutput())
-    # # plywriterModel.SetFileTypeToASCII()
-    # plywriterModel.SetArrayName('Colors')
-    # plywriterModel.Write()
-    #
-    # axes = vtk.vtkAxesActor()
-    # axes.GetXAxisCaptionActor2D().SetHeight(0.05)
-    # axes.GetYAxisCaptionActor2D().SetHeight(0.05)
-    # axes.GetZAxisCaptionActor2D().SetHeight(0.05)
-    # axes.SetCylinderRadius(0.03)
-    # axes.SetShaftTypeToCylinder()
-    # renderer.AddActor(axes)
-    #
-    # renwin = vtk.vtkRenderWindow()
-    # renwin.SetWindowName("Point Cloud Viewer")
-    # renwin.SetSize(800,600)
-    # renwin.AddRenderer(renderer)
-    #
-    #
-    # # An interactor
-    # interactor = vtk.vtkRenderWindowInteractor()
-    # interstyle = vtk.vtkInteractorStyleTrackballCamera()
-    # interactor.SetInteractorStyle(interstyle)
-    # interactor.SetRenderWindow(renwin)
-    #
-    # # Start
-    # interactor.Initialize()
-    # interactor.Start()
+    # appendFilterModel = vtk.vtkAppendPolyData()
+    appendFilterModel.AddInputData(appendFilterPC.GetOutput())
+    appendFilterModel.AddInputData(appendFilter.GetOutput())
+    appendFilterModel.Update()
+    plywriterCam = vtk.vtkPLYWriter()
+    plywriterCam.SetFileName(output_prefix + 'cameras.ply')
+    plywriterCam.SetInputData(appendFilter.GetOutput())
+    # plywriterCam.SetFileTypeToASCII()
+    plywriterCam.Write()
+
+    plywriterModel = vtk.vtkPLYWriter()
+    plywriterModel.SetFileName(output_prefix + 'fused_point_clouds.ply')
+    plywriterModel.SetInputData(appendFilterModel.GetOutput())
+    # plywriterModel.SetFileTypeToASCII()
+    plywriterModel.SetArrayName('Colors')
+    plywriterModel.Write()
+
+    axes = vtk.vtkAxesActor()
+    axes.GetXAxisCaptionActor2D().SetHeight(0.05)
+    axes.GetYAxisCaptionActor2D().SetHeight(0.05)
+    axes.GetZAxisCaptionActor2D().SetHeight(0.05)
+    axes.SetCylinderRadius(0.03)
+    axes.SetShaftTypeToCylinder()
+    renderer.AddActor(axes)
+
+    renwin = vtk.vtkRenderWindow()
+    renwin.SetWindowName("Point Cloud Viewer")
+    renwin.SetSize(800,600)
+    renwin.AddRenderer(renderer)
+
+
+    # An interactor
+    interactor = vtk.vtkRenderWindowInteractor()
+    interstyle = vtk.vtkInteractorStyleTrackballCamera()
+    interactor.SetInteractorStyle(interstyle)
+    interactor.SetRenderWindow(renwin)
+
+    # Start
+    interactor.Initialize()
+    interactor.Start()
 
 if __name__ == "__main__":
     main()

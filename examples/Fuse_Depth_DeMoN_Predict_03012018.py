@@ -8,9 +8,11 @@ import numpy as np
 import math
 import functools
 import six
+import colmap_utils as colmap
 
-from pyquaternion import Quaternion
-import nibabel.quaternions as nq
+# from pyquaternion import Quaternion
+# import nibabel.quaternions as nq
+from minieigen import Quaternion, Matrix3
 
 import PIL.Image
 from matplotlib import pyplot as plt
@@ -35,7 +37,7 @@ _FLOAT_EPS_4 = np.finfo(float).eps * 4.0
 
 #SIMPLE_RADIAL_CAMERA_MODEL = 2
 
-Image = collections.namedtuple(
+ImageKevin = collections.namedtuple(
     "Image", ["id", "camera_id", "name", "qvec", "tvec", "rotmat", "angleaxis"])
 # ImagePairGT = collections.namedtuple(
 #     "ImagePairGT", ["id1", "id2", "qvec12", "tvec12", "camera_id1", "name1", "camera_id2", "name2"])
@@ -504,7 +506,7 @@ def read_global_poses_theia_output(path, path_img_id_map):
                 tvec = np.array(tuple(map(float, elems[4:7])))
                 #rotmat_To_angleaxis(image_pair12_rotmat)
                 rotmat = angleaxis_to_rotation_matrix(R_angleaxis)
-                images[image_id] = Image(id=image_id, camera_id=camera_id, name=image_name, qvec=np.array([1,0,0,0]), tvec=tvec, rotmat=rotmat, angleaxis=R_angleaxis)
+                images[image_id] = ImageKevin(id=image_id, camera_id=camera_id, name=image_name, qvec=np.array([1,0,0,0]), tvec=tvec, rotmat=rotmat, angleaxis=R_angleaxis)
 
                 dummy_image_id += 1
 
@@ -560,6 +562,17 @@ def transform_pc_to_global_coordinate(points_N_3, MatT_4_4):
     transformedPoints_N_3 = transformedPoints_4_N[0:3,:].transpose()
     return transformedPoints_N_3
 
+def quaternion_to_rotation_matrix(q):
+    """Converts quaternion to rotation matrix
+
+    q: tuple with 4 elements
+
+    Returns a 3x3 numpy array
+    """
+    q = Quaternion(*q)
+    R = q.toRotationMatrix()
+    return np.array([list(R.row(0)), list(R.row(1)), list(R.row(2))],dtype=np.float32)
+
 def main():
     args = parse_args()
 
@@ -587,14 +600,19 @@ def main():
     TheiaGlobalPosesfilepath = '/home/kevin/ThesisDATA/gerrard-hall/TheiaReconstructionFromImage/fromImages/ExA/intermediate_results_v2/after_step7_global_position_estimation.txt'
     TheiaGlobalPosesGT = read_global_poses_theia_output(TheiaGlobalPosesfilepath,TheiaIDNamefilepath)
 
-    # # reading colmap output as ground truth from textfile
+    # reading colmap output as ground truth from textfile
     # ColmapGTfilepath = '/home/kevin/JohannesCode/ws1/sparse/0/textfiles_final/images.txt'
+    # ColmapGTfilepath = '/home/kevin/JohannesCode/ws1/dense/0/sparse/images.txt'
+    # ColmapGTfilepath = '/home/kevin/ThesisDATA/person-hall/dense/sparse/images.txt'
+    ColmapGTfilepath = '/home/kevin/ThesisDATA/gerrard-hall/dense/sparse/images.txt'
     # imagesGT = read_images_colmap_format_text(ColmapGTfilepath)
+    colmapImages = colmap.read_images_txt(ColmapGTfilepath)
+
 
     # the .h5 file contains the filtered DeMoN prediction so that only one pair is kept for each input view
     data = h5py.File(args.filtered_demon_path)
 
-    viewNum = 1 # set to value larger than the number of input views
+    viewNum = 128 # set to value larger than the number of input views
     translation_scales = {}
 
     for image_pair12 in data.keys():
@@ -619,10 +637,10 @@ def main():
 
         image_name1, image_name2 = image_pair12.split("---")
         image_pair21 = "{}---{}".format(image_name2, image_name1)
-        # # if image_name1 == 'P1180141.JPG' or image_name1 == 'P1180142.JPG' or image_name1 == 'P1180143.JPG' or image_name1 == 'P1180144.JPG' or image_name1 == 'P1180145.JPG':
-        # if image_name1 != 'P1180216.JPG':
-        if image_name1 != 'IMG_2416.JPG':
-            continue
+        # # # if image_name1 == 'P1180141.JPG' or image_name1 == 'P1180142.JPG' or image_name1 == 'P1180143.JPG' or image_name1 == 'P1180144.JPG' or image_name1 == 'P1180145.JPG':
+        # # if image_name1 != 'P1180216.JPG':
+        # if image_name1 != 'IMG_2416.JPG':
+        #     continue
 
         if image_name1 not in translation_scales.keys():
             continue
@@ -663,8 +681,17 @@ def main():
                 # transScale = np.linalg.norm(val.t_vec) / init_scale
                 # transScale = init_scale / np.linalg.norm(val.t_vec)
                 # translation_scales[image_name1] = transScale
-                print("transScale = ", transScale)
+                print("transScale = ", transScale, "; demon scale = ", data[image_pair12]['scale'].value)
 
+        # ##### global pose from colmap
+        # TheiaExtrinsics_4by4 = np.eye(4)
+        # # for ids,val in imagesGT.items():
+        # for ids,val in colmapImages.items():
+        #     if val.name == image_name1:
+        #         #ColmapExtrinsics_R = val.rotmat
+        #         #ColmapExtrinsics_t = val.tvec
+        #         TheiaExtrinsics_4by4[0:3,0:3] = quaternion_to_rotation_matrix(val.q).astype(np.float64)
+        #         TheiaExtrinsics_4by4[0:3,3] = val.t
 
         TheiaExtrinsics_4by4 = np.eye(4)
         for ids,val in TheiaGlobalPosesGT.items():
@@ -672,6 +699,15 @@ def main():
                 TheiaExtrinsics_4by4[0:3,0:3] = val.rotmat
                 #TheiaExtrinsics_4by4[0:3,0:3] = val.rotmat.T
                 TheiaExtrinsics_4by4[0:3,3] = -np.dot(val.rotmat, val.tvec) # theia output camera position in world frame instead of extrinsic t
+
+        pred_scale = data[image_pair12]['scale'].value
+        if it==0:
+            scaleRecordMat = np.array([pred_scale, transScale])
+            # scaleRecordMat = np.reshape(scaleRecordMat,[1,2])
+        else:
+            # scaleRecordMat = np.concatenate((scaleRecordMat, np.array([pred_scale, transScale])), axis=0)
+            scaleRecordMat = np.vstack((scaleRecordMat, np.array([pred_scale, transScale])))
+        print("scaleRecordMat.shape = ", scaleRecordMat.shape)
 
         # tmp_PointCloud = make_pointcloud_prediction_in_global_coordinate(
         #             inverse_depth=pred_invDepth121,
@@ -700,8 +736,10 @@ def main():
                     rotation=pred_rotmat12_angleaxis,
                     translation=pred_trans12,
                     # scale=transScale)
-                    scale=1/data[image_pair12]['scale'].value)
+                    # scale=1/data[image_pair12]['scale'].value)
                     # scale=transScale/data[image_pair12]['scale'].value)
+                    scale=data[image_pair12]['scale'].value*5)
+                    # scale=1/(data[image_pair12]['scale'].value*transScale))
                     # scale=data[image_pair12]['scale'].value*transScale)
                     # scale=1)
 
@@ -781,6 +819,16 @@ def main():
         # pyplot.show()
 
     appendFilterPC.Update()
+
+    # plot the scatter 2D data of scale records, to find out the correlation between the predicted scales and the calculated scales from global SfM
+    plt.scatter(scaleRecordMat[:,0],scaleRecordMat[:,1])
+    # plt.scatter(1/scaleRecordMat[:,0],scaleRecordMat[:,1])
+    plt.ylabel('scales calculated from global SfM/Colmap')
+    plt.xlabel('scales predicted by DeMoN')
+    # plt.xlabel('inv_scales predicted by DeMoN')
+    plt.grid(True)
+    plt.axis('equal')
+    plt.show()
 
     # export all point clouds in the same global coordinate to a local .ply file (for external visualization)
     output_prefix = './'

@@ -594,7 +594,7 @@ def main():
     # the .h5 file contains the filtered DeMoN prediction so that only one pair is kept for each input view
     data = h5py.File(args.filtered_demon_path)
 
-    viewNum = 1 # set to value larger than the number of input views
+    viewNum = 100 # set to value larger than the number of input views
     translation_scales = {}
 
     for image_pair12 in data.keys():
@@ -619,11 +619,9 @@ def main():
 
         image_name1, image_name2 = image_pair12.split("---")
         image_pair21 = "{}---{}".format(image_name2, image_name1)
-        # # if image_name1 == 'P1180141.JPG' or image_name1 == 'P1180142.JPG' or image_name1 == 'P1180143.JPG' or image_name1 == 'P1180144.JPG' or image_name1 == 'P1180145.JPG':
-        # if image_name1 != 'P1180216.JPG':
-        #if image_name1 != 'IMG_2416.JPG' or image_name2 != 'IMG_2415.JPG':
-        if image_name1 != 'IMG_2417.JPG' or image_name2 != 'IMG_2416.JPG':
-        #if image_name1 != 'IMG_2416.JPG' or image_name2 != 'IMG_2415.JPG':
+
+        #if image_name1 != 'IMG_2417.JPG' or image_name2 != 'IMG_2416.JPG':
+        if image_name1 != 'IMG_2416.JPG' or image_name2 != 'IMG_2415.JPG':
             continue
 
         if image_name1 not in translation_scales.keys():
@@ -644,13 +642,17 @@ def main():
         # pred_rotmat12 = data[image_pair12]["rotation_matrix"].value
         pred_trans12 = data[image_pair12]['translation'].value
         pred_invDepth121 = data[image_pair12]['depth_upsampled'].value
+        pred_scale12 = data[image_pair12]['scale'].value
 
         pred_rotmat21 = data[image_pair21]["rotation"].value
         pred_rotmat21_angleaxis = rotmat_To_angleaxis(pred_rotmat21)
         # pred_rotmat21 = data[image_pair21]["rotation_matrix"].value
         pred_trans21 = data[image_pair21]['translation'].value
         pred_invDepth212 = data[image_pair21]['depth_upsampled'].value
+        pred_scale21 = data[image_pair21]['scale'].value
 
+        print("pred_scale12 = ", pred_scale12, "; pred_scale21 = ", pred_scale21)
+        return
         # plt.imshow(pred_invDepth121, cmap='Greys')
         # plt.show()
 
@@ -675,17 +677,47 @@ def main():
                 # translation_scales[image_name1] = transScale
                 print("transScale = ", transScale)
 
-        TheiaExtrinsics_4by4 = np.eye(4)
+        TheiaExtrinsics1_4by4 = np.eye(4)
         TheiaExtrinsics2_4by4 = np.eye(4)
+        TheiaExtrinsics2Theia_4by4 = np.eye(4)
         for ids,val in TheiaGlobalPosesGT.items():
             if val.name == image_name1:
-                TheiaExtrinsics_4by4[0:3,0:3] = val.rotmat
-                #TheiaExtrinsics_4by4[0:3,0:3] = val.rotmat.T
-                TheiaExtrinsics_4by4[0:3,3] = -np.dot(val.rotmat, val.tvec) # theia output camera position in world frame instead of extrinsic t
+                TheiaExtrinsics1_4by4[0:3,0:3] = val.rotmat
+                #TheiaExtrinsics1_4by4[0:3,0:3] = val.rotmat.T
+                TheiaExtrinsics1_4by4[0:3,3] = -np.dot(val.rotmat, val.tvec) # theia output camera position in world frame instead of extrinsic t
+
+            ##### cam2 pose from theia directly
             if val.name == image_name2:
-                TheiaExtrinsics2_4by4[0:3,0:3] = val.rotmat
-                #TheiaExtrinsics2_4by4[0:3,0:3] = val.rotmat.T
-                TheiaExtrinsics2_4by4[0:3,3] = -np.dot(val.rotmat, val.tvec) # theia output camera position in world frame instead of extrinsic t
+                TheiaExtrinsics2Theia_4by4[0:3,0:3] = val.rotmat
+                #TheiaExtrinsics2Theia_4by4[0:3,0:3] = val.rotmat.T
+                TheiaExtrinsics2Theia_4by4[0:3,3] = -np.dot(val.rotmat, val.tvec) # theia output camera position in world frame instead of extrinsic t
+
+            # ##### cam2 pose from theia directly
+            # if val.name == image_name2:
+            #     TheiaExtrinsics2_4by4[0:3,0:3] = val.rotmat
+            #     #TheiaExtrinsics2_4by4[0:3,0:3] = val.rotmat.T
+            #     TheiaExtrinsics2_4by4[0:3,3] = -np.dot(val.rotmat, val.tvec) # theia output camera position in world frame instead of extrinsic t
+
+            # ###### cam2 pose is calculated with cam1 pose from theia but relative poses from theia
+            # for ids,val in TheiaRelativePosesGT.items():
+            #     if val.name1 == image_name1 and val.name2 == image_name2:
+            #         C12 = val.t_vec
+            #         R12 = val.R_rotmat
+            # C2 = np.dot(TheiaExtrinsics1_4by4[0:3,0:3].T, C12)+ (-np.dot(TheiaExtrinsics1_4by4[0:3,0:3].T, TheiaExtrinsics1_4by4[0:3,3]))
+            # TheiaExtrinsics2_4by4[0:3,0:3] = np.dot(R12, TheiaExtrinsics1_4by4[0:3,0:3])
+            # TheiaExtrinsics2_4by4[0:3,3] = -np.dot(TheiaExtrinsics2_4by4[0:3,0:3], C2)
+
+            ###### cam2 pose is calculated with cam1 pose from theia but relative poses from DeMoN
+            # tvec12 = pred_trans12
+            tvec12 = pred_trans12*transScale
+            print("pred_trans12 = ", pred_trans12, "; tvec12 = ", tvec12)
+            R12 = pred_rotmat12
+            C12 = -np.dot(R12.T, tvec12)
+            C2 = np.dot(TheiaExtrinsics1_4by4[0:3,0:3].T, C12)+ (-np.dot(TheiaExtrinsics1_4by4[0:3,0:3].T, TheiaExtrinsics1_4by4[0:3,3]))
+            TheiaExtrinsics2_4by4[0:3,0:3] = np.dot(R12, TheiaExtrinsics1_4by4[0:3,0:3])
+            TheiaExtrinsics2_4by4[0:3,3] = -np.dot(TheiaExtrinsics2_4by4[0:3,0:3], C2)
+            print("TheiaExtrinsics2Theia_4by4[0:3,3] = ", TheiaExtrinsics2Theia_4by4[0:3,3], "; TheiaExtrinsics2_4by4[0:3,3] = ", TheiaExtrinsics2_4by4[0:3,3])
+
 
         tmp_PointCloud = visualize_prediction(
         # tmp_PointCloud = make_pointcloud_prediction_in_global_coordinate(
@@ -697,15 +729,18 @@ def main():
                     # intrinsics = np.array([0.89115971*256/3072, 1.18821287*192/2304, 0.5, 0.5]),#################################
                     intrinsics = np.array([0.89115971, 1.18821287, 0.5, 0.5]), # sun3d intrinsics
                     image=input_data['image_pair'][0,0:3] if data_format=='channels_first' else input_data['image_pair'].transpose([0,3,1,2])[0,0:3],
-                    R1=TheiaExtrinsics_4by4[0:3,0:3],
-                    t1=TheiaExtrinsics_4by4[0:3,3],
+                    R1=TheiaExtrinsics1_4by4[0:3,0:3],
+                    t1=TheiaExtrinsics1_4by4[0:3,3],
                     rotation=pred_rotmat12_angleaxis,
                     translation=pred_trans12,
                     # scale=transScale)
+                    # scale=1/transScale)
                     # scale=1/data[image_pair12]['scale'].value)
                     # scale=transScale/data[image_pair12]['scale'].value)
                     # scale=data[image_pair12]['scale'].value*transScale)
+                    # scale=data[image_pair12]['scale'].value)
                     scale=1)
+
 
         # plot each point cloud in the global coordinate
         pointcloud_actor = create_pointcloud_actor(
@@ -728,18 +763,21 @@ def main():
             PointClouds['colors'] = np.concatenate((PointClouds['colors'],tmp_PointCloud['colors']), axis=0)
 
 
+        input_data21 = prepare_input_data(img2PIL,img1PIL,data_format)
         tmp_PointCloud = visualize_prediction(
                     inverse_depth=pred_invDepth212,
                     intrinsics = np.array([0.89115971, 1.18821287, 0.5, 0.5]), # sun3d intrinsics
-                    image=input_data['image_pair'][0,0:3] if data_format=='channels_first' else input_data['image_pair'].transpose([0,3,1,2])[0,0:3],
+                    image=input_data21['image_pair'][0,0:3] if data_format=='channels_first' else input_data['image_pair'].transpose([0,3,1,2])[0,0:3],
                     R1=TheiaExtrinsics2_4by4[0:3,0:3],
                     t1=TheiaExtrinsics2_4by4[0:3,3],
                     rotation=pred_rotmat21_angleaxis,
                     translation=pred_trans21,
                     # scale=transScale)
+                    # scale=1/transScale)
                     # scale=1/data[image_pair21]['scale'].value)
                     # scale=transScale/data[image_pair21]['scale'].value)
                     # scale=data[image_pair21]['scale'].value*transScale)
+                    # scale=data[image_pair21]['scale'].value)
                     scale=1)
 
         # plot each point cloud in the global coordinate
