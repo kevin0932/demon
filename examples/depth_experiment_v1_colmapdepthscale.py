@@ -366,43 +366,49 @@ def read_relative_poses_theia_output(path, path_img_id_map):
 
 
 def vtkSliderCallback2(obj, event):
-    global SliderRepres, SliderWidget, interactor, renderer, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT
+    #global SliderRepres, SliderWidget, interactor, renderer, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT
+    global interactor, renderer, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT
     sliderRepres = obj.GetRepresentation()
     pos = sliderRepres.GetValue()
     # contourFilter.SetValue(0, pos)
     alpha=pos
-    print("alpha is set to ", alpha)
+
+    #close_window(interactor)
+    #del renWin, iren
+
     # renderer = visPointCloudInGlobalFrame(alpha, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT)
     visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, True)
+    #renderer = visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, True)
+    renderer.Modified()
     print("vtkSliderCallback2~~~~~~~~~~~~~~~")
     # #### vtk slidingbar to adjust some parameters Runtime
-    # SliderRepres = vtk.vtkSliderRepresentation2D()
-    # min = 0 #ImageViewer.GetSliceMin()
-    # max = 20 #ImageViewer.GetSliceMax()
-    # SliderRepres.SetMinimumValue(min)
-    # SliderRepres.SetMaximumValue(max)
+    SliderRepres = vtk.vtkSliderRepresentation2D()
+    min = 0 #ImageViewer.GetSliceMin()
+    max = 2 #ImageViewer.GetSliceMax()
+    SliderRepres.SetMinimumValue(min)
+    SliderRepres.SetMaximumValue(max)
     SliderRepres.SetValue(alpha)
-    # SliderRepres.SetTitleText("Slice")
-    # SliderRepres.GetPoint1Coordinate().SetCoordinateSystemToNormalizedDisplay()
-    # SliderRepres.GetPoint1Coordinate().SetValue(0.2, 0.6)
-    # SliderRepres.GetPoint2Coordinate().SetCoordinateSystemToNormalizedDisplay()
-    # SliderRepres.GetPoint2Coordinate().SetValue(0.4, 0.6)
-    #
-    # SliderRepres.SetSliderLength(0.02)
-    # SliderRepres.SetSliderWidth(0.03)
-    # SliderRepres.SetEndCapLength(0.01)
-    # SliderRepres.SetEndCapWidth(0.03)
-    # SliderRepres.SetTubeWidth(0.005)
-    # SliderRepres.SetLabelFormat("%3.0lf")
-    # SliderRepres.SetTitleHeight(0.02)
-    # SliderRepres.SetLabelHeight(0.02)
+    SliderRepres.SetTitleText("Slice")
+    SliderRepres.GetPoint1Coordinate().SetCoordinateSystemToNormalizedDisplay()
+    SliderRepres.GetPoint1Coordinate().SetValue(0.2, 0.6)
+    SliderRepres.GetPoint2Coordinate().SetCoordinateSystemToNormalizedDisplay()
+    SliderRepres.GetPoint2Coordinate().SetValue(0.4, 0.6)
 
-    # SliderWidget = vtk.vtkSliderWidget()
+    SliderRepres.SetSliderLength(0.02)
+    SliderRepres.SetSliderWidth(0.03)
+    SliderRepres.SetEndCapLength(0.01)
+    SliderRepres.SetEndCapWidth(0.03)
+    SliderRepres.SetTubeWidth(0.005)
+    SliderRepres.SetLabelFormat("%3.0lf")
+    SliderRepres.SetTitleHeight(0.02)
+    SliderRepres.SetLabelHeight(0.02)
+
+    SliderWidget = vtk.vtkSliderWidget()
     SliderWidget.SetInteractor(interactor)
     SliderWidget.SetRepresentation(SliderRepres)
-    # SliderWidget.KeyPressActivationOff()
-    # SliderWidget.SetAnimationModeToAnimate()
-    # SliderWidget.SetEnabled(True)
+    SliderWidget.KeyPressActivationOff()
+    SliderWidget.SetAnimationModeToAnimate()
+    SliderWidget.SetEnabled(True)
     SliderWidget.AddObserver("EndInteractionEvent", vtkSliderCallback2)
 
 # reading theia intermediate output relative poses from textfile
@@ -494,13 +500,29 @@ data_format = get_tf_data_format()
 
 # if True:
 def visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, initBool=False):
+#def visPointCloudInGlobalFrame(NULLrenderer, alpha, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, initBool=False):
     data = h5py.File(infile)
     dataExhaustivePairs = h5py.File(ExhaustivePairInfile)
 
-    # renderer = vtk.vtkRenderer()
+    #renderer = vtk.vtkRenderer()
     renderer.SetBackground(0, 0, 0)
-    renderer.RemoveAllViewProps()
+    #renderer.RemoveAllViewProps()
     # renderer.ResetCamera()
+    actors_to_be_cleared = renderer.GetActors()
+    #print("actors_to_be_cleared = ", actors_to_be_cleared)
+    print("before: actors_to_be_cleared.GetNumberOfItems() = ", (actors_to_be_cleared.GetNumberOfItems()))
+    #or idx, actor in actors_to_be_cleared.items():
+    #    renderer.RemoveActor(actor)
+    for idx in range(actors_to_be_cleared.GetNumberOfItems()):
+        #actors_to_be_cleared.GetNextActor()
+        #nextActor = actors_to_be_cleared.GetNextActor()
+        nextActor = actors_to_be_cleared.GetLastActor()
+        renderer.RemoveActor(nextActor)
+        print("remove one actor")
+    renderer.Modified()
+    actors_currently = renderer.GetActors()
+    print("after: actors_currently.GetNumberOfItems() = ", (actors_currently.GetNumberOfItems()))
+
     appendFilterPC = vtk.vtkAppendPolyData()
     appendFilterModel = vtk.vtkAppendPolyData()
 
@@ -732,21 +754,28 @@ def visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, da
     axes.SetShaftTypeToCylinder()
     renderer.AddActor(axes)
 
-    if initBool == False:
-        renwin = vtk.vtkRenderWindow()
-        renwin.SetWindowName("Point Cloud Viewer")
-        renwin.SetSize(800,600)
-        renwin.AddRenderer(renderer)
+    # if initBool == False:
+    #     renwin = vtk.vtkRenderWindow()
+    #     renwin.SetWindowName("Point Cloud Viewer")
+    #     renwin.SetSize(800,600)
+    #     renwin.AddRenderer(renderer)
+    #
+    #     # An interactor
+    #     interactor = vtk.vtkRenderWindowInteractor()
+    #     interstyle = vtk.vtkInteractorStyleTrackballCamera()
+    #     interactor.SetInteractorStyle(interstyle)
+    #     interactor.SetRenderWindow(renwin)
+    #
+    #     # Start
+    #     interactor.Initialize()
+    #     interactor.Start()
 
-        # An interactor
-        interactor = vtk.vtkRenderWindowInteractor()
-        interstyle = vtk.vtkInteractorStyleTrackballCamera()
-        interactor.SetInteractorStyle(interstyle)
-        interactor.SetRenderWindow(renwin)
-
-        # Start
-        interactor.Initialize()
-        interactor.Start()
+    # SliderWidget.SetInteractor(interactor)
+    # SliderWidget.SetRepresentation(SliderRepres)
+    # # SliderWidget.KeyPressActivationOff()
+    # # SliderWidget.SetAnimationModeToAnimate()
+    # # SliderWidget.SetEnabled(True)
+    # SliderWidget.AddObserver("EndInteractionEvent", vtkSliderCallback2)
 
     # return renderer
     renderer.Modified()
@@ -754,15 +783,23 @@ def visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, da
 renderer = vtk.vtkRenderer()
 renderer.SetBackground(0, 0, 0)
 interactor = vtk.vtkRenderWindowInteractor()
-SliderRepres = vtk.vtkSliderRepresentation2D()
-SliderWidget = vtk.vtkSliderWidget()
+#SliderRepres = vtk.vtkSliderRepresentation2D()
+#SliderWidget = vtk.vtkSliderWidget()
+
+def close_window(iren):
+    render_window = iren.GetRenderWindow()
+    render_window.Finalize()
+    iren.TerminateApp()
 
 def main():
-    global SliderRepres, SliderWidget, interactor, renderer, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT
-    alpha = 0.28
+    #global SliderRepres, SliderWidget, interactor, renderer, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT
+    global interactor, renderer, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT
+    alpha = 0.18
     # renderer = visPointCloudInGlobalFrame(alpha, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, True)
+    print("alpha is set to ", alpha)
 
     visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, True)
+    #renderer = visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, True)
 
     # axes = vtk.vtkAxesActor()
     # axes.GetXAxisCaptionActor2D().SetHeight(0.05)
@@ -784,28 +821,28 @@ def main():
     interactor.SetRenderWindow(renwin)
 
     # #### vtk slidingbar to adjust some parameters Runtime
-    # SliderRepres = vtk.vtkSliderRepresentation2D()
+    SliderRepres = vtk.vtkSliderRepresentation2D()
     min = 0 #ImageViewer.GetSliceMin()
-    max = 2 #ImageViewer.GetSliceMax()
+    max = 1 #ImageViewer.GetSliceMax()
     SliderRepres.SetMinimumValue(min)
     SliderRepres.SetMaximumValue(max)
     SliderRepres.SetValue(1)
-    SliderRepres.SetTitleText("Slice")
+    SliderRepres.SetTitleText("Alpha")
     SliderRepres.GetPoint1Coordinate().SetCoordinateSystemToNormalizedDisplay()
-    SliderRepres.GetPoint1Coordinate().SetValue(0.2, 0.6)
+    SliderRepres.GetPoint1Coordinate().SetValue(0.2, 0.06)
     SliderRepres.GetPoint2Coordinate().SetCoordinateSystemToNormalizedDisplay()
-    SliderRepres.GetPoint2Coordinate().SetValue(0.4, 0.6)
+    SliderRepres.GetPoint2Coordinate().SetValue(0.6, 0.06)
 
     SliderRepres.SetSliderLength(0.02)
     SliderRepres.SetSliderWidth(0.03)
     SliderRepres.SetEndCapLength(0.01)
     SliderRepres.SetEndCapWidth(0.03)
     SliderRepres.SetTubeWidth(0.005)
-    SliderRepres.SetLabelFormat("%3.0lf")
+    SliderRepres.SetLabelFormat("%2.2lf")
     SliderRepres.SetTitleHeight(0.02)
     SliderRepres.SetLabelHeight(0.02)
 
-    # SliderWidget = vtk.vtkSliderWidget()
+    SliderWidget = vtk.vtkSliderWidget()
     SliderWidget.SetInteractor(interactor)
     SliderWidget.SetRepresentation(SliderRepres)
     SliderWidget.KeyPressActivationOff()
