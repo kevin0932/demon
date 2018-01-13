@@ -726,11 +726,30 @@ def visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, da
     appendFilterPC.Update()
 
     # plot the scatter 2D data of scale records, to find out the correlation between the predicted scales and the calculated scales from global SfM
-    if False:
+    np.savetxt(os.path.join(outdir,'scale_record_DeMoN_Theia_Colmap.txt'), scaleRecordMat, fmt='%f')
+    if True:
         plt.scatter(scaleRecordMat[:,0],scaleRecordMat[:,1])
         # plt.scatter(1/scaleRecordMat[:,0],scaleRecordMat[:,1])
-        plt.ylabel('scales calculated from global SfM/Colmap')
+        plt.ylabel('scales calculated from Theia global SfM')
         plt.xlabel('scales predicted by DeMoN')
+        # plt.xlabel('inv_scales predicted by DeMoN')
+        plt.grid(True)
+        plt.axis('equal')
+        plt.show()
+    if True:
+        plt.scatter(scaleRecordMat[:,0],scaleRecordMat[:,2])
+        # plt.scatter(1/scaleRecordMat[:,0],scaleRecordMat[:,1])
+        plt.ylabel('scales calculated from Colmap')
+        plt.xlabel('scales predicted by DeMoN')
+        # plt.xlabel('inv_scales predicted by DeMoN')
+        plt.grid(True)
+        plt.axis('equal')
+        plt.show()
+    if True:
+        plt.scatter(scaleRecordMat[:,2],scaleRecordMat[:,1])
+        # plt.scatter(1/scaleRecordMat[:,0],scaleRecordMat[:,1])
+        plt.ylabel('scales calculated from Colmap')
+        plt.xlabel('scales calculated from Theia global SfM')
         # plt.xlabel('inv_scales predicted by DeMoN')
         plt.grid(True)
         plt.axis('equal')
