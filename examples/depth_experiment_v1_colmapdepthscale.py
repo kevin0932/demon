@@ -411,12 +411,14 @@ def vtkSliderCallback2(obj, event):
     SliderWidget.SetEnabled(True)
     SliderWidget.AddObserver("EndInteractionEvent", vtkSliderCallback2)
 
-# reading theia intermediate output relative poses from textfile
-TheiaRtfilepath = '/home/kevin/JohannesCode/theia_trial_demon/intermediate_results_southbuilding_01012018/RelativePoses_after_step7_global_position_estimation.txt'
+# # reading theia intermediate output relative poses from textfile
+#TheiaRtfilepath = '/home/kevin/JohannesCode/theia_trial_demon/intermediate_results_southbuilding_01012018/RelativePoses_after_step7_global_position_estimation.txt'
+TheiaRtfilepath = '/home/kevin/JohannesCode/theia_trial_demon/intermediate_results_southbuilding_01012018/RelativePoses_after_step9_BA.txt'
 TheiaIDNamefilepath = '/home/kevin/JohannesCode/theia_trial_demon/intermediate_results_southbuilding_01012018/viewid_imagename_pairs_file.txt'
 TheiaRelativePosesGT = read_relative_poses_theia_output(TheiaRtfilepath,TheiaIDNamefilepath)
-# reading theia intermediate output global poses from textfile
-TheiaGlobalPosesfilepath = '/home/kevin/JohannesCode/theia_trial_demon/intermediate_results_southbuilding_01012018/after_step7_global_position_estimation.txt'
+# # reading theia intermediate output global poses from textfile
+#TheiaGlobalPosesfilepath = '/home/kevin/JohannesCode/theia_trial_demon/intermediate_results_southbuilding_01012018/after_step7_global_position_estimation.txt'
+TheiaGlobalPosesfilepath = '/home/kevin/JohannesCode/theia_trial_demon/intermediate_results_southbuilding_01012018/after_step9_BA.txt'
 TheiaGlobalPosesGT = read_global_poses_theia_output(TheiaGlobalPosesfilepath,TheiaIDNamefilepath)
 
 
@@ -719,7 +721,7 @@ def visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, da
             appendFilterModel.AddInputData(cam2_polydata)
 
         it +=1
-        if it>=2:
+        if it>=2000:
             break
 
 
@@ -842,22 +844,22 @@ def main():
     # #### vtk slidingbar to adjust some parameters Runtime
     SliderRepres = vtk.vtkSliderRepresentation2D()
     min = 0 #ImageViewer.GetSliceMin()
-    max = 1 #ImageViewer.GetSliceMax()
+    max = 10 #ImageViewer.GetSliceMax()
     SliderRepres.SetMinimumValue(min)
     SliderRepres.SetMaximumValue(max)
-    SliderRepres.SetValue(1)
+    SliderRepres.SetValue(alpha)
     SliderRepres.SetTitleText("Alpha")
     SliderRepres.GetPoint1Coordinate().SetCoordinateSystemToNormalizedDisplay()
-    SliderRepres.GetPoint1Coordinate().SetValue(0.2, 0.06)
+    SliderRepres.GetPoint1Coordinate().SetValue(0.05, 0.06)
     SliderRepres.GetPoint2Coordinate().SetCoordinateSystemToNormalizedDisplay()
-    SliderRepres.GetPoint2Coordinate().SetValue(0.6, 0.06)
+    SliderRepres.GetPoint2Coordinate().SetValue(0.95, 0.06)
 
     SliderRepres.SetSliderLength(0.02)
     SliderRepres.SetSliderWidth(0.03)
     SliderRepres.SetEndCapLength(0.01)
     SliderRepres.SetEndCapWidth(0.03)
     SliderRepres.SetTubeWidth(0.005)
-    SliderRepres.SetLabelFormat("%2.2lf")
+    SliderRepres.SetLabelFormat("%1.3lf")
     SliderRepres.SetTitleHeight(0.02)
     SliderRepres.SetLabelHeight(0.02)
 
