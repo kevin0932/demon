@@ -761,7 +761,7 @@ def visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, da
     appendFilterModel.Update()
 
     plywriterModel = vtk.vtkPLYWriter()
-    plywriterModel.SetFileName(outdir + '/fused_point_clouds_colmap.ply')
+    plywriterModel.SetFileName(os.path.join(outdir,'fused_point_clouds_colmap_alpha{0}.ply'.format(int(alpha*10000))))
     plywriterModel.SetInputData(appendFilterModel.GetOutput())
     # plywriterModel.SetFileTypeToASCII()
     plywriterModel.SetArrayName('Colors')
