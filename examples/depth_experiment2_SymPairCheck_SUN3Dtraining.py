@@ -261,18 +261,51 @@ tmpPC['colors'] = np.concatenate((tmpPC1['colors'],tmpPC2['colors']),axis=0)
 print("tmpPC1['points'].shape = ", tmpPC1['points'].shape)
 print("tmpPC2['points'].shape = ", tmpPC2['points'].shape)
 print("tmpPC['points'].shape = ", tmpPC['points'].shape)
+print("tmpPC1['colors'].shape = ", tmpPC1['colors'].shape)
+print("tmpPC2['colors'].shape = ", tmpPC2['colors'].shape)
+print("tmpPC['colors'].shape = ", tmpPC['colors'].shape)
 # export all point clouds in the same global coordinate to a local .ply file (for external visualization)
-# output_prefix = './'
-pointcloud_polydata = create_pointcloud_polydata(
-points=tmpPC['points'],
-# colors=tmpPC['colors'] if 'colors' in tmpPC else None,
-colors=tmpPC['colors'],
-)
+# # output_prefix = './'
+# pointcloud_polydata = create_pointcloud_polydata(
+# points=tmpPC['points'],
+# # colors=tmpPC['colors'] if 'colors' in tmpPC else None,
+# colors=tmpPC['colors'],
+# )
 
+renderer = vtk.vtkRenderer()
+renderer.SetBackground(0, 0, 0)
+pointcloud1_actor = create_pointcloud_actor(
+points=tmpPC1['points'],
+colors=tmpPC1['colors'] if 'colors' in tmpPC1 else None,
+)
+renderer.AddActor(pointcloud1_actor)
+pointcloud2_actor = create_pointcloud_actor(
+points=tmpPC2['points'],
+colors=tmpPC2['colors'] if 'colors' in tmpPC2 else None,
+)
+renderer.AddActor(pointcloud2_actor)
+
+# cam1_actor = create_camera_actor(np.eye(3), [0,0,0])
+cam1_actor = create_camera_actor(R1, t1)
+renderer.AddActor(cam1_actor)
+# cam2_actor = create_camera_actor(angleaxis_to_rotation_matrix(rotation[0]), translation[0])
+cam2_actor = create_camera_actor(R2, t2)
+renderer.AddActor(cam2_actor)
+
+###############################################################
 appendFilterModel = vtk.vtkAppendPolyData()
-cam1_polydata = create_camera_polydata(np.eye(3), [0,0,0], True)
-cam2_polydata = create_camera_polydata(angleaxis_to_rotation_matrix(rotation[0]), translation[0], True)
-appendFilterModel.AddInputData(pointcloud_polydata)
+cam1_polydata = create_camera_polydata(R1, t1, True)
+cam2_polydata = create_camera_polydata(R2, t2, True)
+pointcloud1_polydata = create_pointcloud_polydata(
+points=tmpPC1['points'],
+colors=tmpPC1['colors'] if 'colors' in tmpPC1 else None,
+)
+pointcloud2_polydata = create_pointcloud_polydata(
+points=tmpPC2['points'],
+colors=tmpPC2['colors'] if 'colors' in tmpPC2 else None,
+)
+appendFilterModel.AddInputData(pointcloud1_polydata)
+appendFilterModel.AddInputData(pointcloud2_polydata)
 appendFilterModel.AddInputData(cam1_polydata)
 appendFilterModel.AddInputData(cam2_polydata)
 appendFilterModel.Update()
@@ -282,30 +315,9 @@ plywriter.SetFileName('DeMoN_Sculpture_Example_pointcloud.ply')
 # plywriter.SetInputData(pointcloud_polydata)
 plywriter.SetInputData(appendFilterModel.GetOutput())
 # plywriter.SetFileTypeToASCII()
-plywriter.SetArrayName('colors')
+plywriter.SetArrayName('Colors')
 plywriter.Write()
-
-renderer = vtk.vtkRenderer()
-renderer.SetBackground(0, 0, 0)
-pointcloud_actor = create_pointcloud_actor(
-points=tmpPC1['points'],
-colors=tmpPC1['colors'] if 'colors' in tmpPC1 else None,
-)
-renderer.AddActor(pointcloud_actor)
-pointcloud_actor = create_pointcloud_actor(
-points=tmpPC2['points'],
-colors=tmpPC2['colors'] if 'colors' in tmpPC2 else None,
-)
-renderer.AddActor(pointcloud_actor)
-
-# cam1_actor = create_camera_actor(np.eye(3), [0,0,0])
-cam1_actor = create_camera_actor(R1, t1)
-renderer.AddActor(cam1_actor)
-# cam2_actor = create_camera_actor(angleaxis_to_rotation_matrix(rotation[0]), translation[0])
-cam2_actor = create_camera_actor(R2, t2)
-renderer.AddActor(cam2_actor)
-
-
+###############################################################
 axes = vtk.vtkAxesActor()
 axes.GetXAxisCaptionActor2D().SetHeight(0.05)
 axes.GetYAxisCaptionActor2D().SetHeight(0.05)
