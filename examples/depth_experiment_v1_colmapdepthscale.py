@@ -367,7 +367,7 @@ def read_relative_poses_theia_output(path, path_img_id_map):
 
 def vtkSliderCallback2(obj, event):
     #global SliderRepres, SliderWidget, interactor, renderer, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT
-    global interactor, renderer, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT
+    global sliderMin, sliderMax, interactor, renderer, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT
     sliderRepres = obj.GetRepresentation()
     pos = sliderRepres.GetValue()
     # contourFilter.SetValue(0, pos)
@@ -377,39 +377,37 @@ def vtkSliderCallback2(obj, event):
     #del renWin, iren
 
     # renderer = visPointCloudInGlobalFrame(alpha, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT)
-    visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, True)
+    visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, TheiaColmapPoses='Theia', DeMoNColmapDepth='DeMoN', initBool=True)
     #renderer = visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, True)
     renderer.Modified()
     print("vtkSliderCallback2~~~~~~~~~~~~~~~")
-    # #### vtk slidingbar to adjust some parameters Runtime
-    SliderRepres = vtk.vtkSliderRepresentation2D()
-    min = 0 #ImageViewer.GetSliceMin()
-    max = 2 #ImageViewer.GetSliceMax()
-    SliderRepres.SetMinimumValue(min)
-    SliderRepres.SetMaximumValue(max)
-    SliderRepres.SetValue(alpha)
-    SliderRepres.SetTitleText("Slice")
-    SliderRepres.GetPoint1Coordinate().SetCoordinateSystemToNormalizedDisplay()
-    SliderRepres.GetPoint1Coordinate().SetValue(0.2, 0.6)
-    SliderRepres.GetPoint2Coordinate().SetCoordinateSystemToNormalizedDisplay()
-    SliderRepres.GetPoint2Coordinate().SetValue(0.4, 0.6)
-
-    SliderRepres.SetSliderLength(0.02)
-    SliderRepres.SetSliderWidth(0.03)
-    SliderRepres.SetEndCapLength(0.01)
-    SliderRepres.SetEndCapWidth(0.03)
-    SliderRepres.SetTubeWidth(0.005)
-    SliderRepres.SetLabelFormat("%3.0lf")
-    SliderRepres.SetTitleHeight(0.02)
-    SliderRepres.SetLabelHeight(0.02)
-
-    SliderWidget = vtk.vtkSliderWidget()
-    SliderWidget.SetInteractor(interactor)
-    SliderWidget.SetRepresentation(SliderRepres)
-    SliderWidget.KeyPressActivationOff()
-    SliderWidget.SetAnimationModeToAnimate()
-    SliderWidget.SetEnabled(True)
-    SliderWidget.AddObserver("EndInteractionEvent", vtkSliderCallback2)
+    # # #### vtk slidingbar to adjust some parameters Runtime
+    # SliderRepres = vtk.vtkSliderRepresentation2D()
+    # SliderRepres.SetMinimumValue(sliderMin)
+    # SliderRepres.SetMaximumValue(sliderMax)
+    # SliderRepres.SetValue(alpha)
+    # SliderRepres.SetTitleText("Slice")
+    # SliderRepres.GetPoint1Coordinate().SetCoordinateSystemToNormalizedDisplay()
+    # SliderRepres.GetPoint1Coordinate().SetValue(0.2, 0.6)
+    # SliderRepres.GetPoint2Coordinate().SetCoordinateSystemToNormalizedDisplay()
+    # SliderRepres.GetPoint2Coordinate().SetValue(0.4, 0.6)
+    #
+    # SliderRepres.SetSliderLength(0.02)
+    # SliderRepres.SetSliderWidth(0.03)
+    # SliderRepres.SetEndCapLength(0.01)
+    # SliderRepres.SetEndCapWidth(0.03)
+    # SliderRepres.SetTubeWidth(0.005)
+    # SliderRepres.SetLabelFormat("%3.0lf")
+    # SliderRepres.SetTitleHeight(0.02)
+    # SliderRepres.SetLabelHeight(0.02)
+    #
+    # SliderWidget = vtk.vtkSliderWidget()
+    # SliderWidget.SetInteractor(interactor)
+    # SliderWidget.SetRepresentation(SliderRepres)
+    # SliderWidget.KeyPressActivationOff()
+    # SliderWidget.SetAnimationModeToAnimate()
+    # SliderWidget.SetEnabled(True)
+    # SliderWidget.AddObserver("EndInteractionEvent", vtkSliderCallback2)
 
 # # reading theia intermediate output relative poses from textfile
 #TheiaRtfilepath = '/home/kevin/JohannesCode/theia_trial_demon/intermediate_results_southbuilding_01012018/RelativePoses_after_step7_global_position_estimation.txt'
@@ -501,7 +499,7 @@ data_format = get_tf_data_format()
 
 
 # if True:
-def visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, initBool=False):
+def visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, TheiaColmapPoses='Theia', DeMoNColmapDepth='DeMoN', initBool=False):
 #def visPointCloudInGlobalFrame(NULLrenderer, alpha, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, initBool=False):
     data = h5py.File(infile)
     dataExhaustivePairs = h5py.File(ExhaustivePairInfile)
@@ -596,10 +594,12 @@ def visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, da
         print("scaleRecordMat.shape = ", scaleRecordMat.shape)
 
 
-        GlobalExtrinsics1_4by4 = TheiaExtrinsics1_4by4
-        GlobalExtrinsics2_4by4 = TheiaExtrinsics2_4by4
-        # GlobalExtrinsics1_4by4 = ColmapExtrinsics1_4by4
-        # GlobalExtrinsics2_4by4 = ColmapExtrinsics2_4by4
+        if TheiaColmapPoses=='Theia':
+            GlobalExtrinsics1_4by4 = TheiaExtrinsics1_4by4
+            GlobalExtrinsics2_4by4 = TheiaExtrinsics2_4by4
+        if TheiaColmapPoses=='Colmap':
+            GlobalExtrinsics1_4by4 = ColmapExtrinsics1_4by4
+            GlobalExtrinsics2_4by4 = ColmapExtrinsics2_4by4
 
         ###### scale global poses by a constant (Colmap and Theia may generate 3D reconstruction in different scales, which may differ from the real object depth scale)
         # alpha = 0.28 # 0.3 0.5
@@ -609,7 +609,8 @@ def visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, da
         ###### get the first point clouds
         input_data = prepare_input_data(view1.image, view2.image, data_format)
         tmp_PointCloud1 = visualize_prediction(
-                    inverse_depth=data[image_pair12]['depth_upsampled'].value,
+                    inverse_depth=data[image_pair12]['depth_upsampled'].value if DeMoNColmapDepth=='DeMoN' else 1/view1.depth,
+                    # inverse_depth=data[image_pair12]['depth_upsampled'].value,
                     # inverse_depth=1/view1.depth,
                     intrinsics = np.array([0.89115971, 1.18821287, 0.5, 0.5]), # sun3d intrinsics
                     image=input_data['image_pair'][0,0:3] if data_format=='channels_first' else input_data['image_pair'].transpose([0,3,1,2])[0,0:3],
@@ -624,10 +625,11 @@ def visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, da
                     # # scale=transScaleTheia)   # apply scales calculated from colmap global/relative poses
                     # # scale=1/transScaleTheia)   # apply scales calculated from colmap global/relative poses
                     ###### inverse_depth=data[image_pair12]['depth_upsampled'].value, by DeMoN depth---theia poses
-                    # scale=1/data[image_pair12]['scale'].value)    # apply scales estimated by DeMoN;
-                    scale=(data[image_pair12]['scale'].value+dataExhaustivePairs[image_pair21]['scale'].value)/2)    # apply scales estimated by DeMoN, average value by exchanging pair order;
+                    scale=data[image_pair12]['scale'].value)    # apply scales estimated by DeMoN;
+                    # scale=(data[image_pair12]['scale'].value+dataExhaustivePairs[image_pair21]['scale'].value)/2)    # apply scales estimated by DeMoN, average value by exchanging pair order;
                     # scale=transScaleColmap)   # apply scales calculated from colmap global/relative poses
-                    # # scale=transScaleTheia)   # apply scales calculated from colmap global/relative poses
+                    # scale=transScaleTheia*data[image_pair12]['scale'].value)   # apply scales calculated from colmap global/relative poses
+                    # scale=transScaleTheia)   # apply scales calculated from colmap global/relative poses
                     # # scale=1/transScaleTheia)   # apply scales calculated from colmap global/relative poses
                     ###### inverse_depth=1/view1.depth  by colmap depth---colmap poses
                     # scale=data[image_pair12]['scale'].value)    # apply scales estimated by DeMoN;
@@ -727,35 +729,37 @@ def visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, da
 
     appendFilterPC.Update()
 
+    ###### Compute the slope of the fitted line to reflect the scale differences among DeMoN, Theia and Colmap
+    tmpFittingCoef_DeMoNTheia = np.polyfit(scaleRecordMat[:,0], scaleRecordMat[:,1], 1)
+    print("tmpFittingCoef_DeMoNTheia = ", tmpFittingCoef_DeMoNTheia)
+    tmpFittingCoef_DeMoNColmap = np.polyfit(scaleRecordMat[:,0], scaleRecordMat[:,2], 1)
+    print("tmpFittingCoef_DeMoNColmap = ", tmpFittingCoef_DeMoNColmap)
+    tmpFittingCoef_TheiaColmap = np.polyfit(scaleRecordMat[:,1], scaleRecordMat[:,2], 1)
+    print("tmpFittingCoef_TheiaColmap = ", tmpFittingCoef_TheiaColmap)
     # plot the scatter 2D data of scale records, to find out the correlation between the predicted scales and the calculated scales from global SfM
     np.savetxt(os.path.join(outdir,'scale_record_DeMoN_Theia_Colmap.txt'), scaleRecordMat, fmt='%f')
-    if True:
+    if False:
         plt.scatter(scaleRecordMat[:,0],scaleRecordMat[:,1])
-        # plt.scatter(1/scaleRecordMat[:,0],scaleRecordMat[:,1])
         plt.ylabel('scales calculated from Theia global SfM')
         plt.xlabel('scales predicted by DeMoN')
-        # plt.xlabel('inv_scales predicted by DeMoN')
         plt.grid(True)
         plt.axis('equal')
         plt.show()
-    if True:
+    if False:
         plt.scatter(scaleRecordMat[:,0],scaleRecordMat[:,2])
-        # plt.scatter(1/scaleRecordMat[:,0],scaleRecordMat[:,1])
         plt.ylabel('scales calculated from Colmap')
         plt.xlabel('scales predicted by DeMoN')
-        # plt.xlabel('inv_scales predicted by DeMoN')
         plt.grid(True)
         plt.axis('equal')
         plt.show()
-    if True:
-        plt.scatter(scaleRecordMat[:,2],scaleRecordMat[:,1])
-        # plt.scatter(1/scaleRecordMat[:,0],scaleRecordMat[:,1])
+    if False:
+        plt.scatter(scaleRecordMat[:,1],scaleRecordMat[:,2])
         plt.ylabel('scales calculated from Colmap')
         plt.xlabel('scales calculated from Theia global SfM')
-        # plt.xlabel('inv_scales predicted by DeMoN')
         plt.grid(True)
         plt.axis('equal')
         plt.show()
+
 
     appendFilterModel.AddInputData(appendFilterPC.GetOutput())
     appendFilterModel.Update()
@@ -812,14 +816,19 @@ def close_window(iren):
     render_window.Finalize()
     iren.TerminateApp()
 
+
+sliderMin = 0 #ImageViewer.GetSliceMin()
+sliderMax = 10 #ImageViewer.GetSliceMax()
+
 def main():
     #global SliderRepres, SliderWidget, interactor, renderer, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT
-    global interactor, renderer, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT
-    alpha = 0.18
+    global sliderMin, sliderMax, interactor, renderer, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT
+    # alpha = 0.128
+    alpha = 1.0
     # renderer = visPointCloudInGlobalFrame(alpha, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, True)
     print("alpha is set to ", alpha)
 
-    visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, True)
+    visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, TheiaColmapPoses='Theia', DeMoNColmapDepth='DeMoN', initBool=True)
     #renderer = visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, True)
 
     # axes = vtk.vtkAxesActor()
@@ -843,12 +852,12 @@ def main():
 
     # #### vtk slidingbar to adjust some parameters Runtime
     SliderRepres = vtk.vtkSliderRepresentation2D()
-    min = 0 #ImageViewer.GetSliceMin()
-    max = 10 #ImageViewer.GetSliceMax()
-    SliderRepres.SetMinimumValue(min)
-    SliderRepres.SetMaximumValue(max)
+    # sliderMin = 0 #ImageViewer.GetSliceMin()
+    # sliderMax = 10 #ImageViewer.GetSliceMax()
+    SliderRepres.SetMinimumValue(sliderMin)
+    SliderRepres.SetMaximumValue(sliderMax)
     SliderRepres.SetValue(alpha)
-    SliderRepres.SetTitleText("Alpha")
+    SliderRepres.SetTitleText("Alpha --- A constant scale added to the translation of global poses from Theia/Colmap")
     SliderRepres.GetPoint1Coordinate().SetCoordinateSystemToNormalizedDisplay()
     SliderRepres.GetPoint1Coordinate().SetValue(0.05, 0.06)
     SliderRepres.GetPoint2Coordinate().SetCoordinateSystemToNormalizedDisplay()
