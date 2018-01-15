@@ -12,6 +12,9 @@ import h5py
 import os
 import cv2
 
+from skimage.measure import compare_ssim as ssim #structural_similarity as ssim
+
+
 def prepare_input_data(img1, img2, data_format):
     """Creates the arrays used as input from the two images."""
     # scale images if necessary
@@ -86,8 +89,8 @@ def compute_view_overlap( view1, view2 ):
 
 weights_dir = '/home/kevin/anaconda_tensorflow_demon_ws/demon/weights'
 
-outdir = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing.beijing_hotel_2/demon_prediction"
-outfile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing.beijing_hotel_2/demon_prediction/demon_sun3d_train_beijing_hotel_2_full_baselines.h5"
+outdir = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_mit_32_g7_lounge.g7_lounge_1/demon_prediction"
+outfile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_mit_32_g7_lounge.g7_lounge_1/demon_prediction/demon_sun3d_train_mit_32_g7_lounge_1_full_baselines.h5"
 
 
 outimagedir_small = os.path.join(outdir,'images_demon_small')
@@ -153,7 +156,7 @@ if True:
         print("processing ", inputSUN3D_trainingdata)
         data = h5py.File(inputSUN3D_trainingdata)
         for h5key in data.keys():
-            if h5key.split('-')[0] == 'hotel_beijing.beijing_hotel_2':
+            if h5key.split('-')[0] == 'mit_32_g7_lounge.g7_lounge_1':
                 image_name = ('{0}~{1}').format(h5key.split('.')[0], h5key.split('.')[1])
                 print(h5key, " ====> ", image_name)
                 h5_group_tmp = data[h5key+'/frames/t0/v0']
@@ -163,12 +166,26 @@ if True:
                 # print("type(new_v) = ", type(new_v))
                 new_v.image.save(os.path.join(outimagedir_small,(image_name+'_v0.JPG')))
                 if not new_v is None:
-                    # id_image_list.append((cnt,image))
-                    id_image_list.append((h5key+'_baseline_'+str(fileIdx)+'_v0'))
-                    views.append(new_v)
-                    # Kevin: visualization
-                    # visualize_views(tmp_views)
-                    cnt += 1
+                    dupFlag = False
+                    for prevIdx in range(len(views)):
+                        opencvImage1 = cv2.cvtColor(np.array(views[prevIdx].image), cv2.COLOR_RGB2BGR)
+                        opencvImage2 = cv2.cvtColor(np.array(new_v.image), cv2.COLOR_RGB2BGR)
+                        pair_ssim_val = ssim(opencvImage1,opencvImage2, multichannel=True)
+                        if pair_ssim_val ==1:
+                            # print("one duplicated image pair is detected and the new_v will be skipped!")
+                            dupFlag = True
+                        # else:
+                        #     print("ssim = ", pair_ssim_val)
+
+                    if dupFlag == False:
+                        # id_image_list.append((cnt,image))
+                        id_image_list.append((h5key+'_baseline_'+str(fileIdx)+'_v0'))
+                        views.append(new_v)
+                        # Kevin: visualization
+                        # visualize_views(tmp_views)
+                        cnt += 1
+
+                    dupFlag = False
                 # if cnt >= 2:
                 #     break
 
@@ -179,12 +196,27 @@ if True:
                 # print("type(new_v) = ", type(new_v))
                 new_v.image.save(os.path.join(outimagedir_small,(image_name+'_v1.JPG')))
                 if not new_v is None:
-                    # id_image_list.append((cnt,image))
-                    id_image_list.append((h5key+'_baseline_'+str(fileIdx)+'_v1'))
-                    views.append(new_v)
-                    # Kevin: visualization
-                    # visualize_views(tmp_views)
-                    cnt += 1
+                    dupFlag = False
+                    for prevIdx in range(len(views)):
+                        opencvImage1 = cv2.cvtColor(np.array(views[prevIdx].image), cv2.COLOR_RGB2BGR)
+                        opencvImage2 = cv2.cvtColor(np.array(new_v.image), cv2.COLOR_RGB2BGR)
+                        pair_ssim_val = ssim(opencvImage1,opencvImage2, multichannel=True)
+                        if pair_ssim_val ==1:
+                            # print("one duplicated image pair is detected and the new_v will be skipped!")
+                            dupFlag = True
+                        # else:
+                        #     print("ssim = ", pair_ssim_val)
+
+                    if dupFlag == False:
+                        # id_image_list.append((cnt,image))
+                        id_image_list.append((h5key+'_baseline_'+str(fileIdx)+'_v1'))
+                        views.append(new_v)
+                        # Kevin: visualization
+                        # visualize_views(tmp_views)
+                        cnt += 1
+
+                    dupFlag = False
+
     distances = compute_view_distances(views)
 
     pairs_to_compute = set()

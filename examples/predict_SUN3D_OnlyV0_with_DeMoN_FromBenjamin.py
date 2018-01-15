@@ -86,8 +86,8 @@ def compute_view_overlap( view1, view2 ):
 
 weights_dir = '/home/kevin/anaconda_tensorflow_demon_ws/demon/weights'
 
-outdir = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing.beijing_hotel_2/demon_prediction"
-outfile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing.beijing_hotel_2/demon_prediction/demon_sun3d_train_beijing_hotel_2_full_baselines.h5"
+outdir = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing.beijing_hotel_2/demon_prediction_onlyv0"
+outfile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing.beijing_hotel_2/demon_prediction_onlyv0/demon_sun3d_train_beijing_hotel_2_full_baselines.h5"
 
 
 outimagedir_small = os.path.join(outdir,'images_demon_small')
@@ -172,19 +172,19 @@ if True:
                 # if cnt >= 2:
                 #     break
 
-                h5_group_tmp = data[h5key+'/frames/t0/v1']
-                tmp_view = read_view(h5_group_tmp)
-                tmp_view.image.save(os.path.join(outimagedir_large,(image_name+'_v1.JPG')))
-                new_v = adjust_intrinsics(tmp_view, target_K, w, h,)
-                # print("type(new_v) = ", type(new_v))
-                new_v.image.save(os.path.join(outimagedir_small,(image_name+'_v1.JPG')))
-                if not new_v is None:
-                    # id_image_list.append((cnt,image))
-                    id_image_list.append((h5key+'_baseline_'+str(fileIdx)+'_v1'))
-                    views.append(new_v)
-                    # Kevin: visualization
-                    # visualize_views(tmp_views)
-                    cnt += 1
+                # h5_group_tmp = data[h5key+'/frames/t0/v1']
+                # tmp_view = read_view(h5_group_tmp)
+                # tmp_view.image.save(os.path.join(outimagedir_large,(image_name+'_v1.JPG')))
+                # new_v = adjust_intrinsics(tmp_view, target_K, w, h,)
+                # # print("type(new_v) = ", type(new_v))
+                # new_v.image.save(os.path.join(outimagedir_small,(image_name+'_v1.JPG')))
+                # if not new_v is None:
+                #     # id_image_list.append((cnt,image))
+                #     id_image_list.append((h5key+'_baseline_'+str(fileIdx)+'_v1'))
+                #     views.append(new_v)
+                #     # Kevin: visualization
+                #     # visualize_views(tmp_views)
+                #     cnt += 1
     distances = compute_view_distances(views)
 
     pairs_to_compute = set()
