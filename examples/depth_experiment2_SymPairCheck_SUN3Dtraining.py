@@ -8,7 +8,7 @@ import h5py
 
 examples_dir = os.path.dirname(__file__)
 weights_dir = os.path.join(examples_dir,'..','weights')
-sys.path.insert(0, os.path.join(examples_dir, '..', 'python'))
+#sys.path.insert(0, os.path.join(examples_dir, '..', 'python'))
 
 from depthmotionnet.networks_original import *
 from depthmotionnet.dataset_tools.view_io import *
@@ -70,12 +70,30 @@ else: # running on cpu requires channels_last data format
 # ##################################################################
 # ############Add input data from training data SUN3D###############
 # ##################################################################
+### SUN3D Training Data
 # inputSUN3D_trainingdata = '/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/sun3d_train_0.01m_to_0.1m.h5'
-inputSUN3D_trainingdata = '/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/sun3d_train_0.2m_to_0.4m.h5'
+# inputSUN3D_trainingdata = '/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/sun3d_train_0.2m_to_0.4m.h5'
 # inputSUN3D_trainingdata = '/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/sun3d_train_0.4m_to_0.8m.h5'
 # inputSUN3D_trainingdata = '/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/sun3d_train_0.8m_to_1.6m.h5'
 # inputSUN3D_trainingdata = '/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/sun3d_train_1.6m_to_infm.h5'
+
+### SUN3D testing data
+inputSUN3D_trainingdata = '/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/sun3d_test.h5'
+
+# SUN3D_datasetname = 'mit_w85h.h2_1-0006100_10to15cm'
+# SUN3D_datasetname = 'harvard_corridor_lounge.hv_lounge1_2-0000687_30to50cm'
+# SUN3D_datasetname = 'harvard_robotics_lab.hv_s1_2-0000427_15to30cm'
+# SUN3D_datasetname = 'hotel_florence_jx.florence_hotel_stair_room_all-0017880_50toinfcm'
+# SUN3D_datasetname = 'hotel_florence_jx.florence_hotel_stair_room_all-0000710_5to10cm'
+
+# SUN3D_datasetname = 'hotel_florence_jx.florence_hotel_stair_room_all-0000070_30to50cm'
+# SUN3D_datasetname = 'hotel_florence_jx.florence_hotel_stair_room_all-0000070_50toinfcm'
+
+
 data = h5py.File(inputSUN3D_trainingdata)
+
+h5_group_v1 = data[SUN3D_datasetname+'/frames/t0/v0']
+h5_group_v2 = data[SUN3D_datasetname+'/frames/t0/v1']
 
 K1 = np.zeros((3,3),dtype=np.float64)
 R1 = np.zeros((3,3),dtype=np.float64)
@@ -93,8 +111,8 @@ t2 = np.zeros((3,),dtype=np.float64)
 ###### baseline 0.2m_0.4m ######
 # h5_group_v1 = data['hotel_pittsburg.hotel_pittsburg_scan1_2012_dec_12-0000008/frames/t0/v0']
 # h5_group_v2 = data['hotel_pittsburg.hotel_pittsburg_scan1_2012_dec_12-0000008/frames/t0/v1']
-h5_group_v1 = data['hotel_pedraza.hotel_room_pedraza_2012_nov_25-0000100/frames/t0/v0']
-h5_group_v2 = data['hotel_pedraza.hotel_room_pedraza_2012_nov_25-0000100/frames/t0/v1']
+# h5_group_v1 = data['hotel_pedraza.hotel_room_pedraza_2012_nov_25-0000100/frames/t0/v0']
+# h5_group_v2 = data['hotel_pedraza.hotel_room_pedraza_2012_nov_25-0000100/frames/t0/v1']
 ###### baseline 0.4m_0.8m ######
 # h5_group_v1 = data['mit_w85k2.k1-0000116/frames/t0/v0']
 # h5_group_v2 = data['mit_w85k2.k1-0000116/frames/t0/v1']
@@ -114,13 +132,25 @@ h5_group_v2 = data['hotel_pedraza.hotel_room_pedraza_2012_nov_25-0000100/frames/
 # h5_group_v2 = data['mit_32_g7_lounge.g7_lounge_1-0000088/frames/t0/v1']
 # h5_group_v1 = data['mit_32_g660.g660_1-0000008/frames/t0/v0']
 # h5_group_v2 = data['mit_32_g660.g660_1-0000008/frames/t0/v1']
-# write_camera_params(h5_group, K, R, t, dsname="camera"):
+
+# DeMoN compatible size
+w = 256
+h = 192
+normalized_intrinsics = np.array([0.89115971, 1.18821287, 0.5, 0.5],np.float32)
+target_K = np.eye(3)
+target_K[0,0] = w*normalized_intrinsics[0]
+target_K[1,1] = h*normalized_intrinsics[1]
+target_K[0,2] = w*normalized_intrinsics[2]
+target_K[1,2] = h*normalized_intrinsics[3]
+
 K1,R1,t1 = read_camera_params(h5_group_v1['camera'])
 view1 = read_view(h5_group_v1)
+view1 = adjust_intrinsics(view1, target_K, w, h,)
 img1 = view1.image
 
 K2,R2,t2 = read_camera_params(h5_group_v2['camera'])
 view2 = read_view(h5_group_v2)
+view2 = adjust_intrinsics(view2, target_K, w, h,)
 img2 = view2.image
 
 # # a colormap and a normalization instance
@@ -188,10 +218,12 @@ print('predict_scale = ', predict_scale)
 result = refine_net.eval(input_data['image1'],result['predict_depth2'])
 
 
-plt.imshow(result['predict_depth0'].squeeze(), cmap='Greys')
-plt.show()
-
-# depth_img1.show()
+# plt.figure()
+# plt.subplot(211) # equivalent to: plt.subplot(2, 2, 1)
+# plt.imshow(view1.depth, cmap='Greys')
+# plt.subplot(212)
+# plt.imshow(result['predict_depth0'].squeeze(), cmap='Greys')
+# plt.show()
 
 ####### image2---image1
 input_data21 = prepare_input_data(img2,img1,data_format)
@@ -215,31 +247,55 @@ print('predict_scale21 = ', predict_scale21)
 result21 = refine_net.eval(input_data21['image1'],result21['predict_depth2'])
 
 
-plt.imshow(result21['predict_depth0'].squeeze(), cmap='Greys')
-plt.show()
+# plt.figure()
+# plt.subplot(121) # equivalent to: plt.subplot(2, 2, 1)
+# plt.imshow(view2.depth, cmap='Greys')
+# plt.subplot(122)
+# plt.imshow(result21['predict_depth0'].squeeze(), cmap='Greys')
+# plt.show()
 
+
+plt.figure()
+plt.subplot(231) # equivalent to: plt.subplot(2, 2, 1)
+plt.imshow(view1.image)
+plt.title('RGB Image 1')
+plt.subplot(232) # equivalent to: plt.subplot(2, 2, 1)
+plt.imshow(1/view1.depth, cmap='Greys')
+plt.title('SUN3D Ground Truth Depth Image 1')
+plt.subplot(233)
+plt.imshow(result['predict_depth0'].squeeze(), cmap='Greys')
+plt.title('SUN3D DeMoN Depth Image 1')
+plt.subplot(234) # equivalent to: plt.subplot(2, 2, 1)
+plt.imshow(view2.image)
+plt.title('RGB Image 2')
+plt.subplot(235) # equivalent to: plt.subplot(2, 2, 1)
+plt.imshow(1/view2.depth, cmap='Greys')
+plt.title('SUN3D Ground Truth Depth Image 2')
+plt.subplot(236)
+plt.imshow(result21['predict_depth0'].squeeze(), cmap='Greys')
+plt.title('SUN3D DeMoN Depth Image 2')
+plt.show()
 
 print("t1 = ", t1, "; t2 = ", t2)
 
 from depthmotionnet.vis import *
 import vtk
 tmpPC1 = visualize_prediction(
-# visualize_prediction(
 inverse_depth=result['predict_depth0'],
+# inverse_depth=1/view1.depth,
 image=input_data['image_pair'][0,0:3] if data_format=='channels_first' else input_data['image_pair'].transpose([0,3,1,2])[0,0:3],
 R1=R1,
 t1=t1,
 rotation=(rotation),
 translation=translation[0],
 scale=predict_scale)
-# scale=1/predict_scale)
 # scale=1)
 
 print("translation.shape = ", translation.shape)
 print("translation[0].shape = ", translation[0].shape)
 tmpPC2 = visualize_prediction(
-# visualize_prediction(
 inverse_depth=result21['predict_depth0'],
+# inverse_depth=1/view2.depth,
 image=input_data21['image_pair'][0,0:3] if data_format=='channels_first' else input_data21['image_pair'].transpose([0,3,1,2])[0,0:3],
 # R1=angleaxis_to_rotation_matrix(rotation[0]),
 # t1=translation[0],
@@ -248,7 +304,6 @@ t1=t2,
 rotation=(rotation),
 translation=translation[0],
 scale=predict_scale21)
-# scale=1/predict_scale21)
 # scale=1)
 
 tmpPC = {}
@@ -311,7 +366,8 @@ appendFilterModel.AddInputData(cam2_polydata)
 appendFilterModel.Update()
 
 plywriter = vtk.vtkPLYWriter()
-plywriter.SetFileName('DeMoN_Sculpture_Example_pointcloud.ply')
+plywriter.SetFileName(('DeMoN_pair_pointcloud_'+inputSUN3D_trainingdata.split('/')[-1][:-3]+'_'+SUN3D_datasetname+'_'+str(predict_scale)+'_'+str(predict_scale21)+'.ply'))
+# plywriter.SetFileName(('SUN3D_GT_pair_pointcloud_'+inputSUN3D_trainingdata.split('/')[-1][:-3]+'_'+SUN3D_datasetname+'_'+str(predict_scale)+'_'+str(predict_scale21)+'.ply'))
 # plywriter.SetInputData(pointcloud_polydata)
 plywriter.SetInputData(appendFilterModel.GetOutput())
 # plywriter.SetFileTypeToASCII()
