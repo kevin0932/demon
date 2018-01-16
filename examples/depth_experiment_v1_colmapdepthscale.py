@@ -366,8 +366,7 @@ def read_relative_poses_theia_output(path, path_img_id_map):
 
 
 def vtkSliderCallback2(obj, event):
-    #global SliderRepres, SliderWidget, interactor, renderer, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT
-    global sliderMin, sliderMax, interactor, renderer, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT
+    global TheiaOrColmap, DeMoNOrColmap, sliderMin, sliderMax, interactor, renderer, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT
     sliderRepres = obj.GetRepresentation()
     pos = sliderRepres.GetValue()
     # contourFilter.SetValue(0, pos)
@@ -377,7 +376,7 @@ def vtkSliderCallback2(obj, event):
     #del renWin, iren
 
     # renderer = visPointCloudInGlobalFrame(alpha, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT)
-    visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, TheiaColmapPoses='Theia', DeMoNColmapDepth='DeMoN', initBool=True)
+    visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, TheiaColmapPoses=TheiaOrColmap, DeMoNColmapDepth=DeMoNOrColmap, initBool=True)
     #renderer = visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, True)
     renderer.Modified()
     print("vtkSliderCallback2~~~~~~~~~~~~~~~")
@@ -430,14 +429,18 @@ TheiaGlobalPosesGT = read_global_poses_theia_output(TheiaGlobalPosesfilepath,The
 # outdir = '/home/kevin/ThesisDATA/person-hall/demon_prediction'
 # outdir = "/home/kevin/ThesisDATA/CVG_Datasets_3Dsymmetric/barcelona_Dataset/demon_prediction"
 # outdir = "/home/kevin/ThesisDATA/CVG_Datasets_3Dsymmetric/redmond_Dataset/demon_prediction"
-outdir = "/home/kevin/JohannesCode/ws1/demon_prediction"
+# outdir = "/home/kevin/JohannesCode/ws1/demon_prediction/freiburgSettingBak"
+outdir = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction"
 # infile = '/home/kevin/ThesisDATA/gerrard-hall/demon_prediction/gerrard_hall_predictions.h5'
 # infile = '/home/kevin/ThesisDATA/person-hall/demon_prediction/person_hall_predictions.h5'
 # infile = "/home/kevin/ThesisDATA/CVG_Datasets_3Dsymmetric/barcelona_Dataset/demon_prediction/CVG_barcelona_predictions.h5"
 # infile = "/home/kevin/ThesisDATA/CVG_Datasets_3Dsymmetric/redmond_Dataset/demon_prediction/CVG_redmond_predictions.h5"
 # infile = "/home/kevin/JohannesCode/ws1/demon_prediction/kevin_southbuilding_predictions_08012018.h5"
-infile = "/home/kevin/JohannesCode/ws1/demon_prediction/freiburgSettingBak/View128_fuse_southbuilding_demon.h5"
-ExhaustivePairInfile = "/home/kevin/JohannesCode/ws1/demon_prediction/freiburgSettingBak/kevin_southbuilding_predictions_06012018.h5"
+# infile = "/home/kevin/JohannesCode/ws1/demon_prediction/freiburgSettingBak/View128_fuse_southbuilding_demon.h5"
+infile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/View128ColmapFilter_demon_sun3d_train_hotel_beijing~beijing_hotel_2.h5"
+# infile = "/home/kevin/JohannesCode/ws1/demon_prediction/freiburgSettingBak/View128ColmapFilter_fuse_southbuilding_demon.h5"
+# ExhaustivePairInfile = "/home/kevin/JohannesCode/ws1/demon_prediction/freiburgSettingBak/kevin_southbuilding_predictions_06012018.h5"
+ExhaustivePairInfile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/demon_sun3d_train_hotel_beijing~beijing_hotel_2.h5"
 
 # outimagedir_small = os.path.join(outdir,'images_demon_small')
 # outimagedir_large = os.path.join(outdir,'images_demon')
@@ -448,7 +451,8 @@ ExhaustivePairInfile = "/home/kevin/JohannesCode/ws1/demon_prediction/freiburgSe
 # os.makedirs(os.path.join(outdir,'vizdepthmap'), exist_ok=True)
 
 # recondir = '/misc/lmbraid12/depthmotionnet/datasets/mvs_colmap/south-building/mvs/'
-recondir = '/home/kevin/JohannesCode/ws1/dense/0/'
+# recondir = '/home/kevin/JohannesCode/ws1/dense/0/'
+recondir = '/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/images_demon/dense/'
 # recondir = '/home/kevin/ThesisDATA/ToyDataset_Desk/dense/'
 # recondir = '/home/kevin/ThesisDATA/gerrard-hall/dense/'
 # recondir = '/home/kevin/ThesisDATA/person-hall/dense/'
@@ -538,6 +542,7 @@ def visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, da
 
         tmp_dict = {}
         for image_id, image in images.items():
+            print(image.name, "; ", image_name1, "; ", image_name2)
             if image.name == image_name1:
                 tmp_dict[image_id] = image
             if image.name == image_name2:
@@ -546,8 +551,10 @@ def visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, da
         # tmp_dict = {image_id: image}
         print("tmp_dict = ", tmp_dict)
         tmp_views = colmap.create_views(cameras, tmp_dict, os.path.join(recondir,'images'), os.path.join(recondir,'stereo','depth_maps'))
+        # print("tmp_views = ", tmp_views)
         tmp_views[0] = adjust_intrinsics(tmp_views[0], target_K, w, h,)
         tmp_views[1] = adjust_intrinsics(tmp_views[1], target_K, w, h,)
+
 
         view1 = tmp_views[0]
         view2 = tmp_views[1]
@@ -608,43 +615,38 @@ def visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, da
 
         ###### get the first point clouds
         input_data = prepare_input_data(view1.image, view2.image, data_format)
-        tmp_PointCloud1 = visualize_prediction(
-                    inverse_depth=data[image_pair12]['depth_upsampled'].value if DeMoNColmapDepth=='DeMoN' else 1/view1.depth,
-                    # inverse_depth=data[image_pair12]['depth_upsampled'].value,
-                    # inverse_depth=1/view1.depth,
-                    intrinsics = np.array([0.89115971, 1.18821287, 0.5, 0.5]), # sun3d intrinsics
-                    image=input_data['image_pair'][0,0:3] if data_format=='channels_first' else input_data['image_pair'].transpose([0,3,1,2])[0,0:3],
-                    R1=GlobalExtrinsics1_4by4[0:3,0:3],
-                    t1=GlobalExtrinsics1_4by4[0:3,3],
-                    rotation=rotmat_To_angleaxis(np.dot(GlobalExtrinsics2_4by4[0:3,0:3], GlobalExtrinsics1_4by4[0:3,0:3].T)),
-                    translation=GlobalExtrinsics2_4by4[0:3,3],   # should be changed, this is wrong!
-                    ###### inverse_depth=data[image_pair12]['depth_upsampled'].value, by DeMoN depth---colmap poses
-                    # scale=data[image_pair12]['scale'].value)    # apply scales estimated by DeMoN;
-                    # scale=(data[image_pair12]['scale'].value+dataExhaustivePairs[image_pair21]['scale'].value)/2)    # apply scales estimated by DeMoN, average value by exchanging pair order;
-                    # scale=transScaleColmap)   # apply scales calculated from colmap global/relative poses
-                    # # scale=transScaleTheia)   # apply scales calculated from colmap global/relative poses
-                    # # scale=1/transScaleTheia)   # apply scales calculated from colmap global/relative poses
-                    ###### inverse_depth=data[image_pair12]['depth_upsampled'].value, by DeMoN depth---theia poses
-                    scale=data[image_pair12]['scale'].value)    # apply scales estimated by DeMoN;
-                    # scale=(data[image_pair12]['scale'].value+dataExhaustivePairs[image_pair21]['scale'].value)/2)    # apply scales estimated by DeMoN, average value by exchanging pair order;
-                    # scale=transScaleColmap)   # apply scales calculated from colmap global/relative poses
-                    # scale=transScaleTheia*data[image_pair12]['scale'].value)   # apply scales calculated from colmap global/relative poses
-                    # scale=transScaleTheia)   # apply scales calculated from colmap global/relative poses
-                    # # scale=1/transScaleTheia)   # apply scales calculated from colmap global/relative poses
-                    ###### inverse_depth=1/view1.depth  by colmap depth---colmap poses
-                    # scale=data[image_pair12]['scale'].value)    # apply scales estimated by DeMoN;
-                    # scale=(data[image_pair12]['scale'].value+dataExhaustivePairs[image_pair21]['scale'].value)/2)    # apply scales estimated by DeMoN, average value by exchanging pair order;
-                    # scale=transScaleColmap)   # apply scales calculated from colmap global/relative poses
-                    # # scale=transScaleTheia)   # apply scales calculated from colmap global/relative poses
-                    # # scale=1/transScaleTheia)   # apply scales calculated from colmap global/relative poses
-                    ###### inverse_depth=1/view1.depth  by colmap depth---theia poses
-                    # scale=1/data[image_pair12]['scale'].value)    # apply scales estimated by DeMoN;
-                    # scale=2/(data[image_pair12]['scale'].value+dataExhaustivePairs[image_pair21]['scale'].value))    # apply scales estimated by DeMoN, average value by exchanging pair order;
-                    # scale=1/transScaleColmap)   # apply scales calculated from colmap global/relative poses
-                    # # scale=transScaleTheia)   # apply scales calculated from colmap global/relative poses
-                    # scale=1/transScaleTheia)   # apply scales calculated from colmap global/relative poses
+        if DeMoNColmapDepth=='Colmap':
+            tmp_PointCloud1 = visualize_prediction(
+                        inverse_depth=data[image_pair12]['depth_upsampled'].value if DeMoNColmapDepth=='DeMoN' else 1/view1.depth,
+                        # inverse_depth=data[image_pair12]['depth_upsampled'].value,
+                        # inverse_depth=1/view1.depth,
+                        intrinsics = np.array([0.89115971, 1.18821287, 0.5, 0.5]), # sun3d intrinsics
+                        image=input_data['image_pair'][0,0:3] if data_format=='channels_first' else input_data['image_pair'].transpose([0,3,1,2])[0,0:3],
+                        R1=GlobalExtrinsics1_4by4[0:3,0:3],
+                        t1=GlobalExtrinsics1_4by4[0:3,3],
+                        rotation=rotmat_To_angleaxis(np.dot(GlobalExtrinsics2_4by4[0:3,0:3], GlobalExtrinsics1_4by4[0:3,0:3].T)),
+                        translation=GlobalExtrinsics2_4by4[0:3,3],   # should be changed, this is wrong!
+                        scale=transScaleTheia/transScaleColmap if TheiaColmapPoses=='Theia' else 1)    # apply scales estimated by DeMoN;
+                        # scale=1/data[image_pair12]['scale'].value)    # apply scales estimated by DeMoN;
 
-                    # scale=1)  # a complete model; no scaling because the depths are already in the correct scale
+        elif DeMoNColmapDepth=='DeMoN':
+            tmp_PointCloud1 = visualize_prediction(
+                        inverse_depth=data[image_pair12]['depth_upsampled'].value if DeMoNColmapDepth=='DeMoN' else 1/view1.depth,
+                        # inverse_depth=data[image_pair12]['depth_upsampled'].value,
+                        # inverse_depth=1/view1.depth,
+                        intrinsics = np.array([0.89115971, 1.18821287, 0.5, 0.5]), # sun3d intrinsics
+                        image=input_data['image_pair'][0,0:3] if data_format=='channels_first' else input_data['image_pair'].transpose([0,3,1,2])[0,0:3],
+                        R1=GlobalExtrinsics1_4by4[0:3,0:3],
+                        t1=GlobalExtrinsics1_4by4[0:3,3],
+                        rotation=rotmat_To_angleaxis(np.dot(GlobalExtrinsics2_4by4[0:3,0:3], GlobalExtrinsics1_4by4[0:3,0:3].T)),
+                        translation=GlobalExtrinsics2_4by4[0:3,3],   # should be changed, this is wrong!
+                        scale=data[image_pair12]['scale'].value if TheiaColmapPoses=='Theia' else transScaleColmap)    # apply scales estimated by DeMoN;
+                        # scale=transScaleColmap if DeMoNColmapDepth=='DeMoN' else 1)    # apply scales estimated by DeMoN;
+                        # scale=1/transScaleColmap if DeMoNColmapDepth=='Colmap' else 1)    # apply scales estimated by DeMoN;
+                        # scale=1/data[image_pair12]['scale'].value if DeMoNColmapDepth=='DeMoN' else 1)    # apply scales estimated by DeMoN;
+                        # scale=transScaleColmap if (DeMoNColmapDepth=='DeMoN' and TheiaColmapPoses=='Colmap') elif (DeMoNColmapDepth=='DeMoN') data[image_pair12]['scale'].value else 1)    # apply scales estimated by DeMoN;
+                        # scale=data[image_pair12]['scale'].value)    # apply scales estimated by DeMoN;
+                        # scale=1)    # apply scales estimated by DeMoN;
 
         # vis2 = cv2.cvtColor(view1.depth, cv2.COLOR_GRAY2BGR)
         # #Displayed the image
@@ -819,16 +821,19 @@ def close_window(iren):
 
 sliderMin = 0 #ImageViewer.GetSliceMin()
 sliderMax = 10 #ImageViewer.GetSliceMax()
+TheiaOrColmap='Colmap'
+DeMoNOrColmap='DeMoN'
+# DeMoNOrColmap='Colmap'
 
 def main():
     #global SliderRepres, SliderWidget, interactor, renderer, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT
-    global sliderMin, sliderMax, interactor, renderer, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT
+    global TheiaOrColmap, DeMoNOrColmap, sliderMin, sliderMax, interactor, renderer, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT
     # alpha = 0.128
     alpha = 1.0
     # renderer = visPointCloudInGlobalFrame(alpha, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, True)
     print("alpha is set to ", alpha)
 
-    visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, TheiaColmapPoses='Theia', DeMoNColmapDepth='DeMoN', initBool=True)
+    visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, TheiaColmapPoses=TheiaOrColmap, DeMoNColmapDepth=DeMoNOrColmap, initBool=True)
     #renderer = visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, True)
 
     # axes = vtk.vtkAxesActor()

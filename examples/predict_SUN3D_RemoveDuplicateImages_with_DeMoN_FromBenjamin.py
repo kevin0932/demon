@@ -89,8 +89,8 @@ def compute_view_overlap( view1, view2 ):
 
 weights_dir = '/home/kevin/anaconda_tensorflow_demon_ws/demon/weights'
 
-outdir = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_mit_32_g7_lounge.g7_lounge_1/demon_prediction"
-outfile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_mit_32_g7_lounge.g7_lounge_1/demon_prediction/demon_sun3d_train_mit_32_g7_lounge_1_full_baselines.h5"
+outdir = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_harvard_computer_lab.hv_c1_1/demon_prediction"
+outfile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_harvard_computer_lab.hv_c1_1/demon_prediction/demon_sun3d_train_mit_w85_playroom_westgate_playroom_1_full_baselines.h5"
 
 
 outimagedir_small = os.path.join(outdir,'images_demon_small')
@@ -156,15 +156,13 @@ if True:
         print("processing ", inputSUN3D_trainingdata)
         data = h5py.File(inputSUN3D_trainingdata)
         for h5key in data.keys():
-            if h5key.split('-')[0] == 'mit_32_g7_lounge.g7_lounge_1':
+            if h5key.split('-')[0] == 'harvard_computer_lab.hv_c1_1':
                 image_name = ('{0}~{1}').format(h5key.split('.')[0], h5key.split('.')[1])
                 print(h5key, " ====> ", image_name)
                 h5_group_tmp = data[h5key+'/frames/t0/v0']
                 tmp_view = read_view(h5_group_tmp)
-                tmp_view.image.save(os.path.join(outimagedir_large,(image_name+'_v0.JPG')))
                 new_v = adjust_intrinsics(tmp_view, target_K, w, h,)
                 # print("type(new_v) = ", type(new_v))
-                new_v.image.save(os.path.join(outimagedir_small,(image_name+'_v0.JPG')))
                 if not new_v is None:
                     dupFlag = False
                     for prevIdx in range(len(views)):
@@ -178,8 +176,11 @@ if True:
                         #     print("ssim = ", pair_ssim_val)
 
                     if dupFlag == False:
+                        v0_save_name_forIndexing = image_name+'_baseline_'+str(fileIdx)+'_v0.JPG'
+                        tmp_view.image.save(os.path.join(outimagedir_large,(v0_save_name_forIndexing)))
+                        new_v.image.save(os.path.join(outimagedir_small,(v0_save_name_forIndexing)))
                         # id_image_list.append((cnt,image))
-                        id_image_list.append((h5key+'_baseline_'+str(fileIdx)+'_v0'))
+                        id_image_list.append((v0_save_name_forIndexing))
                         views.append(new_v)
                         # Kevin: visualization
                         # visualize_views(tmp_views)
@@ -191,10 +192,8 @@ if True:
 
                 h5_group_tmp = data[h5key+'/frames/t0/v1']
                 tmp_view = read_view(h5_group_tmp)
-                tmp_view.image.save(os.path.join(outimagedir_large,(image_name+'_v1.JPG')))
                 new_v = adjust_intrinsics(tmp_view, target_K, w, h,)
                 # print("type(new_v) = ", type(new_v))
-                new_v.image.save(os.path.join(outimagedir_small,(image_name+'_v1.JPG')))
                 if not new_v is None:
                     dupFlag = False
                     for prevIdx in range(len(views)):
@@ -208,8 +207,11 @@ if True:
                         #     print("ssim = ", pair_ssim_val)
 
                     if dupFlag == False:
+                        v1_save_name_forIndexing = image_name+'_baseline_'+str(fileIdx)+'_v1.JPG'
+                        tmp_view.image.save(os.path.join(outimagedir_large,(v1_save_name_forIndexing)))
+                        new_v.image.save(os.path.join(outimagedir_small,(v1_save_name_forIndexing)))
                         # id_image_list.append((cnt,image))
-                        id_image_list.append((h5key+'_baseline_'+str(fileIdx)+'_v1'))
+                        id_image_list.append((v1_save_name_forIndexing))
                         views.append(new_v)
                         # Kevin: visualization
                         # visualize_views(tmp_views)

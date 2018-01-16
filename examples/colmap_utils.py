@@ -177,6 +177,7 @@ def create_views(cameras, images, image_dir, depth_dir):
             raise RuntimeError('Wrong camera model "'+camera.model+'"')
 
         K = np.zeros((3,3),np.float64)
+
         # compatible with camera model of 'PINHOLE' (when you use colmap command-line interface and export text result in the 'sparse' folder under the directory of 'dense')
         K[0,0] = camera.params[0]
         K[1,1] = camera.params[1]
