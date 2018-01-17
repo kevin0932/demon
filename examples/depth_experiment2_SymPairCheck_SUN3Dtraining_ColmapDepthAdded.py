@@ -14,7 +14,8 @@ from depthmotionnet.networks_original import *
 from depthmotionnet.dataset_tools.view_io import *
 from depthmotionnet.dataset_tools.view_tools import *
 import colmap_utils as colmap
-
+# from depthmotionnet.helpers import angleaxis_to_rotation_matrix
+from depthmotionnet.vis import *
 # from .view import View
 # from .view_io import *
 # from .view_tools import *
@@ -204,8 +205,18 @@ tmp_views[0] = adjust_intrinsics(tmp_views[0], target_K, w, h,)
 tmp_views[1] = adjust_intrinsics(tmp_views[1], target_K, w, h,)
 
 
-depth1Colmap = tmp_views[0].depth
-depth2Colmap = tmp_views[1].depth
+# depth1Colmap = tmp_views[0].depth
+# depth2Colmap = tmp_views[1].depth
+view1Colmap = tmp_views[0]
+view2Colmap = tmp_views[1]
+scaleColmap = np.linalg.norm(-np.dot(view2Colmap.R.T, view2Colmap.t)+np.dot(view1Colmap.R.T, view1Colmap.t))
+print("scaleColmap = ", scaleColmap)
+
+#### If use colmap result global poses or not?
+R1 = view1Colmap.R
+t1 = view1Colmap.t
+R2 = view2Colmap.R
+t2 = view2Colmap.t
 # ##################################################################
 
 
@@ -299,24 +310,30 @@ result21 = refine_net.eval(input_data21['image1'],result21['predict_depth2'])
 
 
 plt.figure()
-plt.subplot(231) # equivalent to: plt.subplot(2, 2, 1)
+plt.subplot(241) # equivalent to: plt.subplot(2, 2, 1)
 plt.imshow(view1.image)
 plt.title('RGB Image 1')
-plt.subplot(232) # equivalent to: plt.subplot(2, 2, 1)
+plt.subplot(242) # equivalent to: plt.subplot(2, 2, 1)
 plt.imshow(1/view1.depth, cmap='Greys')
 plt.title('SUN3D Ground Truth Depth Image 1')
-plt.subplot(233)
+plt.subplot(243)
 plt.imshow(result['predict_depth0'].squeeze(), cmap='Greys')
 plt.title('SUN3D DeMoN Depth Image 1')
-plt.subplot(234) # equivalent to: plt.subplot(2, 2, 1)
+plt.subplot(244) # equivalent to: plt.subplot(2, 2, 1)
+plt.imshow(view1Colmap.depth, cmap='Greys')
+plt.title('SUN3D Colmap Depth Image 1')
+plt.subplot(245) # equivalent to: plt.subplot(2, 2, 1)
 plt.imshow(view2.image)
 plt.title('RGB Image 2')
-plt.subplot(235) # equivalent to: plt.subplot(2, 2, 1)
+plt.subplot(246) # equivalent to: plt.subplot(2, 2, 1)
 plt.imshow(1/view2.depth, cmap='Greys')
 plt.title('SUN3D Ground Truth Depth Image 2')
-plt.subplot(236)
+plt.subplot(247)
 plt.imshow(result21['predict_depth0'].squeeze(), cmap='Greys')
 plt.title('SUN3D DeMoN Depth Image 2')
+plt.subplot(248) # equivalent to: plt.subplot(2, 2, 1)
+plt.imshow(view2Colmap.depth, cmap='Greys')
+plt.title('SUN3D Colmap Depth Image 2')
 plt.show()
 
 print("t1 = ", t1, "; t2 = ", t2)
@@ -324,21 +341,24 @@ print("t1 = ", t1, "; t2 = ", t2)
 from depthmotionnet.vis import *
 import vtk
 tmpPC1 = visualize_prediction(
-inverse_depth=result['predict_depth0'],
-# inverse_depth=1/view1.depth,
+# inverse_depth=result['predict_depth0'],
+inverse_depth=1/view1.depth,
+# inverse_depth=1/view1Colmap.depth,
 image=input_data['image_pair'][0,0:3] if data_format=='channels_first' else input_data['image_pair'].transpose([0,3,1,2])[0,0:3],
 R1=R1,
 t1=t1,
 rotation=(rotation),
 translation=translation[0],
-scale=predict_scale)
-# scale=1)
+# scale=predict_scale)
+# scale=scaleColmap)
+scale=1)
 
 print("translation.shape = ", translation.shape)
 print("translation[0].shape = ", translation[0].shape)
 tmpPC2 = visualize_prediction(
-inverse_depth=result21['predict_depth0'],
-# inverse_depth=1/view2.depth,
+# inverse_depth=result21['predict_depth0'],
+inverse_depth=1/view2.depth,
+# inverse_depth=1/view2Colmap.depth,
 image=input_data21['image_pair'][0,0:3] if data_format=='channels_first' else input_data21['image_pair'].transpose([0,3,1,2])[0,0:3],
 # R1=angleaxis_to_rotation_matrix(rotation[0]),
 # t1=translation[0],
@@ -346,8 +366,9 @@ R1=R2,
 t1=t2,
 rotation=(rotation),
 translation=translation[0],
-scale=predict_scale21)
-# scale=1)
+# scale=predict_scale21)
+# scale=scaleColmap)
+scale=1)
 
 tmpPC = {}
 tmpPC['points'] = np.concatenate((tmpPC1['points'],tmpPC2['points']),axis=0)
