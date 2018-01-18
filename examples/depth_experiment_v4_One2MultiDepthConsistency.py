@@ -365,17 +365,6 @@ def read_relative_poses_theia_output(path, path_img_id_map):
     return image_pair_gt
 
 
-def vtkSliderCallback2(obj, event):
-    global curIteration, alpha, TheiaOrColmapOrGTPoses, DeMoNOrColmapOrGTDepths, sliderMin, sliderMax, interactor, renderer, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT
-    sliderRepres = obj.GetRepresentation()
-    pos = sliderRepres.GetValue()
-    alpha=pos
-
-    visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, PoseSource=TheiaOrColmapOrGTPoses, DepthSource=DeMoNOrColmapOrGTDepths, initBool=False)
-    renderer.Modified()
-    print("vtkSliderCallback2~~~~~~~~~~~~~~~")
-
-
 # # # reading theia intermediate output relative poses from textfile
 # #TheiaRtfilepath = '/home/kevin/JohannesCode/theia_trial_demon/intermediate_results_southbuilding_01012018/RelativePoses_after_step7_global_position_estimation.txt'
 # TheiaRtfilepath = '/home/kevin/JohannesCode/theia_trial_demon/intermediate_results_southbuilding_01012018/RelativePoses_after_step9_BA.txt'
@@ -905,14 +894,6 @@ def visPointCloudInGlobalFrame(rendererNotUsed, alpha, infile, ExhaustivePairInf
     print("alpha = ", alpha)
 
 
-def close_window(iren):
-    render_window = iren.GetRenderWindow()
-    render_window.Finalize()
-    iren.TerminateApp()
-
-
-sliderMin = 0 #ImageViewer.GetSliceMin()
-sliderMax = 20 #ImageViewer.GetSliceMax()
 # TheiaOrColmapOrGTPoses='Colmap'
 # TheiaOrColmapOrGTPoses='Theia'
 TheiaOrColmapOrGTPoses='GT'
@@ -925,7 +906,7 @@ renderer = vtk.vtkRenderer()
 renderer.SetBackground(0, 0, 0)
 interactor = vtk.vtkRenderWindowInteractor()
 
-curIteration = 10
+curIteration = 0
 image_pairs = set()
 # scaleRecordMat = []
 scaleRecordMat = np.empty((1,4))
@@ -951,58 +932,164 @@ class MyKeyPressInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
             renderer.Modified()
         return
 
+
+# One2MultiImagePair = collections.namedtuple("One2MultiImagePair", ["name1", "name2", "image1", "image2", "depth1", "depth2", "Extrinsic1_4by4_Colmap", "Extrinsic2_4by4_Colmap", "Extrinsic1_4by4_GT", "Extrinsic2_4by4_GT", "Extrinsic1_4by4_DeMoN", "Extrinsic2_4by4_DeMoN", "Relative12_4by4_Colmap", "Relative12_4by4_GT", "Relative12_4by4_DeMoN", "scale_Colmap", "scale_GT", "scale_DeMoN"])
+One2MultiImagePair = collections.namedtuple("One2MultiImagePair", ["name1", "name2", "image1", "image2", "depth1", "depth2", "Extrinsic1_4by4", "Extrinsic2_4by4", "Relative12_4by4", "Relative21_4by4", "scale12", "scale21"])
+
+def findOne2MultiPairs(infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, image1_filename='hotel_beijing~beijing_hotel_2-0000181_baseline_1_v0.JPG'):
+    # global initColmapGTRatio, renderer, appendFilterPC, appendFilterModel, curIteration, image_pairs, scaleRecordMat, tmpFittingCoef_Colmap_GT
+
+    One2MultiImagePairs_Colmap = {}
+    One2MultiImagePairs_GT = {}
+    One2MultiImagePairs_DeMoN = {}
+
+    data = h5py.File(infile)
+    dataExhaustivePairs = h5py.File(ExhaustivePairInfile)
+
+    image_pairs_One2Multi = set()
+    it = 0
+    # it = curIteration
+
+    for image_pair12 in (data.keys()):
+        image_name1, image_name2 = image_pair12.split("---")
+        if image_name1 != image1_filename:
+            continue
+        print("add ", image_pair12, " to the candidate pool!")
+
+        image_pair21 = "{}---{}".format(image_name2, image_name1)
+        print(image_name1, "; ", image_name2)
+        tmp_dict = {}
+        for image_id, image in images.items():
+            # print(image.name, "; ", image_name1, "; ", image_name2)
+            if image.name == image_name1:
+                tmp_dict[image_id] = image
+            if image.name == image_name2:
+                tmp_dict[image_id] = image
+
+        # tmp_dict = {image_id: image}
+        print("tmp_dict = ", tmp_dict)
+        if len(tmp_dict)<2:
+            print("Warning: a pair is skipped because of inavailability of data")
+            continue
+        tmp_views = colmap.create_views(cameras, tmp_dict, os.path.join(recondir,'images'), os.path.join(recondir,'stereo','depth_maps'))
+        tmp_views[0] = adjust_intrinsics(tmp_views[0], target_K, w, h,)
+        tmp_views[1] = adjust_intrinsics(tmp_views[1], target_K, w, h,)
+
+        view1 = tmp_views[0]
+        view2 = tmp_views[1]
+
+        # print("view1 = ", view1)
+        image_pairs_One2Multi.add(image_pair12)
+        # image_pairs_One2Multi.add(image_pair21)
+
+        ###### Retrieve Theia Global poses for image 1 and 2
+        TheiaExtrinsics1_4by4 = np.eye(4)
+        TheiaExtrinsics2_4by4 = np.eye(4)
+        for ids,val in TheiaGlobalPosesGT.items():
+            if val.name == image_name1:
+                TheiaExtrinsics1_4by4[0:3,0:3] = val.rotmat
+                TheiaExtrinsics1_4by4[0:3,3] = -np.dot(val.rotmat, val.tvec) # theia output camera position in world frame instead of extrinsic t
+            if val.name == image_name2:
+                TheiaExtrinsics2_4by4[0:3,0:3] = val.rotmat
+                TheiaExtrinsics2_4by4[0:3,3] = -np.dot(val.rotmat, val.tvec) # theia output camera position in world frame instead of extrinsic t
+
+        # # a colormap and a normalization instance
+        # cmap = plt.cm.jet
+        # # plt.imshow(data[image_pair12]["depth_upsampled"], cmap='Greys')
+        # plt.imshow(view1.depth, cmap='Greys')
+        ColmapExtrinsics1_4by4 = np.eye(4)
+        ColmapExtrinsics1_4by4[0:3,0:3] = view1.R
+        ColmapExtrinsics1_4by4[0:3,3] = view1.t# -np.dot(val.rotmat, val.tvec) # theia output camera position in world frame instead of extrinsic t
+
+        ColmapExtrinsics2_4by4 = np.eye(4)
+        ColmapExtrinsics2_4by4[0:3,0:3] = view2.R
+        ColmapExtrinsics2_4by4[0:3,3] = view2.t # -np.dot(val.rotmat, val.tvec) # theia output camera position in world frame instead of extrinsic t
+
+        ###### Retrieve Ground Truth Global poses for image 1 and 2
+        BaselineRange1 = image_name1[-8:-7]
+        tmpName1 = image_name1[:-18].split('~')
+        name1InSUN3D_H5 = tmpName1[0]+'.'+tmpName1[1]
+        vId1 = image_name1[-6:-4]
+        # print(BaselineRange1, name1InSUN3D_H5, vId1)
+        name1InSUN3D_H5 = name1InSUN3D_H5+'/frames/t0/' +vId1
+        # print(name1InSUN3D_H5)
+        # print(inputSUN3D_trainFilePaths[0])
+        dataGT1 = h5py.File(inputSUN3D_trainFilePaths[int(BaselineRange1)])
+        GTExtrinsics1_4by4 = np.eye(4)
+        K1GT, GTExtrinsics1_4by4[0:3,0:3], GTExtrinsics1_4by4[0:3,3] = read_camera_params(dataGT1[name1InSUN3D_H5]['camera'])
+        tmp_view1 = read_view(dataGT1[name1InSUN3D_H5])
+        view1GT = adjust_intrinsics(tmp_view1, target_K, w, h,)
+
+        BaselineRange2 = image_name2[-8:-7]
+        tmpName2 = image_name2[:-18].split('~')
+        name2InSUN3D_H5 = tmpName2[0]+'.'+tmpName2[1]
+        vId2 = image_name2[-6:-4]
+        print(BaselineRange2, name2InSUN3D_H5, vId2)
+        name2InSUN3D_H5 = name2InSUN3D_H5+'/frames/t0/' +vId2
+        print(name2InSUN3D_H5)
+        dataGT2 = h5py.File(inputSUN3D_trainFilePaths[int(BaselineRange2)])
+        GTExtrinsics2_4by4 = np.eye(4)
+        K2GT, GTExtrinsics2_4by4[0:3,0:3], GTExtrinsics2_4by4[0:3,3] = read_camera_params(dataGT2[name2InSUN3D_H5]['camera'])
+        tmp_view2 = read_view(dataGT2[name2InSUN3D_H5])
+        view2GT = adjust_intrinsics(tmp_view2, target_K, w, h,)
+
+        ##### compute scales
+        transScaleTheia = np.linalg.norm(np.linalg.inv(TheiaExtrinsics2_4by4)[0:3,3] - np.linalg.inv(TheiaExtrinsics1_4by4)[0:3,3])
+        transScaleColmap = np.linalg.norm(np.linalg.inv(ColmapExtrinsics2_4by4)[0:3,3] - np.linalg.inv(ColmapExtrinsics1_4by4)[0:3,3])
+        transScaleGT = np.linalg.norm(np.linalg.inv(GTExtrinsics2_4by4)[0:3,3] - np.linalg.inv(GTExtrinsics1_4by4)[0:3,3])
+        print("transScaleTheia = ", transScaleTheia, "; transScaleColmap = ", transScaleColmap, "; transScaleGT = ", transScaleGT, "; demon scale = ", data[image_pair12]['scale'].value)
+        pred_scale = data[image_pair12]['scale'].value
+
+    print("number of image pairs retrieved = ", len(image_pairs_One2Multi))
+
+    if True:
+        plt.figure()
+        plt.subplot(241) # equivalent to: plt.subplot(2, 2, 1)
+        plt.imshow(view1.image)
+        plt.title('RGB Image 1')
+        plt.subplot(242) # equivalent to: plt.subplot(2, 2, 1)
+        plt.imshow(1/view1.depth, cmap='Greys')
+        plt.title('SUN3D Ground Truth Depth Image 1')
+        plt.subplot(243)
+        plt.imshow(result['predict_depth0'].squeeze(), cmap='Greys')
+        plt.title('SUN3D DeMoN Depth Image 1')
+        plt.subplot(244) # equivalent to: plt.subplot(2, 2, 1)
+        plt.imshow(view1Colmap.depth, cmap='Greys')
+        plt.title('SUN3D Colmap Depth Image 1')
+        plt.subplot(245) # equivalent to: plt.subplot(2, 2, 1)
+        plt.imshow(view2.image)
+        plt.title('RGB Image 2')
+        plt.subplot(246) # equivalent to: plt.subplot(2, 2, 1)
+        plt.imshow(1/view2.depth, cmap='Greys')
+        plt.title('SUN3D Ground Truth Depth Image 2')
+        plt.subplot(247)
+        plt.imshow(result21['predict_depth0'].squeeze(), cmap='Greys')
+        plt.title('SUN3D DeMoN Depth Image 2')
+        plt.subplot(248) # equivalent to: plt.subplot(2, 2, 1)
+        plt.imshow(view2Colmap.depth, cmap='Greys')
+        plt.title('SUN3D Colmap Depth Image 2')
+        plt.show()
+
 def main():
     global initColmapGTRatio, appendFilterPC, appendFilterModel, alpha, tmpFittingCoef_Colmap_GT, scaleRecordMat, image_pairs, TheiaOrColmapOrGTPoses, DeMoNOrColmapOrGTDepths, sliderMin, sliderMax, interactor, renderer, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT
-    # alpha = 1.0
     print("alpha is set to ", alpha)
 
-    visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, PoseSource=TheiaOrColmapOrGTPoses, DepthSource=DeMoNOrColmapOrGTDepths, initBool=True, setColmapGTRatio=True)
+    findOne2MultiPairs(ExhaustivePairInfile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, 'hotel_beijing~beijing_hotel_2-0000023_baseline_2_v0.JPG')
 
-    renwin = vtk.vtkRenderWindow()
-    renwin.SetWindowName("Point Cloud Viewer")
-    renwin.SetSize(800,600)
-    renwin.AddRenderer(renderer)
-
-    # An interactor
-    # # interactor = vtk.vtkRenderWindowInteractor()
-    # interstyle = vtk.vtkInteractorStyleTrackballCamera()
-    # interactor.SetInteractorStyle(interstyle)
-    interactor.SetInteractorStyle(MyKeyPressInteractorStyle())
-    interactor.SetRenderWindow(renwin)
-
-    # #### vtk slidingbar to adjust some parameters Runtime
-    SliderRepres = vtk.vtkSliderRepresentation2D()
-    # sliderMin = 0 #ImageViewer.GetSliceMin()
-    # sliderMax = 10 #ImageViewer.GetSliceMax()
-    SliderRepres.SetMinimumValue(sliderMin)
-    SliderRepres.SetMaximumValue(sliderMax)
-    SliderRepres.SetValue(alpha)
-    SliderRepres.SetTitleText("Alpha --- A constant scale added to the translation of global poses from Theia/Colmap")
-    SliderRepres.GetPoint1Coordinate().SetCoordinateSystemToNormalizedDisplay()
-    SliderRepres.GetPoint1Coordinate().SetValue(0.05, 0.06)
-    SliderRepres.GetPoint2Coordinate().SetCoordinateSystemToNormalizedDisplay()
-    SliderRepres.GetPoint2Coordinate().SetValue(0.95, 0.06)
-
-    SliderRepres.SetSliderLength(0.02)
-    SliderRepres.SetSliderWidth(0.03)
-    SliderRepres.SetEndCapLength(0.01)
-    SliderRepres.SetEndCapWidth(0.03)
-    SliderRepres.SetTubeWidth(0.005)
-    SliderRepres.SetLabelFormat("%1.3lf")
-    SliderRepres.SetTitleHeight(0.02)
-    SliderRepres.SetLabelHeight(0.02)
-
-    SliderWidget = vtk.vtkSliderWidget()
-    SliderWidget.SetInteractor(interactor)
-    SliderWidget.SetRepresentation(SliderRepres)
-    SliderWidget.KeyPressActivationOff()
-    SliderWidget.SetAnimationModeToAnimate()
-    SliderWidget.SetEnabled(True)
-    SliderWidget.AddObserver("EndInteractionEvent", vtkSliderCallback2)
-
-    # Start
-    interactor.Initialize()
-    interactor.Start()
+    # visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, PoseSource=TheiaOrColmapOrGTPoses, DepthSource=DeMoNOrColmapOrGTDepths, initBool=True, setColmapGTRatio=True)
+    #
+    # renwin = vtk.vtkRenderWindow()
+    # renwin.SetWindowName("Point Cloud Viewer")
+    # renwin.SetSize(800,600)
+    # renwin.AddRenderer(renderer)
+    #
+    # # An interactor
+    # interactor.SetInteractorStyle(MyKeyPressInteractorStyle())
+    # interactor.SetRenderWindow(renwin)
+    #
+    # # Start
+    # interactor.Initialize()
+    # interactor.Start()
 
 if __name__ == "__main__":
     main()
