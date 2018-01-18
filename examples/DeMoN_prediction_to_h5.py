@@ -167,6 +167,7 @@ def main():
     h5file.attrs[u'HDF5_Version']     = six.u(h5py.version.hdf5_version)
     h5file.attrs[u'h5py_version']     = six.u(h5py.version.version)
 
+    iteration = 0
     # Iterate over working directory
     for file1 in os.listdir(input_dir):
         for file2 in os.listdir(input_dir):
@@ -228,6 +229,7 @@ def main():
             # print(flow2.shape)
             # flow5 = result['predict_flow5'].squeeze()
             # print(flow5.shape)
+            scale = result['predict_scale'].squeeze().astype(np.float32)
 
             result = refine_net.eval(input_data['image1'],result['predict_depth2'])
             # depth_upsampled = result['predict_depth0']
@@ -266,11 +268,13 @@ def main():
             # h5file.create_dataset(("/" + file1 + "---" + file2 + "/flow"), data=flow2)
 
             h5file.create_dataset((file1 + "---" + file2 + "/rotation_angleaxis"), data=rotation)
-            h5file.create_dataset((file1 + "---" + file2 + "/rotation_matrix"), data=rotation_matrix)
+            #h5file.create_dataset((file1 + "---" + file2 + "/rotation_matrix"), data=rotation_matrix)
+            h5file.create_dataset((file1 + "---" + file2 + "/rotation"), data=rotation_matrix)
             h5file.create_dataset((file1 + "---" + file2 + "/translation"), data=translation)
             h5file.create_dataset((file1 + "---" + file2 + "/depth"), data=depth_48by64)
             h5file.create_dataset((file1 + "---" + file2 + "/depth_upsampled"), data=depth_upsampled)
             h5file.create_dataset((file1 + "---" + file2 + "/flow"), data=flow2)
+            h5file.create_dataset((file1 + "---" + file2 + "/scale"), data=scale)
     h5file.close()   # be CERTAIN to close the file
     print("HDF5 file is written successfully:", output_h5_filepath)
 

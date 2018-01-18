@@ -433,7 +433,8 @@ TheiaGlobalPosesGT = read_global_poses_theia_output(TheiaGlobalPosesfilepath,The
 
 outdir = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction"
 infile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/View128ColmapFilter_demon_sun3d_train_hotel_beijing~beijing_hotel_2.h5"
-ExhaustivePairInfile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/demon_sun3d_train_hotel_beijing~beijing_hotel_2.h5"
+#ExhaustivePairInfile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/demon_sun3d_train_hotel_beijing~beijing_hotel_2.h5"
+ExhaustivePairInfile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/kevin_beijing_hotel_2_exhaustive_demon.h5"
 recondir = '/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/images_demon/dense/'
 
 cameras = colmap.read_cameras_txt(os.path.join(recondir,'sparse','cameras.txt'))
@@ -958,6 +959,8 @@ def findOne2MultiPairs(infile, ExhaustivePairInfile, data_format, target_K, w, h
 
         image_pair21 = "{}---{}".format(image_name2, image_name1)
         print(image_name1, "; ", image_name2)
+        if image_pair21 not in data.keys():
+            continue
         tmp_dict = {}
         for image_id, image in images.items():
             # print(image.name, "; ", image_name1, "; ", image_name2)
@@ -1040,9 +1043,23 @@ def findOne2MultiPairs(infile, ExhaustivePairInfile, data_format, target_K, w, h
         print("transScaleTheia = ", transScaleTheia, "; transScaleColmap = ", transScaleColmap, "; transScaleGT = ", transScaleGT, "; demon scale = ", data[image_pair12]['scale'].value)
         pred_scale = data[image_pair12]['scale'].value
 
-    print("number of image pairs retrieved = ", len(image_pairs_One2Multi))
+        ###### record data in corresponding data structure for later access
+        One2MultiImagePairs_Colmap[image_pair12] = One2MultiImagePair(name1=image_name1, name2=image_name2, image1=view1.image, image2=view2.image, depth1=view1.depth, depth2=view2.depth, Extrinsic1_4by4=ColmapExtrinsics1_4by4, Extrinsic2_4by4=ColmapExtrinsics2_4by4, Relative12_4by4=np.dot(ColmapExtrinsics2_4by4, np.linalg.inv(ColmapExtrinsics1_4by4)), Relative21_4by4=np.dot(ColmapExtrinsics1_4by4, np.linalg.inv(ColmapExtrinsics2_4by4)), scale12=transScaleColmap, scale21=transScaleColmap)
+        One2MultiImagePairs_GT[image_pair12] = One2MultiImagePair(name1=image_name1, name2=image_name2, image1=view1GT.image, image2=view2GT.image, depth1=view1GT.depth, depth2=view2GT.depth, Extrinsic1_4by4=GTExtrinsics1_4by4, Extrinsic2_4by4=GTExtrinsics2_4by4, Relative12_4by4=np.dot(GTExtrinsics2_4by4, np.linalg.inv(GTExtrinsics1_4by4)), Relative21_4by4=np.dot(GTExtrinsics1_4by4, np.linalg.inv(GTExtrinsics2_4by4)), scale12=transScaleGT, scale21=transScaleGT)
+        DeMoNRelative12_4by4 = np.eye(4)
+        DeMoNRelative12_4by4[0:3,0:3] = data[image_pair12]['rotation'].value
+        DeMoNRelative12_4by4[0:3,3] = data[image_pair12]['translation'].value
+        One2MultiImagePairs_DeMoN[image_pair12] = One2MultiImagePair(name1=image_name1, name2=image_name2, image1=view1.image, image2=view2.image, depth1=1/data[image_pair12]['depth_upsampled'].value, depth2=1/data[image_pair21]['depth_upsampled'].value, Extrinsic1_4by4=np.eye(4), Extrinsic2_4by4=DeMoNRelative12_4by4, Relative12_4by4=DeMoNRelative12_4by4, Relative21_4by4=np.linalg.inv(DeMoNRelative12_4by4), scale12=data[image_pair12]['scale'].value, scale21=data[image_pair21]['scale'].value)
 
-    if True:
+    print("Colmap image pairs retrieved = ", (One2MultiImagePairs_Colmap))
+    print("GT image pairs retrieved = ", (One2MultiImagePairs_GT))
+    print("DeMoN image pairs retrieved = ", (One2MultiImagePairs_DeMoN))
+    print("number of image pairs retrieved = ", len(image_pairs_One2Multi))
+    print("number of image pairs retrieved = ", len(One2MultiImagePairs_Colmap))
+    print("number of image pairs retrieved = ", len(One2MultiImagePairs_GT))
+    print("number of image pairs retrieved = ", len(One2MultiImagePairs_DeMoN))
+
+    if False:
         plt.figure()
         plt.subplot(241) # equivalent to: plt.subplot(2, 2, 1)
         plt.imshow(view1.image)
@@ -1074,7 +1091,7 @@ def main():
     global initColmapGTRatio, appendFilterPC, appendFilterModel, alpha, tmpFittingCoef_Colmap_GT, scaleRecordMat, image_pairs, TheiaOrColmapOrGTPoses, DeMoNOrColmapOrGTDepths, sliderMin, sliderMax, interactor, renderer, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT
     print("alpha is set to ", alpha)
 
-    findOne2MultiPairs(ExhaustivePairInfile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, 'hotel_beijing~beijing_hotel_2-0000023_baseline_2_v0.JPG')
+    findOne2MultiPairs(ExhaustivePairInfile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, 'hotel_beijing~beijing_hotel_2-0000126_baseline_1_v0.JPG')
 
     # visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, PoseSource=TheiaOrColmapOrGTPoses, DepthSource=DeMoNOrColmapOrGTDepths, initBool=True, setColmapGTRatio=True)
     #
