@@ -666,6 +666,7 @@ def visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, da
         pred_scale = data[image_pair12]['scale'].value
         if it==0:
             scaleRecordMat = np.array([pred_scale, transScaleTheia, transScaleColmap, transScaleGT])
+            initColmapGTRatio = transScaleColmap/transScaleGT
         else:
             scaleRecordMat = np.vstack((scaleRecordMat, np.array([pred_scale, transScaleTheia, transScaleColmap, transScaleGT])))
         print("scaleRecordMat.shape = ", scaleRecordMat.shape)
@@ -694,7 +695,9 @@ def visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, da
             if PoseSource=='Colmap':
                 scale_applied = 1
             if PoseSource=='GT':
-                scale_applied = transScaleGT/transScaleColmap
+                # scale_applied = transScaleGT/transScaleColmap
+                # scale_applied = 1/initColmapGTRatio
+                scale_applied = 1/1.72921055    # fittedColmapGTRatio = 1.72921055
             tmp_PointCloud1 = visualize_prediction(
                         inverse_depth=1/view1.depth,
                         intrinsics = np.array([0.89115971, 1.18821287, 0.5, 0.5]), # sun3d intrinsics
@@ -710,8 +713,10 @@ def visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, da
                 scale_applied = transScaleTheia
             if PoseSource=='Colmap':
                 scale_applied = transScaleColmap
+                # scale_applied = data[image_pair12]['scale'].value
             if PoseSource=='GT':
                 scale_applied = transScaleGT
+                # scale_applied = data[image_pair12]['scale'].value
             tmp_PointCloud1 = visualize_prediction(
                         inverse_depth=data[image_pair12]['depth_upsampled'].value,
                         intrinsics = np.array([0.89115971, 1.18821287, 0.5, 0.5]), # sun3d intrinsics
@@ -725,7 +730,9 @@ def visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, da
             if PoseSource=='Theia':
                 scale_applied = transScaleTheia/transScaleGT
             if PoseSource=='Colmap':
-                scale_applied = transScaleColmap/transScaleGT
+                # scale_applied = transScaleColmap/transScaleGT
+                # scale_applied = initColmapGTRatio
+                scale_applied = 1.72921055    # fittedColmapGTRatio = 1.72921055
             if PoseSource=='GT':
                 scale_applied = 1
             tmp_PointCloud1 = visualize_prediction(
@@ -827,6 +834,8 @@ def visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, da
     # print("tmpFittingCoef_DeMoNColmap = ", tmpFittingCoef_DeMoNColmap)
     # tmpFittingCoef_TheiaColmap = np.polyfit(scaleRecordMat[:,1], scaleRecordMat[:,2], 1)
     # print("tmpFittingCoef_TheiaColmap = ", tmpFittingCoef_TheiaColmap)
+    tmpFittingCoef_Colmap_GT = np.polyfit(scaleRecordMat[:,3], scaleRecordMat[:,2], 1)
+    print("tmpFittingCoef_Colmap_GT = ", tmpFittingCoef_Colmap_GT)
     # plot the scatter 2D data of scale records, to find out the correlation between the predicted scales and the calculated scales from global SfM
     np.savetxt(os.path.join(outdir,'scale_record_DeMoN_Theia_Colmap.txt'), scaleRecordMat, fmt='%f')
     if False:
@@ -849,6 +858,25 @@ def visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, da
         plt.scatter(scaleRecordMat[:,0],scaleRecordMat[:,3])
         plt.ylabel('scales calculated from SUN3D Ground Truth')
         plt.xlabel('scales predicted by DeMoN')
+        plt.grid(True)
+        plt.axis('equal')
+        plt.show()
+    if True:
+        plt.scatter(scaleRecordMat[:,2],scaleRecordMat[:,3])
+        plt.ylabel('scales calculated from SUN3D Ground Truth')
+        plt.xlabel('scales calculated from Colmap')
+        plt.grid(True)
+        plt.axis('equal')
+        plt.show()
+    if True:
+        x = np.linspace(np.min(scaleRecordMat[:,3]), np.max(scaleRecordMat[:,3]), 1000)
+        # dashes = [10, 5, 100, 5]  # 10 points on, 5 off, 100 on, 5 off
+        y = 1.72921055*x+0.02395182
+        plt.plot(x, y, 'r-', lw=2)
+        plt.text(0.2, 0.15, r'fitted line with slope = 1.72921055')
+        plt.scatter(scaleRecordMat[:,3],scaleRecordMat[:,2])
+        plt.xlabel('scales calculated from SUN3D Ground Truth')
+        plt.ylabel('scales calculated from Colmap')
         plt.grid(True)
         plt.axis('equal')
         plt.show()

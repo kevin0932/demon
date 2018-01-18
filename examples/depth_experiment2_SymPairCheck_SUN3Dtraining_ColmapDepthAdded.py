@@ -73,6 +73,7 @@ else: # running on cpu requires channels_last data format
 # ######## Add Colmap result as ground truth alternatives ##########
 # ##################################################################
 recondir = '/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_pedraza~hotel_room_pedraza_2012_nov_25/demon_prediction/images_demon/dense/'
+# recondir = '/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/images_demon/dense/'
 
 camerasColmap = colmap.read_cameras_txt(os.path.join(recondir,'sparse','cameras.txt'))
 imagesColmap = colmap.read_images_txt(os.path.join(recondir,'sparse','images.txt'))
@@ -91,8 +92,9 @@ inputSUN3D_trainingdata = '/home/kevin/anaconda_tensorflow_demon_ws/demon/datase
 # inputSUN3D_trainingdata = '/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/sun3d_train_1.6m_to_infm.h5'
 
 
-# SUN3D_datasetname = 'hotel_pedraza.hotel_room_pedraza_2012_nov_25-0000100'
+## SUN3D_datasetname = 'hotel_pedraza.hotel_room_pedraza_2012_nov_25-0000100'
 SUN3D_datasetname = 'hotel_pedraza.hotel_room_pedraza_2012_nov_25-0000248'
+# SUN3D_datasetname = 'hotel_beijing.beijing_hotel_2-0000003'
 
 # ### SUN3D testing data
 # inputSUN3D_trainingdata = '/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/sun3d_test.h5'
@@ -171,6 +173,9 @@ K2,R2,t2 = read_camera_params(h5_group_v2['camera'])
 view2 = read_view(h5_group_v2)
 view2 = adjust_intrinsics(view2, target_K, w, h,)
 img2 = view2.image
+
+scaleGT = np.linalg.norm(-np.dot(view2.R.T, view2.t)+np.dot(view1.R.T, view1.t))
+print("scaleGT = ", scaleGT)
 
 # # a colormap and a normalization instance
 # cmap = plt.cm.jet
@@ -341,8 +346,8 @@ print("t1 = ", t1, "; t2 = ", t2)
 from depthmotionnet.vis import *
 import vtk
 tmpPC1 = visualize_prediction(
-# inverse_depth=result['predict_depth0'],
-inverse_depth=1/view1.depth,
+inverse_depth=result['predict_depth0'],
+# inverse_depth=1/view1.depth,
 # inverse_depth=1/view1Colmap.depth,
 image=input_data['image_pair'][0,0:3] if data_format=='channels_first' else input_data['image_pair'].transpose([0,3,1,2])[0,0:3],
 R1=R1,
@@ -350,14 +355,17 @@ t1=t1,
 rotation=(rotation),
 translation=translation[0],
 # scale=predict_scale)
-# scale=scaleColmap)
-scale=1)
+scale=scaleColmap)
+#scale=1)
+#scale=scaleGT/scaleColmap)
+# scale=scaleGT)
+# scale=scaleColmap/scaleGT)
 
 print("translation.shape = ", translation.shape)
 print("translation[0].shape = ", translation[0].shape)
 tmpPC2 = visualize_prediction(
-# inverse_depth=result21['predict_depth0'],
-inverse_depth=1/view2.depth,
+inverse_depth=result21['predict_depth0'],
+# inverse_depth=1/view2.depth,
 # inverse_depth=1/view2Colmap.depth,
 image=input_data21['image_pair'][0,0:3] if data_format=='channels_first' else input_data21['image_pair'].transpose([0,3,1,2])[0,0:3],
 # R1=angleaxis_to_rotation_matrix(rotation[0]),
@@ -367,8 +375,13 @@ t1=t2,
 rotation=(rotation),
 translation=translation[0],
 # scale=predict_scale21)
-# scale=scaleColmap)
-scale=1)
+scale=scaleColmap)
+#scale=1)
+#scale=scaleGT/scaleColmap)
+# scale=scaleGT)
+# scale=scaleColmap/scaleGT)
+#print('scaleGT/scaleColmap = ', scaleGT/scaleColmap)
+print('scaleColmap/scaleGT = ', scaleColmap/scaleGT)
 
 tmpPC = {}
 tmpPC['points'] = np.concatenate((tmpPC1['points'],tmpPC2['points']),axis=0)
