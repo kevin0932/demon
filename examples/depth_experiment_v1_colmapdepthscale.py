@@ -579,26 +579,62 @@ def visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, da
         # #######
         image_pair21 = "{}---{}".format(image_name2, image_name1)
         # print(image_name1, "; ", image_name2)
+        ###########################################################################################
+        # tmp_dict = {}
+        # for image_id, image in images.items():
+        #     # print(image.name, "; ", image_name1, "; ", image_name2)
+        #     if image.name == image_name1:
+        #         tmp_dict[image_id] = image
+        #     if image.name == image_name2:
+        #         tmp_dict[image_id] = image
+        #
+        # # tmp_dict = {image_id: image}
+        # print("tmp_dict = ", tmp_dict)
+        # if len(tmp_dict)<2:
+        #     continue
+        # tmp_views = colmap.create_views(cameras, tmp_dict, os.path.join(recondir,'images'), os.path.join(recondir,'stereo','depth_maps'))
+        # # print("tmp_views = ", tmp_views)
+        # tmp_views[0] = adjust_intrinsics(tmp_views[0], target_K, w, h,)
+        # tmp_views[1] = adjust_intrinsics(tmp_views[1], target_K, w, h,)
+        #
+        #
+        # view1 = tmp_views[0]
+        # view2 = tmp_views[1]
+        # # view1 = tmp_views[1]
+        # # view2 = tmp_views[0]
+        ###########################################################################################
+
         tmp_dict = {}
         for image_id, image in images.items():
             # print(image.name, "; ", image_name1, "; ", image_name2)
             if image.name == image_name1:
                 tmp_dict[image_id] = image
+
+        # tmp_dict = {image_id: image}
+        print("tmp_dict = ", tmp_dict)
+        if len(tmp_dict)<1:
+            continue
+        tmp_views = colmap.create_views(cameras, tmp_dict, os.path.join(recondir,'images'), os.path.join(recondir,'stereo','depth_maps'))
+        # print("tmp_views = ", tmp_views)
+        tmp_views[0] = adjust_intrinsics(tmp_views[0], target_K, w, h,)
+        view1 = tmp_views[0]
+
+        tmp_dict = {}
+        for image_id, image in images.items():
+            # print(image.name, "; ", image_name1, "; ", image_name2)
             if image.name == image_name2:
                 tmp_dict[image_id] = image
 
         # tmp_dict = {image_id: image}
         print("tmp_dict = ", tmp_dict)
-        if len(tmp_dict)<2:
+        if len(tmp_dict)<1:
             continue
         tmp_views = colmap.create_views(cameras, tmp_dict, os.path.join(recondir,'images'), os.path.join(recondir,'stereo','depth_maps'))
         # print("tmp_views = ", tmp_views)
         tmp_views[0] = adjust_intrinsics(tmp_views[0], target_K, w, h,)
-        tmp_views[1] = adjust_intrinsics(tmp_views[1], target_K, w, h,)
+        view2 = tmp_views[0]
 
-
-        view1 = tmp_views[0]
-        view2 = tmp_views[1]
+        ###########################################################################################
 
         if image_pair12 in image_pairs:
             continue
@@ -947,12 +983,12 @@ def close_window(iren):
 
 sliderMin = 0 #ImageViewer.GetSliceMin()
 sliderMax = 20 #ImageViewer.GetSliceMax()
-# TheiaOrColmapOrGTPoses='Colmap'
+TheiaOrColmapOrGTPoses='Colmap'
 # TheiaOrColmapOrGTPoses='Theia'
-TheiaOrColmapOrGTPoses='GT'
-# DeMoNOrColmapOrGTDepths='DeMoN'
+# TheiaOrColmapOrGTPoses='GT'
+DeMoNOrColmapOrGTDepths='DeMoN'
 # DeMoNOrColmapOrGTDepths='Colmap'
-DeMoNOrColmapOrGTDepths='GT'
+# DeMoNOrColmapOrGTDepths='GT'
 
 def main():
     #global SliderRepres, SliderWidget, interactor, renderer, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT

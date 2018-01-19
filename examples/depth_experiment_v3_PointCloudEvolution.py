@@ -555,30 +555,67 @@ def visPointCloudInGlobalFrame(rendererNotUsed, alpha, infile, ExhaustivePairInf
         # #######
         image_pair21 = "{}---{}".format(image_name2, image_name1)
         # print(image_name1, "; ", image_name2)
+
+        # tmp_dict = {}
+        # for image_id, image in images.items():
+        #     # print(image.name, "; ", image_name1, "; ", image_name2)
+        #     if image.name == image_name1:
+        #         tmp_dict[image_id] = image
+        #     if image.name == image_name2:
+        #         tmp_dict[image_id] = image
+        #
+        # # tmp_dict = {image_id: image}
+        # print("tmp_dict = ", tmp_dict)
+        # if len(tmp_dict)<2:
+        #     if initBool==False:
+        #         continue
+        #     print("Warning: a pair is skipped because of inavailability of data")
+        #     curIteration += 1
+        #     return
+        # tmp_views = colmap.create_views(cameras, tmp_dict, os.path.join(recondir,'images'), os.path.join(recondir,'stereo','depth_maps'))
+        # # print("tmp_views = ", tmp_views)
+        # tmp_views[0] = adjust_intrinsics(tmp_views[0], target_K, w, h,)
+        # tmp_views[1] = adjust_intrinsics(tmp_views[1], target_K, w, h,)
+        #
+        #
+        # view1 = tmp_views[0]
+        # view2 = tmp_views[1]
+        # # view1 = tmp_views[1]
+        # # view2 = tmp_views[0]
+
+        ###########################################################################################
+
         tmp_dict = {}
         for image_id, image in images.items():
             # print(image.name, "; ", image_name1, "; ", image_name2)
             if image.name == image_name1:
                 tmp_dict[image_id] = image
+
+        # tmp_dict = {image_id: image}
+        print("tmp_dict = ", tmp_dict)
+        if len(tmp_dict)<1:
+            continue
+        tmp_views = colmap.create_views(cameras, tmp_dict, os.path.join(recondir,'images'), os.path.join(recondir,'stereo','depth_maps'))
+        # print("tmp_views = ", tmp_views)
+        tmp_views[0] = adjust_intrinsics(tmp_views[0], target_K, w, h,)
+        view1 = tmp_views[0]
+
+        tmp_dict = {}
+        for image_id, image in images.items():
+            # print(image.name, "; ", image_name1, "; ", image_name2)
             if image.name == image_name2:
                 tmp_dict[image_id] = image
 
         # tmp_dict = {image_id: image}
         print("tmp_dict = ", tmp_dict)
-        if len(tmp_dict)<2:
-            if initBool==False:
-                continue
-            print("Warning: a pair is skipped because of inavailability of data")
-            curIteration += 1
-            return
+        if len(tmp_dict)<1:
+            continue
         tmp_views = colmap.create_views(cameras, tmp_dict, os.path.join(recondir,'images'), os.path.join(recondir,'stereo','depth_maps'))
         # print("tmp_views = ", tmp_views)
         tmp_views[0] = adjust_intrinsics(tmp_views[0], target_K, w, h,)
-        tmp_views[1] = adjust_intrinsics(tmp_views[1], target_K, w, h,)
+        view2 = tmp_views[0]
 
-
-        view1 = tmp_views[0]
-        view2 = tmp_views[1]
+        ###########################################################################################
 
         if image_pair12 in image_pairs:
             if initBool==False:
@@ -683,8 +720,8 @@ def visPointCloudInGlobalFrame(rendererNotUsed, alpha, infile, ExhaustivePairInf
                 scale_applied = 1
             if PoseSource=='GT':
                 # scale_applied = transScaleGT/transScaleColmap
-                scale_applied = 1/initColmapGTRatio
-                # scale_applied = 1/1.72921055    # fittedColmapGTRatio = 1.72921055
+                # scale_applied = 1/initColmapGTRatio
+                scale_applied = 1/1.72921055    # fittedColmapGTRatio = 1.72921055
             tmp_PointCloud1 = visualize_prediction(
                         inverse_depth=1/view1.depth,
                         intrinsics = np.array([0.89115971, 1.18821287, 0.5, 0.5]), # sun3d intrinsics

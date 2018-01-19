@@ -431,11 +431,19 @@ TheiaGlobalPosesGT = read_global_poses_theia_output(TheiaGlobalPosesfilepath,The
 # recondir = "/home/kevin/ThesisDATA/CVG_Datasets_3Dsymmetric/barcelona_Dataset/dense/"
 # recondir = "/home/kevin/ThesisDATA/CVG_Datasets_3Dsymmetric/redmond_Dataset/dense/"
 
-outdir = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction"
-infile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/View128ColmapFilter_demon_sun3d_train_hotel_beijing~beijing_hotel_2.h5"
-#ExhaustivePairInfile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/demon_sun3d_train_hotel_beijing~beijing_hotel_2.h5"
-ExhaustivePairInfile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/kevin_beijing_hotel_2_exhaustive_demon.h5"
-recondir = '/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/images_demon/dense/'
+# outdir = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction"
+# #infile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/View128ColmapFilter_demon_sun3d_train_hotel_beijing~beijing_hotel_2.h5"
+# #ExhaustivePairInfile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/demon_sun3d_train_hotel_beijing~beijing_hotel_2.h5"
+# infile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/kevin_beijing_hotel_2_exhaustive_demon.h5"
+# ExhaustivePairInfile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/kevin_beijing_hotel_2_exhaustive_demon.h5"
+# recondir = '/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/images_demon/dense/'
+
+outdir = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_mit_w85_lounge1~wg_lounge1_1/demon_prediction/images_demon/dense/1"
+# infile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_mit_w85_lounge1~wg_lounge1_1/demon_prediction/images_demon/dense/1/kevin_exhaustive_demon.h5"
+infile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_mit_w85_lounge1~wg_lounge1_1/demon_prediction/demon_sun3d_train_mit_w85_lounge1~wg_lounge1_1.h5"
+ExhaustivePairInfile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_mit_w85_lounge1~wg_lounge1_1/demon_prediction/images_demon/dense/1/kevin_exhaustive_demon.h5"
+recondir = '/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_mit_w85_lounge1~wg_lounge1_1/demon_prediction/images_demon/dense/1'
+
 
 cameras = colmap.read_cameras_txt(os.path.join(recondir,'sparse','cameras.txt'))
 images = colmap.read_images_txt(os.path.join(recondir,'sparse','images.txt'))
@@ -545,30 +553,65 @@ def visPointCloudInGlobalFrame(rendererNotUsed, alpha, infile, ExhaustivePairInf
         # #######
         image_pair21 = "{}---{}".format(image_name2, image_name1)
         # print(image_name1, "; ", image_name2)
+
+        # tmp_dict = {}
+        # for image_id, image in images.items():
+        #     # print(image.name, "; ", image_name1, "; ", image_name2)
+        #     if image.name == image_name1:
+        #         tmp_dict[image_id] = image
+        #     if image.name == image_name2:
+        #         tmp_dict[image_id] = image
+        #
+        # # tmp_dict = {image_id: image}
+        # print("tmp_dict = ", tmp_dict)
+        # if len(tmp_dict)<2:
+        #     if initBool==False:
+        #         continue
+        #     print("Warning: a pair is skipped because of inavailability of data")
+        #     curIteration += 1
+        #     return
+        # tmp_views = colmap.create_views(cameras, tmp_dict, os.path.join(recondir,'images'), os.path.join(recondir,'stereo','depth_maps'))
+        # # print("tmp_views = ", tmp_views)
+        # tmp_views[0] = adjust_intrinsics(tmp_views[0], target_K, w, h,)
+        # tmp_views[1] = adjust_intrinsics(tmp_views[1], target_K, w, h,)
+        #
+        #
+        # view1 = tmp_views[0]
+        # view2 = tmp_views[1]
+
+        ###########################################################################################
+
         tmp_dict = {}
         for image_id, image in images.items():
             # print(image.name, "; ", image_name1, "; ", image_name2)
             if image.name == image_name1:
                 tmp_dict[image_id] = image
+
+        # tmp_dict = {image_id: image}
+        print("tmp_dict = ", tmp_dict)
+        if len(tmp_dict)<1:
+            continue
+        tmp_views = colmap.create_views(cameras, tmp_dict, os.path.join(recondir,'images'), os.path.join(recondir,'stereo','depth_maps'))
+        # print("tmp_views = ", tmp_views)
+        tmp_views[0] = adjust_intrinsics(tmp_views[0], target_K, w, h,)
+        view1 = tmp_views[0]
+
+        tmp_dict = {}
+        for image_id, image in images.items():
+            # print(image.name, "; ", image_name1, "; ", image_name2)
             if image.name == image_name2:
                 tmp_dict[image_id] = image
 
         # tmp_dict = {image_id: image}
         print("tmp_dict = ", tmp_dict)
-        if len(tmp_dict)<2:
-            if initBool==False:
-                continue
-            print("Warning: a pair is skipped because of inavailability of data")
-            curIteration += 1
-            return
+        if len(tmp_dict)<1:
+            continue
         tmp_views = colmap.create_views(cameras, tmp_dict, os.path.join(recondir,'images'), os.path.join(recondir,'stereo','depth_maps'))
         # print("tmp_views = ", tmp_views)
         tmp_views[0] = adjust_intrinsics(tmp_views[0], target_K, w, h,)
-        tmp_views[1] = adjust_intrinsics(tmp_views[1], target_K, w, h,)
+        view2 = tmp_views[0]
 
-
-        view1 = tmp_views[0]
-        view2 = tmp_views[1]
+        ###########################################################################################
 
         if image_pair12 in image_pairs:
             if initBool==False:
@@ -961,25 +1004,62 @@ def findOne2MultiPairs(infile, ExhaustivePairInfile, data_format, target_K, w, h
         print(image_name1, "; ", image_name2)
         if image_pair21 not in data.keys():
             continue
+
+        # tmp_dict = {}
+        # for image_id, image in images.items():
+        #     # print(image.name, "; ", image_name1, "; ", image_name2)
+        #     if image.name == image_name1:
+        #         tmp_dict[image_id] = image
+        #     if image.name == image_name2:
+        #         tmp_dict[image_id] = image
+        #
+        # # tmp_dict = {image_id: image}
+        # print("tmp_dict = ", tmp_dict)
+        # if len(tmp_dict)<2:
+        #     print("Warning: a pair is skipped because of inavailability of data")
+        #     continue
+        # tmp_views = colmap.create_views(cameras, tmp_dict, os.path.join(recondir,'images'), os.path.join(recondir,'stereo','depth_maps'))
+        # tmp_views[0] = adjust_intrinsics(tmp_views[0], target_K, w, h,)
+        # tmp_views[1] = adjust_intrinsics(tmp_views[1], target_K, w, h,)
+        #
+        # view1 = tmp_views[0]
+        # view2 = tmp_views[1]
+        # # view1 = tmp_views[1]
+        # # view2 = tmp_views[0]
+
+        ###########################################################################################
+
         tmp_dict = {}
         for image_id, image in images.items():
             # print(image.name, "; ", image_name1, "; ", image_name2)
             if image.name == image_name1:
                 tmp_dict[image_id] = image
+
+        # tmp_dict = {image_id: image}
+        print("tmp_dict = ", tmp_dict)
+        if len(tmp_dict)<1:
+            continue
+        tmp_views = colmap.create_views(cameras, tmp_dict, os.path.join(recondir,'images'), os.path.join(recondir,'stereo','depth_maps'))
+        # print("tmp_views = ", tmp_views)
+        tmp_views[0] = adjust_intrinsics(tmp_views[0], target_K, w, h,)
+        view1 = tmp_views[0]
+
+        tmp_dict = {}
+        for image_id, image in images.items():
+            # print(image.name, "; ", image_name1, "; ", image_name2)
             if image.name == image_name2:
                 tmp_dict[image_id] = image
 
         # tmp_dict = {image_id: image}
         print("tmp_dict = ", tmp_dict)
-        if len(tmp_dict)<2:
-            print("Warning: a pair is skipped because of inavailability of data")
+        if len(tmp_dict)<1:
             continue
         tmp_views = colmap.create_views(cameras, tmp_dict, os.path.join(recondir,'images'), os.path.join(recondir,'stereo','depth_maps'))
+        # print("tmp_views = ", tmp_views)
         tmp_views[0] = adjust_intrinsics(tmp_views[0], target_K, w, h,)
-        tmp_views[1] = adjust_intrinsics(tmp_views[1], target_K, w, h,)
+        view2 = tmp_views[0]
 
-        view1 = tmp_views[0]
-        view2 = tmp_views[1]
+        ###########################################################################################
 
         # print("view1 = ", view1)
         image_pairs_One2Multi.add(image_pair12)
@@ -1059,39 +1139,226 @@ def findOne2MultiPairs(infile, ExhaustivePairInfile, data_format, target_K, w, h
     print("number of image pairs retrieved = ", len(One2MultiImagePairs_GT))
     print("number of image pairs retrieved = ", len(One2MultiImagePairs_DeMoN))
 
-    if False:
-        plt.figure()
-        plt.subplot(241) # equivalent to: plt.subplot(2, 2, 1)
-        plt.imshow(view1.image)
-        plt.title('RGB Image 1')
-        plt.subplot(242) # equivalent to: plt.subplot(2, 2, 1)
-        plt.imshow(1/view1.depth, cmap='Greys')
-        plt.title('SUN3D Ground Truth Depth Image 1')
-        plt.subplot(243)
-        plt.imshow(result['predict_depth0'].squeeze(), cmap='Greys')
-        plt.title('SUN3D DeMoN Depth Image 1')
-        plt.subplot(244) # equivalent to: plt.subplot(2, 2, 1)
-        plt.imshow(view1Colmap.depth, cmap='Greys')
-        plt.title('SUN3D Colmap Depth Image 1')
-        plt.subplot(245) # equivalent to: plt.subplot(2, 2, 1)
-        plt.imshow(view2.image)
-        plt.title('RGB Image 2')
-        plt.subplot(246) # equivalent to: plt.subplot(2, 2, 1)
-        plt.imshow(1/view2.depth, cmap='Greys')
-        plt.title('SUN3D Ground Truth Depth Image 2')
-        plt.subplot(247)
-        plt.imshow(result21['predict_depth0'].squeeze(), cmap='Greys')
-        plt.title('SUN3D DeMoN Depth Image 2')
-        plt.subplot(248) # equivalent to: plt.subplot(2, 2, 1)
-        plt.imshow(view2Colmap.depth, cmap='Greys')
-        plt.title('SUN3D Colmap Depth Image 2')
-        plt.show()
+    if True:
+        if len(image_pairs_One2Multi) >= 5:
+            plt.figure()
+
+            plt.subplot(4,5,1) # equivalent to: plt.subplot(2, 2, 1)
+            plt.imshow(One2MultiImagePairs_DeMoN[list(image_pairs_One2Multi)[0]].image1)
+            plt.title('RGB Image 1')
+            plt.subplot(4,5,11) # equivalent to: plt.subplot(2, 2, 1)
+            plt.imshow(One2MultiImagePairs_DeMoN[list(image_pairs_One2Multi)[0]].image2)
+            plt.title('RGB Image 2')
+            plt.subplot(4,5,6)
+            plt.imshow(One2MultiImagePairs_DeMoN[list(image_pairs_One2Multi)[0]].depth1, cmap='Greys')
+            plt.title('DeMoN Depth Image 1')
+            plt.subplot(4,5,16)
+            plt.imshow(One2MultiImagePairs_DeMoN[list(image_pairs_One2Multi)[0]].depth2, cmap='Greys')
+            plt.title('DeMoN Depth Image 2')
+
+            plt.subplot(4,5,2) # equivalent to: plt.subplot(2, 2, 1)
+            plt.imshow(One2MultiImagePairs_DeMoN[list(image_pairs_One2Multi)[1]].image1)
+            plt.title('RGB Image 1')
+            plt.subplot(4,5,12) # equivalent to: plt.subplot(2, 2, 1)
+            plt.imshow(One2MultiImagePairs_DeMoN[list(image_pairs_One2Multi)[1]].image2)
+            plt.title('RGB Image 3')
+            plt.subplot(4,5,7)
+            plt.imshow(One2MultiImagePairs_DeMoN[list(image_pairs_One2Multi)[1]].depth1, cmap='Greys')
+            plt.title('DeMoN Depth Image 1')
+            plt.subplot(4,5,17)
+            plt.imshow(One2MultiImagePairs_DeMoN[list(image_pairs_One2Multi)[1]].depth2, cmap='Greys')
+            plt.title('DeMoN Depth Image 2')
+
+            plt.subplot(4,5,3) # equivalent to: plt.subplot(2, 2, 1)
+            plt.imshow(One2MultiImagePairs_DeMoN[list(image_pairs_One2Multi)[2]].image1)
+            plt.title('RGB Image 1')
+            plt.subplot(4,5,13) # equivalent to: plt.subplot(2, 2, 1)
+            plt.imshow(One2MultiImagePairs_DeMoN[list(image_pairs_One2Multi)[2]].image2)
+            plt.title('RGB Image 4')
+            plt.subplot(4,5,8)
+            plt.imshow(One2MultiImagePairs_DeMoN[list(image_pairs_One2Multi)[2]].depth1, cmap='Greys')
+            plt.title('DeMoN Depth Image 1')
+            plt.subplot(4,5,18)
+            plt.imshow(One2MultiImagePairs_DeMoN[list(image_pairs_One2Multi)[2]].depth2, cmap='Greys')
+            plt.title('DeMoN Depth Image 2')
+
+            plt.subplot(4,5,4) # equivalent to: plt.subplot(2, 2, 1)
+            plt.imshow(One2MultiImagePairs_DeMoN[list(image_pairs_One2Multi)[3]].image1)
+            plt.title('RGB Image 1')
+            plt.subplot(4,5,14) # equivalent to: plt.subplot(2, 2, 1)
+            plt.imshow(One2MultiImagePairs_DeMoN[list(image_pairs_One2Multi)[3]].image2)
+            plt.title('RGB Image 5')
+            plt.subplot(4,5,9)
+            plt.imshow(One2MultiImagePairs_DeMoN[list(image_pairs_One2Multi)[3]].depth1, cmap='Greys')
+            plt.title('DeMoN Depth Image 1')
+            plt.subplot(4,5,19)
+            plt.imshow(One2MultiImagePairs_DeMoN[list(image_pairs_One2Multi)[3]].depth2, cmap='Greys')
+            plt.title('DeMoN Depth Image 2')
+
+            plt.subplot(4,5,5) # equivalent to: plt.subplot(2, 2, 1)
+            plt.imshow(One2MultiImagePairs_DeMoN[list(image_pairs_One2Multi)[4]].image1)
+            plt.title('RGB Image 1')
+            plt.subplot(4,5,15) # equivalent to: plt.subplot(2, 2, 1)
+            plt.imshow(One2MultiImagePairs_DeMoN[list(image_pairs_One2Multi)[4]].image2)
+            plt.title('RGB Image 6')
+            plt.subplot(4,5,10)
+            plt.imshow(One2MultiImagePairs_DeMoN[list(image_pairs_One2Multi)[4]].depth1, cmap='Greys')
+            plt.title('DeMoN Depth Image 1')
+            plt.subplot(4,5,20)
+            plt.imshow(One2MultiImagePairs_DeMoN[list(image_pairs_One2Multi)[4]].depth2, cmap='Greys')
+            plt.title('DeMoN Depth Image 2')
+
+            plt.show()
+
+
+            plt.figure()
+
+            plt.subplot(4,5,1) # equivalent to: plt.subplot(2, 2, 1)
+            plt.imshow(One2MultiImagePairs_GT[list(image_pairs_One2Multi)[0]].image1)
+            plt.title('RGB Image 1')
+            plt.subplot(4,5,11) # equivalent to: plt.subplot(2, 2, 1)
+            plt.imshow(One2MultiImagePairs_GT[list(image_pairs_One2Multi)[0]].image2)
+            plt.title('RGB Image 2')
+            plt.subplot(4,5,6)
+            plt.imshow(One2MultiImagePairs_GT[list(image_pairs_One2Multi)[0]].depth1, cmap='Greys')
+            plt.title('GT Depth Image 1')
+            plt.subplot(4,5,16)
+            plt.imshow(One2MultiImagePairs_GT[list(image_pairs_One2Multi)[0]].depth2, cmap='Greys')
+            plt.title('GT Depth Image 2')
+
+            plt.subplot(4,5,2) # equivalent to: plt.subplot(2, 2, 1)
+            plt.imshow(One2MultiImagePairs_GT[list(image_pairs_One2Multi)[1]].image1)
+            plt.title('RGB Image 1')
+            plt.subplot(4,5,12) # equivalent to: plt.subplot(2, 2, 1)
+            plt.imshow(One2MultiImagePairs_GT[list(image_pairs_One2Multi)[1]].image2)
+            plt.title('RGB Image 3')
+            plt.subplot(4,5,7)
+            plt.imshow(One2MultiImagePairs_GT[list(image_pairs_One2Multi)[1]].depth1, cmap='Greys')
+            plt.title('GT Depth Image 1')
+            plt.subplot(4,5,17)
+            plt.imshow(One2MultiImagePairs_GT[list(image_pairs_One2Multi)[1]].depth2, cmap='Greys')
+            plt.title('GT Depth Image 2')
+
+            plt.subplot(4,5,3) # equivalent to: plt.subplot(2, 2, 1)
+            plt.imshow(One2MultiImagePairs_GT[list(image_pairs_One2Multi)[2]].image1)
+            plt.title('RGB Image 1')
+            plt.subplot(4,5,13) # equivalent to: plt.subplot(2, 2, 1)
+            plt.imshow(One2MultiImagePairs_GT[list(image_pairs_One2Multi)[2]].image2)
+            plt.title('RGB Image 4')
+            plt.subplot(4,5,8)
+            plt.imshow(One2MultiImagePairs_GT[list(image_pairs_One2Multi)[2]].depth1, cmap='Greys')
+            plt.title('GT Depth Image 1')
+            plt.subplot(4,5,18)
+            plt.imshow(One2MultiImagePairs_GT[list(image_pairs_One2Multi)[2]].depth2, cmap='Greys')
+            plt.title('GT Depth Image 2')
+
+            plt.subplot(4,5,4) # equivalent to: plt.subplot(2, 2, 1)
+            plt.imshow(One2MultiImagePairs_GT[list(image_pairs_One2Multi)[3]].image1)
+            plt.title('RGB Image 1')
+            plt.subplot(4,5,14) # equivalent to: plt.subplot(2, 2, 1)
+            plt.imshow(One2MultiImagePairs_GT[list(image_pairs_One2Multi)[3]].image2)
+            plt.title('RGB Image 5')
+            plt.subplot(4,5,9)
+            plt.imshow(One2MultiImagePairs_GT[list(image_pairs_One2Multi)[3]].depth1, cmap='Greys')
+            plt.title('GT Depth Image 1')
+            plt.subplot(4,5,19)
+            plt.imshow(One2MultiImagePairs_GT[list(image_pairs_One2Multi)[3]].depth2, cmap='Greys')
+            plt.title('GT Depth Image 2')
+
+            plt.subplot(4,5,5) # equivalent to: plt.subplot(2, 2, 1)
+            plt.imshow(One2MultiImagePairs_GT[list(image_pairs_One2Multi)[4]].image1)
+            plt.title('RGB Image 1')
+            plt.subplot(4,5,15) # equivalent to: plt.subplot(2, 2, 1)
+            plt.imshow(One2MultiImagePairs_GT[list(image_pairs_One2Multi)[4]].image2)
+            plt.title('RGB Image 6')
+            plt.subplot(4,5,10)
+            plt.imshow(One2MultiImagePairs_GT[list(image_pairs_One2Multi)[4]].depth1, cmap='Greys')
+            plt.title('GT Depth Image 1')
+            plt.subplot(4,5,20)
+            plt.imshow(One2MultiImagePairs_GT[list(image_pairs_One2Multi)[4]].depth2, cmap='Greys')
+            plt.title('GT Depth Image 2')
+
+            plt.show()
+
+            plt.figure()
+
+            plt.subplot(4,5,1) # equivalent to: plt.subplot(2, 2, 1)
+            plt.imshow(One2MultiImagePairs_Colmap[list(image_pairs_One2Multi)[0]].image1)
+            plt.title('RGB Image 1')
+            plt.subplot(4,5,11) # equivalent to: plt.subplot(2, 2, 1)
+            plt.imshow(One2MultiImagePairs_Colmap[list(image_pairs_One2Multi)[0]].image2)
+            plt.title('RGB Image 2')
+            plt.subplot(4,5,6)
+            plt.imshow(One2MultiImagePairs_Colmap[list(image_pairs_One2Multi)[0]].depth1, cmap='Greys')
+            plt.title('Colmap Depth Image 1')
+            plt.subplot(4,5,16)
+            plt.imshow(One2MultiImagePairs_Colmap[list(image_pairs_One2Multi)[0]].depth2, cmap='Greys')
+            plt.title('Colmap Depth Image 2')
+
+            plt.subplot(4,5,2) # equivalent to: plt.subplot(2, 2, 1)
+            plt.imshow(One2MultiImagePairs_Colmap[list(image_pairs_One2Multi)[1]].image1)
+            plt.title('RGB Image 1')
+            plt.subplot(4,5,12) # equivalent to: plt.subplot(2, 2, 1)
+            plt.imshow(One2MultiImagePairs_Colmap[list(image_pairs_One2Multi)[1]].image2)
+            plt.title('RGB Image 3')
+            plt.subplot(4,5,7)
+            plt.imshow(One2MultiImagePairs_Colmap[list(image_pairs_One2Multi)[1]].depth1, cmap='Greys')
+            plt.title('Colmap Depth Image 1')
+            plt.subplot(4,5,17)
+            plt.imshow(One2MultiImagePairs_Colmap[list(image_pairs_One2Multi)[1]].depth2, cmap='Greys')
+            plt.title('Colmap Depth Image 2')
+
+            plt.subplot(4,5,3) # equivalent to: plt.subplot(2, 2, 1)
+            plt.imshow(One2MultiImagePairs_Colmap[list(image_pairs_One2Multi)[2]].image1)
+            plt.title('RGB Image 1')
+            plt.subplot(4,5,13) # equivalent to: plt.subplot(2, 2, 1)
+            plt.imshow(One2MultiImagePairs_Colmap[list(image_pairs_One2Multi)[2]].image2)
+            plt.title('RGB Image 4')
+            plt.subplot(4,5,8)
+            plt.imshow(One2MultiImagePairs_Colmap[list(image_pairs_One2Multi)[2]].depth1, cmap='Greys')
+            plt.title('Colmap Depth Image 1')
+            plt.subplot(4,5,18)
+            plt.imshow(One2MultiImagePairs_Colmap[list(image_pairs_One2Multi)[2]].depth2, cmap='Greys')
+            plt.title('Colmap Depth Image 2')
+
+            plt.subplot(4,5,4) # equivalent to: plt.subplot(2, 2, 1)
+            plt.imshow(One2MultiImagePairs_Colmap[list(image_pairs_One2Multi)[3]].image1)
+            plt.title('RGB Image 1')
+            plt.subplot(4,5,14) # equivalent to: plt.subplot(2, 2, 1)
+            plt.imshow(One2MultiImagePairs_Colmap[list(image_pairs_One2Multi)[3]].image2)
+            plt.title('RGB Image 5')
+            plt.subplot(4,5,9)
+            plt.imshow(One2MultiImagePairs_Colmap[list(image_pairs_One2Multi)[3]].depth1, cmap='Greys')
+            plt.title('Colmap Depth Image 1')
+            plt.subplot(4,5,19)
+            plt.imshow(One2MultiImagePairs_Colmap[list(image_pairs_One2Multi)[3]].depth2, cmap='Greys')
+            plt.title('Colmap Depth Image 2')
+
+            plt.subplot(4,5,5) # equivalent to: plt.subplot(2, 2, 1)
+            plt.imshow(One2MultiImagePairs_Colmap[list(image_pairs_One2Multi)[4]].image1)
+            plt.title('RGB Image 1')
+            plt.subplot(4,5,15) # equivalent to: plt.subplot(2, 2, 1)
+            plt.imshow(One2MultiImagePairs_Colmap[list(image_pairs_One2Multi)[4]].image2)
+            plt.title('RGB Image 6')
+            plt.subplot(4,5,10)
+            plt.imshow(One2MultiImagePairs_Colmap[list(image_pairs_One2Multi)[4]].depth1, cmap='Greys')
+            plt.title('Colmap Depth Image 1')
+            plt.subplot(4,5,20)
+            plt.imshow(One2MultiImagePairs_Colmap[list(image_pairs_One2Multi)[4]].depth2, cmap='Greys')
+            plt.title('Colmap Depth Image 2')
+
+            plt.show()
+
+    return One2MultiImagePairs_DeMoN, One2MultiImagePairs_GT, One2MultiImagePairs_Colmap
 
 def main():
     global initColmapGTRatio, appendFilterPC, appendFilterModel, alpha, tmpFittingCoef_Colmap_GT, scaleRecordMat, image_pairs, TheiaOrColmapOrGTPoses, DeMoNOrColmapOrGTDepths, sliderMin, sliderMax, interactor, renderer, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT
     print("alpha is set to ", alpha)
+    # tarImageFileName = 'hotel_beijing~beijing_hotel_2-0000126_baseline_1_v0.JPG'
+    # tarImageFileName = 'mit_w85_lounge1~wg_lounge1_1-0000082_baseline_3_v1.JPG'
+    tarImageFileName = 'mit_w85_lounge1~wg_lounge1_1-0000055_baseline_2_v1.JPG'
 
-    findOne2MultiPairs(ExhaustivePairInfile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, 'hotel_beijing~beijing_hotel_2-0000126_baseline_1_v0.JPG')
+    findOne2MultiPairs(infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, tarImageFileName)
 
     # visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, PoseSource=TheiaOrColmapOrGTPoses, DepthSource=DeMoNOrColmapOrGTDepths, initBool=True, setColmapGTRatio=True)
     #

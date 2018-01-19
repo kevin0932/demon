@@ -182,16 +182,31 @@ img2 = view2.image
 # print("depth = ", curView.depth)
 
 ########### Retrieve Colmap Depth Data
-tmp_dict={}
+# tmp_dict={}
 tmpName1 = SUN3D_datasetname.split('.')
 image_name1_inColmap = tmpName1[0]+'~'+tmpName1[1]+'_baseline_2_v0.JPG'
 tmpName2 = SUN3D_datasetname.split('.')
 image_name2_inColmap = tmpName2[0]+'~'+tmpName2[1]+'_baseline_2_v1.JPG'
 print(image_name1_inColmap, "; ", image_name2_inColmap)
+tmp_dict={}
 for image_id, image in imagesColmap.items():
     # print(image.name, "; ", image_name1, "; ", image_name2)
     if image.name == image_name1_inColmap:
         tmp_dict[image_id] = image
+
+print("tmp_dict = ", tmp_dict)
+# if len(tmp_dict)<2:
+#     continue
+tmp_views = colmap.create_views(camerasColmap, tmp_dict, os.path.join(recondir,'images'), os.path.join(recondir,'stereo','depth_maps'))
+# print("tmp_views = ", tmp_views)
+tmp_views[0] = adjust_intrinsics(tmp_views[0], target_K, w, h,)
+
+depth1Colmap = tmp_views[0].depth
+# view1Colmap = tmp_views[0]
+
+tmp_dict={}
+for image_id, image in imagesColmap.items():
+    # print(image.name, "; ", image_name1, "; ", image_name2)
     if image.name == image_name2_inColmap:
         tmp_dict[image_id] = image
 
@@ -201,11 +216,10 @@ print("tmp_dict = ", tmp_dict)
 tmp_views = colmap.create_views(camerasColmap, tmp_dict, os.path.join(recondir,'images'), os.path.join(recondir,'stereo','depth_maps'))
 # print("tmp_views = ", tmp_views)
 tmp_views[0] = adjust_intrinsics(tmp_views[0], target_K, w, h,)
-tmp_views[1] = adjust_intrinsics(tmp_views[1], target_K, w, h,)
 
+depth2Colmap = tmp_views[0].depth
+# view2Colmap = tmp_views[0]
 
-depth1Colmap = tmp_views[0].depth
-depth2Colmap = tmp_views[1].depth
 # ##################################################################
 
 
