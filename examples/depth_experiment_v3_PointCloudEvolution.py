@@ -920,12 +920,13 @@ def visPointCloudInGlobalFrame(rendererNotUsed, alpha, infile, ExhaustivePairInf
     appendFilterModel.AddInputData(appendFilterPC.GetOutput())
     appendFilterModel.Update()
 
-    plywriterModel = vtk.vtkPLYWriter()
-    plywriterModel.SetFileName(os.path.join(outdir,'fused_point_clouds_colmap_alpha{0}_iteration{1}_.ply'.format(int(alpha*10000), int(curIteration))))
-    plywriterModel.SetInputData(appendFilterModel.GetOutput())
-    # plywriterModel.SetFileTypeToASCII()
-    plywriterModel.SetArrayName('Colors')
-    plywriterModel.Write()
+    if curIteration % 5 == 0:
+        plywriterModel = vtk.vtkPLYWriter()
+        plywriterModel.SetFileName(os.path.join(outdir,'fused_point_clouds_colmap_alpha{0}_iteration{1}_.ply'.format(int(alpha*10000), int(curIteration))))
+        plywriterModel.SetInputData(appendFilterModel.GetOutput())
+        # plywriterModel.SetFileTypeToASCII()
+        plywriterModel.SetArrayName('Colors')
+        plywriterModel.Write()
 
     axes = vtk.vtkAxesActor()
     axes.GetXAxisCaptionActor2D().SetHeight(0.05)
@@ -950,19 +951,19 @@ def close_window(iren):
 
 sliderMin = 0 #ImageViewer.GetSliceMin()
 sliderMax = 20 #ImageViewer.GetSliceMax()
-# TheiaOrColmapOrGTPoses='Colmap'
+TheiaOrColmapOrGTPoses='Colmap'
 # TheiaOrColmapOrGTPoses='Theia'
-TheiaOrColmapOrGTPoses='GT'
+# TheiaOrColmapOrGTPoses='GT'
 # DeMoNOrColmapOrGTDepths='DeMoN'
-DeMoNOrColmapOrGTDepths='Colmap'
-# DeMoNOrColmapOrGTDepths='GT'
+# DeMoNOrColmapOrGTDepths='Colmap'
+DeMoNOrColmapOrGTDepths='GT'
 
 
 renderer = vtk.vtkRenderer()
 renderer.SetBackground(0, 0, 0)
 interactor = vtk.vtkRenderWindowInteractor()
 
-curIteration = 10
+curIteration = 0
 image_pairs = set()
 # scaleRecordMat = []
 scaleRecordMat = np.empty((1,4))

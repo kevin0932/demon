@@ -881,7 +881,7 @@ def visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, da
         plt.grid(True)
         plt.axis('equal')
         plt.show()
-    if True:
+    if False:
         plt.scatter(scaleRecordMat[:,0],scaleRecordMat[:,2])
         # plt.scatter(1/scaleRecordMat[:,0],scaleRecordMat[:,2])
         plt.ylabel('scales calculated from Colmap')
@@ -890,21 +890,21 @@ def visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, da
         plt.grid(True)
         plt.axis('equal')
         plt.show()
-    if True:
+    if False:
         plt.scatter(scaleRecordMat[:,0],scaleRecordMat[:,3])
         plt.ylabel('scales calculated from SUN3D Ground Truth')
         plt.xlabel('scales predicted by DeMoN')
         plt.grid(True)
         plt.axis('equal')
         plt.show()
-    if True:
+    if False:
         plt.scatter(scaleRecordMat[:,2],scaleRecordMat[:,3])
         plt.ylabel('scales calculated from SUN3D Ground Truth')
         plt.xlabel('scales calculated from Colmap')
         plt.grid(True)
         plt.axis('equal')
         plt.show()
-    if True:
+    if False:
         x = np.linspace(np.min(scaleRecordMat[:,3]), np.max(scaleRecordMat[:,3]), 1000)
         # dashes = [10, 5, 100, 5]  # 10 points on, 5 off, 100 on, 5 off
         y = 1.72921055*x+0.02395182
@@ -983,11 +983,11 @@ def close_window(iren):
 
 sliderMin = 0 #ImageViewer.GetSliceMin()
 sliderMax = 20 #ImageViewer.GetSliceMax()
-TheiaOrColmapOrGTPoses='Colmap'
+# TheiaOrColmapOrGTPoses='Colmap'
 # TheiaOrColmapOrGTPoses='Theia'
-# TheiaOrColmapOrGTPoses='GT'
-DeMoNOrColmapOrGTDepths='DeMoN'
-# DeMoNOrColmapOrGTDepths='Colmap'
+TheiaOrColmapOrGTPoses='GT'
+# DeMoNOrColmapOrGTDepths='DeMoN'
+DeMoNOrColmapOrGTDepths='Colmap'
 # DeMoNOrColmapOrGTDepths='GT'
 
 def main():

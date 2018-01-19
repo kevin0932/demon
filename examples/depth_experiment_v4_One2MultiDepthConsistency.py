@@ -431,18 +431,19 @@ TheiaGlobalPosesGT = read_global_poses_theia_output(TheiaGlobalPosesfilepath,The
 # recondir = "/home/kevin/ThesisDATA/CVG_Datasets_3Dsymmetric/barcelona_Dataset/dense/"
 # recondir = "/home/kevin/ThesisDATA/CVG_Datasets_3Dsymmetric/redmond_Dataset/dense/"
 
-# outdir = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction"
-# #infile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/View128ColmapFilter_demon_sun3d_train_hotel_beijing~beijing_hotel_2.h5"
-# #ExhaustivePairInfile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/demon_sun3d_train_hotel_beijing~beijing_hotel_2.h5"
-# infile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/kevin_beijing_hotel_2_exhaustive_demon.h5"
-# ExhaustivePairInfile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/kevin_beijing_hotel_2_exhaustive_demon.h5"
-# recondir = '/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/images_demon/dense/'
+outdir = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction"
+# infile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/View128ColmapFilter_demon_sun3d_train_hotel_beijing~beijing_hotel_2.h5"
+# ExhaustivePairInfile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/demon_sun3d_train_hotel_beijing~beijing_hotel_2.h5"
+# infile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/demon_sun3d_train_hotel_beijing~beijing_hotel_2.h5"
+infile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/kevin_southbuilding_demon.h5"
+ExhaustivePairInfile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/kevin_southbuilding_demon.h5"
+recondir = '/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/images_demon/dense/'
 
-outdir = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_mit_w85_lounge1~wg_lounge1_1/demon_prediction/images_demon/dense/1"
-# infile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_mit_w85_lounge1~wg_lounge1_1/demon_prediction/images_demon/dense/1/kevin_exhaustive_demon.h5"
-infile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_mit_w85_lounge1~wg_lounge1_1/demon_prediction/demon_sun3d_train_mit_w85_lounge1~wg_lounge1_1.h5"
-ExhaustivePairInfile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_mit_w85_lounge1~wg_lounge1_1/demon_prediction/images_demon/dense/1/kevin_exhaustive_demon.h5"
-recondir = '/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_mit_w85_lounge1~wg_lounge1_1/demon_prediction/images_demon/dense/1'
+# outdir = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_mit_w85_lounge1~wg_lounge1_1/demon_prediction/images_demon/dense/1"
+# # infile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_mit_w85_lounge1~wg_lounge1_1/demon_prediction/images_demon/dense/1/kevin_exhaustive_demon.h5"
+# infile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_mit_w85_lounge1~wg_lounge1_1/demon_prediction/demon_sun3d_train_mit_w85_lounge1~wg_lounge1_1.h5"
+# ExhaustivePairInfile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_mit_w85_lounge1~wg_lounge1_1/demon_prediction/images_demon/dense/1/kevin_exhaustive_demon.h5"
+# recondir = '/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_mit_w85_lounge1~wg_lounge1_1/demon_prediction/images_demon/dense/1'
 
 
 cameras = colmap.read_cameras_txt(os.path.join(recondir,'sparse','cameras.txt'))
@@ -483,8 +484,7 @@ def get_tf_data_format():
 data_format = get_tf_data_format()
 
 
-def visPointCloudInGlobalFrame(rendererNotUsed, alpha, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, PoseSource='Theia', DepthSource='DeMoN', initBool=True, setColmapGTRatio=False):
-#def visPointCloudInGlobalFrame(NULLrenderer, alpha, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, initBool=False):
+def visOne2MultiPointCloudInGlobalFrame(rendererNotUsed, alpha, image_pairs_One2Multi, One2MultiImagePairs_DeMoN, One2MultiImagePairs_GT, One2MultiImagePairs_Colmap, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, PoseSource='Theia', DepthSource='DeMoN', initBool=True, setColmapGTRatio=False):
     global initColmapGTRatio, renderer, appendFilterPC, appendFilterModel, curIteration, image_pairs, scaleRecordMat, tmpFittingCoef_Colmap_GT
     data = h5py.File(infile)
     dataExhaustivePairs = h5py.File(ExhaustivePairInfile)
@@ -524,7 +524,6 @@ def visPointCloudInGlobalFrame(rendererNotUsed, alpha, infile, ExhaustivePairInf
     # appendFilterPC = vtk.vtkAppendPolyData()
     # appendFilterModel = vtk.vtkAppendPolyData()
 
-# def visPointCloudInGlobalFrame(data, dataExhaustivePairs, data_format, renderer, appendFilterPC, appendFilterModel):
     # image_pairs = set()
     # it = 0
     it = curIteration
@@ -534,84 +533,17 @@ def visPointCloudInGlobalFrame(rendererNotUsed, alpha, infile, ExhaustivePairInf
     candidate_pool = []
     if initBool==False:
         for i in range(it):
-            candidate_pool.append(list(data.keys())[i])
+            candidate_pool.append(list(One2MultiImagePairs_DeMoN.keys())[i])
         print("recalculate all trajectory after adjusting alpha; the length of candidate_pool is ", len(candidate_pool))
     else:
-        candidate_pool.append(list(data.keys())[it])
-    # image_pair12 = list(data.keys())[it]
-    # for image_pair12 in list(data.keys())[it]:
+        candidate_pool.append(list(One2MultiImagePairs_DeMoN.keys())[it])
+
     for image_pair12 in candidate_pool:
-    # if True:
         print("Processing", image_pair12)
 
         image_name1, image_name2 = image_pair12.split("---")
-        # ####### Added for dealing with inconsistent image names stored in .h5 pair-names! Should be commented out when using updated consistent codes
-        # tempN = image_name1.split('.')
-        # image_name1 = tempN[0]+'~'+tempN[1]+'.JPG'
-        # tempN = image_name2.split('.')
-        # image_name2 = tempN[0]+'~'+tempN[1]+'.JPG'
-        # #######
         image_pair21 = "{}---{}".format(image_name2, image_name1)
         # print(image_name1, "; ", image_name2)
-
-        # tmp_dict = {}
-        # for image_id, image in images.items():
-        #     # print(image.name, "; ", image_name1, "; ", image_name2)
-        #     if image.name == image_name1:
-        #         tmp_dict[image_id] = image
-        #     if image.name == image_name2:
-        #         tmp_dict[image_id] = image
-        #
-        # # tmp_dict = {image_id: image}
-        # print("tmp_dict = ", tmp_dict)
-        # if len(tmp_dict)<2:
-        #     if initBool==False:
-        #         continue
-        #     print("Warning: a pair is skipped because of inavailability of data")
-        #     curIteration += 1
-        #     return
-        # tmp_views = colmap.create_views(cameras, tmp_dict, os.path.join(recondir,'images'), os.path.join(recondir,'stereo','depth_maps'))
-        # # print("tmp_views = ", tmp_views)
-        # tmp_views[0] = adjust_intrinsics(tmp_views[0], target_K, w, h,)
-        # tmp_views[1] = adjust_intrinsics(tmp_views[1], target_K, w, h,)
-        #
-        #
-        # view1 = tmp_views[0]
-        # view2 = tmp_views[1]
-
-        ###########################################################################################
-
-        tmp_dict = {}
-        for image_id, image in images.items():
-            # print(image.name, "; ", image_name1, "; ", image_name2)
-            if image.name == image_name1:
-                tmp_dict[image_id] = image
-
-        # tmp_dict = {image_id: image}
-        print("tmp_dict = ", tmp_dict)
-        if len(tmp_dict)<1:
-            continue
-        tmp_views = colmap.create_views(cameras, tmp_dict, os.path.join(recondir,'images'), os.path.join(recondir,'stereo','depth_maps'))
-        # print("tmp_views = ", tmp_views)
-        tmp_views[0] = adjust_intrinsics(tmp_views[0], target_K, w, h,)
-        view1 = tmp_views[0]
-
-        tmp_dict = {}
-        for image_id, image in images.items():
-            # print(image.name, "; ", image_name1, "; ", image_name2)
-            if image.name == image_name2:
-                tmp_dict[image_id] = image
-
-        # tmp_dict = {image_id: image}
-        print("tmp_dict = ", tmp_dict)
-        if len(tmp_dict)<1:
-            continue
-        tmp_views = colmap.create_views(cameras, tmp_dict, os.path.join(recondir,'images'), os.path.join(recondir,'stereo','depth_maps'))
-        # print("tmp_views = ", tmp_views)
-        tmp_views[0] = adjust_intrinsics(tmp_views[0], target_K, w, h,)
-        view2 = tmp_views[0]
-
-        ###########################################################################################
 
         if image_pair12 in image_pairs:
             if initBool==False:
@@ -624,63 +556,12 @@ def visPointCloudInGlobalFrame(rendererNotUsed, alpha, infile, ExhaustivePairInf
         image_pairs.add(image_pair12)
         # image_pairs.add(image_pair21)
 
-        ###### Retrieve Theia Global poses for image 1 and 2
-        TheiaExtrinsics1_4by4 = np.eye(4)
-        TheiaExtrinsics2_4by4 = np.eye(4)
-        for ids,val in TheiaGlobalPosesGT.items():
-            if val.name == image_name1:
-                TheiaExtrinsics1_4by4[0:3,0:3] = val.rotmat
-                TheiaExtrinsics1_4by4[0:3,3] = -np.dot(val.rotmat, val.tvec) # theia output camera position in world frame instead of extrinsic t
-            if val.name == image_name2:
-                TheiaExtrinsics2_4by4[0:3,0:3] = val.rotmat
-                TheiaExtrinsics2_4by4[0:3,3] = -np.dot(val.rotmat, val.tvec) # theia output camera position in world frame instead of extrinsic t
-
-        # # a colormap and a normalization instance
-        # cmap = plt.cm.jet
-        # # plt.imshow(data[image_pair12]["depth_upsampled"], cmap='Greys')
-        # plt.imshow(view1.depth, cmap='Greys')
-        ColmapExtrinsics1_4by4 = np.eye(4)
-        ColmapExtrinsics1_4by4[0:3,0:3] = view1.R
-        ColmapExtrinsics1_4by4[0:3,3] = view1.t# -np.dot(val.rotmat, val.tvec) # theia output camera position in world frame instead of extrinsic t
-
-        ColmapExtrinsics2_4by4 = np.eye(4)
-        ColmapExtrinsics2_4by4[0:3,0:3] = view2.R
-        ColmapExtrinsics2_4by4[0:3,3] = view2.t # -np.dot(val.rotmat, val.tvec) # theia output camera position in world frame instead of extrinsic t
-
-        ###### Retrieve Ground Truth Global poses for image 1 and 2
-        BaselineRange1 = image_name1[-8:-7]
-        tmpName1 = image_name1[:-18].split('~')
-        name1InSUN3D_H5 = tmpName1[0]+'.'+tmpName1[1]
-        vId1 = image_name1[-6:-4]
-        # print(BaselineRange1, name1InSUN3D_H5, vId1)
-        name1InSUN3D_H5 = name1InSUN3D_H5+'/frames/t0/' +vId1
-        # print(name1InSUN3D_H5)
-        # print(inputSUN3D_trainFilePaths[0])
-        dataGT1 = h5py.File(inputSUN3D_trainFilePaths[int(BaselineRange1)])
-        GTExtrinsics1_4by4 = np.eye(4)
-        K1GT, GTExtrinsics1_4by4[0:3,0:3], GTExtrinsics1_4by4[0:3,3] = read_camera_params(dataGT1[name1InSUN3D_H5]['camera'])
-        tmp_view1 = read_view(dataGT1[name1InSUN3D_H5])
-        view1GT = adjust_intrinsics(tmp_view1, target_K, w, h,)
-
-        BaselineRange2 = image_name2[-8:-7]
-        tmpName2 = image_name2[:-18].split('~')
-        name2InSUN3D_H5 = tmpName2[0]+'.'+tmpName2[1]
-        vId2 = image_name2[-6:-4]
-        print(BaselineRange2, name2InSUN3D_H5, vId2)
-        name2InSUN3D_H5 = name2InSUN3D_H5+'/frames/t0/' +vId2
-        print(name2InSUN3D_H5)
-        dataGT2 = h5py.File(inputSUN3D_trainFilePaths[int(BaselineRange2)])
-        GTExtrinsics2_4by4 = np.eye(4)
-        K2GT, GTExtrinsics2_4by4[0:3,0:3], GTExtrinsics2_4by4[0:3,3] = read_camera_params(dataGT2[name2InSUN3D_H5]['camera'])
-        tmp_view2 = read_view(dataGT2[name2InSUN3D_H5])
-        view2GT = adjust_intrinsics(tmp_view2, target_K, w, h,)
-
         ##### compute scales
-        transScaleTheia = np.linalg.norm(np.linalg.inv(TheiaExtrinsics2_4by4)[0:3,3] - np.linalg.inv(TheiaExtrinsics1_4by4)[0:3,3])
-        transScaleColmap = np.linalg.norm(np.linalg.inv(ColmapExtrinsics2_4by4)[0:3,3] - np.linalg.inv(ColmapExtrinsics1_4by4)[0:3,3])
-        transScaleGT = np.linalg.norm(np.linalg.inv(GTExtrinsics2_4by4)[0:3,3] - np.linalg.inv(GTExtrinsics1_4by4)[0:3,3])
-        print("transScaleTheia = ", transScaleTheia, "; transScaleColmap = ", transScaleColmap, "; transScaleGT = ", transScaleGT, "; demon scale = ", data[image_pair12]['scale'].value)
-        pred_scale = data[image_pair12]['scale'].value
+        transScaleTheia = 0
+        transScaleColmap = One2MultiImagePairs_Colmap[image_pair12].scale12
+        transScaleGT = One2MultiImagePairs_GT[image_pair12].scale12
+        print("transScaleTheia = ", transScaleTheia, "; transScaleColmap = ", transScaleColmap, "; transScaleGT = ", transScaleGT, "; demon scale = ",  One2MultiImagePairs_DeMoN[image_pair12].scale12)
+        pred_scale =  One2MultiImagePairs_DeMoN[image_pair12].scale12
         if setColmapGTRatio==True:
             initColmapGTRatio = transScaleColmap/transScaleGT
         if initBool == True:
@@ -692,23 +573,23 @@ def visPointCloudInGlobalFrame(rendererNotUsed, alpha, infile, ExhaustivePairInf
         print("scaleRecordMat.shape = ", scaleRecordMat.shape)
 
 
-        if PoseSource=='Theia':
-            GlobalExtrinsics1_4by4 = TheiaExtrinsics1_4by4
-            GlobalExtrinsics2_4by4 = TheiaExtrinsics2_4by4
+        # if PoseSource=='Theia':
+        #     GlobalExtrinsics1_4by4 = TheiaExtrinsics1_4by4
+        #     GlobalExtrinsics2_4by4 = TheiaExtrinsics2_4by4
         if PoseSource=='Colmap':
-            GlobalExtrinsics1_4by4 = ColmapExtrinsics1_4by4
-            GlobalExtrinsics2_4by4 = ColmapExtrinsics2_4by4
+            GlobalExtrinsics1_4by4 = One2MultiImagePairs_Colmap[image_pair12].Extrinsic1_4by4
+            GlobalExtrinsics2_4by4 = One2MultiImagePairs_Colmap[image_pair12].Extrinsic2_4by4
         if PoseSource=='GT':
-            GlobalExtrinsics1_4by4 = GTExtrinsics1_4by4
-            GlobalExtrinsics2_4by4 = GTExtrinsics2_4by4
+            GlobalExtrinsics1_4by4 = One2MultiImagePairs_GT[image_pair12].Extrinsic1_4by4
+            GlobalExtrinsics2_4by4 = One2MultiImagePairs_GT[image_pair12].Extrinsic2_4by4
 
-        ###### scale global poses by a constant (Colmap and Theia may generate 3D reconstruction in different scales, which may differ from the real object depth scale)
-        # alpha = 0.28 # 0.3 0.5
-        GlobalExtrinsics1_4by4[0:3,3] = alpha * GlobalExtrinsics1_4by4[0:3,3]
-        GlobalExtrinsics2_4by4[0:3,3] = alpha * GlobalExtrinsics2_4by4[0:3,3]
+        # ###### scale global poses by a constant (Colmap and Theia may generate 3D reconstruction in different scales, which may differ from the real object depth scale)
+        # # alpha = 0.28 # 0.3 0.5
+        # GlobalExtrinsics1_4by4[0:3,3] = alpha * GlobalExtrinsics1_4by4[0:3,3]
+        # GlobalExtrinsics2_4by4[0:3,3] = alpha * GlobalExtrinsics2_4by4[0:3,3]
 
         ###### get the first point clouds
-        input_data = prepare_input_data(view1.image, view2.image, data_format)
+        input_data = prepare_input_data(One2MultiImagePairs_GT[image_pair12].image1, One2MultiImagePairs_GT[image_pair12].image2, data_format)
         if DepthSource=='Colmap':
             if PoseSource=='Theia':
                 scale_applied = transScaleTheia/transScaleColmap
@@ -719,7 +600,7 @@ def visPointCloudInGlobalFrame(rendererNotUsed, alpha, infile, ExhaustivePairInf
                 scale_applied = 1/initColmapGTRatio
                 # scale_applied = 1/1.72921055    # fittedColmapGTRatio = 1.72921055
             tmp_PointCloud1 = visualize_prediction(
-                        inverse_depth=1/view1.depth,
+                        inverse_depth=1/One2MultiImagePairs_Colmap[image_pair12].depth1,
                         intrinsics = np.array([0.89115971, 1.18821287, 0.5, 0.5]), # sun3d intrinsics
                         image=input_data['image_pair'][0,0:3] if data_format=='channels_first' else input_data['image_pair'].transpose([0,3,1,2])[0,0:3],
                         R1=GlobalExtrinsics1_4by4[0:3,0:3],
@@ -733,12 +614,15 @@ def visPointCloudInGlobalFrame(rendererNotUsed, alpha, infile, ExhaustivePairInf
                 scale_applied = transScaleTheia
             if PoseSource=='Colmap':
                 scale_applied = transScaleColmap
-                # scale_applied = data[image_pair12]['scale'].value
+                # scale_applied = pred_scale
+                # scale_applied = 1
             if PoseSource=='GT':
                 scale_applied = transScaleGT
-                # scale_applied = data[image_pair12]['scale'].value
+                # scale_applied = 1/pred_scale
+                # scale_applied = pred_scale
+                # scale_applied = 1
             tmp_PointCloud1 = visualize_prediction(
-                        inverse_depth=data[image_pair12]['depth_upsampled'].value,
+                        inverse_depth=1/One2MultiImagePairs_DeMoN[image_pair12].depth1,### in previous data retrieval part, the predicted inv_depth has been inversed to depth for later access!
                         intrinsics = np.array([0.89115971, 1.18821287, 0.5, 0.5]), # sun3d intrinsics
                         image=input_data['image_pair'][0,0:3] if data_format=='channels_first' else input_data['image_pair'].transpose([0,3,1,2])[0,0:3],
                         R1=GlobalExtrinsics1_4by4[0:3,0:3],
@@ -756,7 +640,7 @@ def visPointCloudInGlobalFrame(rendererNotUsed, alpha, infile, ExhaustivePairInf
             if PoseSource=='GT':
                 scale_applied = 1
             tmp_PointCloud1 = visualize_prediction(
-                        inverse_depth=1/view1GT.depth,
+                        inverse_depth=1/One2MultiImagePairs_GT[image_pair12].depth1,
                         intrinsics = np.array([0.89115971, 1.18821287, 0.5, 0.5]), # sun3d intrinsics
                         image=input_data['image_pair'][0,0:3] if data_format=='channels_first' else input_data['image_pair'].transpose([0,3,1,2])[0,0:3],
                         R1=GlobalExtrinsics1_4by4[0:3,0:3],
@@ -764,10 +648,6 @@ def visPointCloudInGlobalFrame(rendererNotUsed, alpha, infile, ExhaustivePairInf
                         rotation=rotmat_To_angleaxis(np.dot(GlobalExtrinsics2_4by4[0:3,0:3], GlobalExtrinsics1_4by4[0:3,0:3].T)),
                         translation=GlobalExtrinsics2_4by4[0:3,3],   # should be changed, this is wrong!
                         scale=scale_applied)
-        # vis2 = cv2.cvtColor(view1.depth, cv2.COLOR_GRAY2BGR)
-        # #Displayed the image
-        # cv2.imshow("WindowNameHere", vis2)
-        # cv2.waitKey(0)
 
         pointcloud_actor = create_pointcloud_actor(
            points=tmp_PointCloud1['points'],
@@ -816,10 +696,6 @@ def visPointCloudInGlobalFrame(rendererNotUsed, alpha, infile, ExhaustivePairInf
                         # scale=data[image_pair12]['scale'].value*transScale)
                         scale=1)
 
-            # vis2 = cv2.cvtColor(view1.depth, cv2.COLOR_GRAY2BGR)
-            # #Displayed the image
-            # cv2.imshow("WindowNameHere", vis2)
-            # cv2.waitKey(0)
 
             pointcloud_actor = create_pointcloud_actor(
                points=tmp_PointCloud2['points'],
@@ -843,7 +719,7 @@ def visPointCloudInGlobalFrame(rendererNotUsed, alpha, infile, ExhaustivePairInf
             appendFilterModel.AddInputData(cam2_polydata)
 
         it +=1
-        if it>=len(data.keys()):
+        if it>=len(One2MultiImagePairs_DeMoN.keys()):
             print("Warning: No more views(image pairs) can be added for visualization!")
             # break
 
@@ -862,62 +738,63 @@ def visPointCloudInGlobalFrame(rendererNotUsed, alpha, infile, ExhaustivePairInf
     print("tmpFittingCoef_Colmap_GT = ", tmpFittingCoef_Colmap_GT)
     # plot the scatter 2D data of scale records, to find out the correlation between the predicted scales and the calculated scales from global SfM
     np.savetxt(os.path.join(outdir,'scale_record_DeMoN_Theia_Colmap.txt'), scaleRecordMat, fmt='%f')
-    if False:
-        plt.scatter(scaleRecordMat[:,0],scaleRecordMat[:,1])
-        plt.ylabel('scales calculated from Theia global SfM')
-        plt.xlabel('scales predicted by DeMoN')
-        plt.grid(True)
-        plt.axis('equal')
-        plt.show()
-    if False:
-        plt.scatter(scaleRecordMat[:,0],scaleRecordMat[:,2])
-        # plt.scatter(1/scaleRecordMat[:,0],scaleRecordMat[:,2])
-        plt.ylabel('scales calculated from Colmap')
-        plt.xlabel('scales predicted by DeMoN')
-        # plt.xlabel('inv_scales predicted by DeMoN')
-        plt.grid(True)
-        plt.axis('equal')
-        plt.show()
-    if False:
-        plt.scatter(scaleRecordMat[:,0],scaleRecordMat[:,3])
-        plt.ylabel('scales calculated from SUN3D Ground Truth')
-        plt.xlabel('scales predicted by DeMoN')
-        plt.grid(True)
-        plt.axis('equal')
-        plt.show()
-    if False:
-        plt.scatter(scaleRecordMat[:,2],scaleRecordMat[:,3])
-        plt.ylabel('scales calculated from SUN3D Ground Truth')
-        plt.xlabel('scales calculated from Colmap')
-        plt.grid(True)
-        plt.axis('equal')
-        plt.show()
-    if False:
-        x = np.linspace(np.min(scaleRecordMat[:,3]), np.max(scaleRecordMat[:,3]), 1000)
-        # dashes = [10, 5, 100, 5]  # 10 points on, 5 off, 100 on, 5 off
-        y = 1.72921055*x+0.02395182
-        plt.plot(x, y, 'r-', lw=2)
-        plt.text(0.2, 0.15, r'fitted line with slope = 1.72921055')
-        plt.scatter(scaleRecordMat[:,3],scaleRecordMat[:,2])
-        plt.xlabel('scales calculated from SUN3D Ground Truth')
-        plt.ylabel('scales calculated from Colmap')
-        plt.grid(True)
-        plt.axis('equal')
-        plt.show()
-    if False:
-        plt.scatter(scaleRecordMat[:,1],scaleRecordMat[:,2])
-        plt.ylabel('scales calculated from Colmap')
-        plt.xlabel('scales calculated from Theia global SfM')
-        plt.grid(True)
-        plt.axis('equal')
-        plt.show()
+    if scaleRecordMat.ndim>1:
+        if False:
+            plt.scatter(scaleRecordMat[:,0],scaleRecordMat[:,1])
+            plt.ylabel('scales calculated from Theia global SfM')
+            plt.xlabel('scales predicted by DeMoN')
+            plt.grid(True)
+            plt.axis('equal')
+            plt.show()
+        if False:
+            plt.scatter(scaleRecordMat[:,0],scaleRecordMat[:,2])
+            # plt.scatter(1/scaleRecordMat[:,0],scaleRecordMat[:,2])
+            plt.ylabel('scales calculated from Colmap')
+            plt.xlabel('scales predicted by DeMoN')
+            # plt.xlabel('inv_scales predicted by DeMoN')
+            plt.grid(True)
+            plt.axis('equal')
+            plt.show()
+        if False:
+            plt.scatter(scaleRecordMat[:,0],scaleRecordMat[:,3])
+            plt.ylabel('scales calculated from SUN3D Ground Truth')
+            plt.xlabel('scales predicted by DeMoN')
+            plt.grid(True)
+            plt.axis('equal')
+            plt.show()
+        if False:
+            plt.scatter(scaleRecordMat[:,2],scaleRecordMat[:,3])
+            plt.ylabel('scales calculated from SUN3D Ground Truth')
+            plt.xlabel('scales calculated from Colmap')
+            plt.grid(True)
+            plt.axis('equal')
+            plt.show()
+        if False:
+            x = np.linspace(np.min(scaleRecordMat[:,3]), np.max(scaleRecordMat[:,3]), 1000)
+            # # dashes = [10, 5, 100, 5]  # 10 points on, 5 off, 100 on, 5 off
+            # y = 1.72921055*x+0.02395182
+            # plt.plot(x, y, 'r-', lw=2)
+            # plt.text(0.2, 0.15, r'fitted line with slope = 1.72921055')
+            plt.scatter(scaleRecordMat[:,3],scaleRecordMat[:,2])
+            plt.xlabel('scales calculated from SUN3D Ground Truth')
+            plt.ylabel('scales calculated from Colmap')
+            plt.grid(True)
+            plt.axis('equal')
+            plt.show()
+        if False:
+            plt.scatter(scaleRecordMat[:,1],scaleRecordMat[:,2])
+            plt.ylabel('scales calculated from Colmap')
+            plt.xlabel('scales calculated from Theia global SfM')
+            plt.grid(True)
+            plt.axis('equal')
+            plt.show()
 
 
     appendFilterModel.AddInputData(appendFilterPC.GetOutput())
     appendFilterModel.Update()
 
     plywriterModel = vtk.vtkPLYWriter()
-    plywriterModel.SetFileName(os.path.join(outdir,'fused_point_clouds_colmap_alpha{0}_iteration{1}_.ply'.format(int(alpha*10000), int(curIteration))))
+    plywriterModel.SetFileName(os.path.join(outdir,'One2Multi_point_clouds_iteration{0}_.ply'.format(int(curIteration))))
     plywriterModel.SetInputData(appendFilterModel.GetOutput())
     # plywriterModel.SetFileTypeToASCII()
     plywriterModel.SetArrayName('Colors')
@@ -935,16 +812,17 @@ def visPointCloudInGlobalFrame(rendererNotUsed, alpha, infile, ExhaustivePairInf
     if initBool==True:
         curIteration += 1
 
-    print("alpha = ", alpha)
 
 
 # TheiaOrColmapOrGTPoses='Colmap'
 # TheiaOrColmapOrGTPoses='Theia'
 TheiaOrColmapOrGTPoses='GT'
-# DeMoNOrColmapOrGTDepths='DeMoN'
-DeMoNOrColmapOrGTDepths='Colmap'
 # DeMoNOrColmapOrGTDepths='GT'
+# DeMoNOrColmapOrGTDepths='Colmap'
+DeMoNOrColmapOrGTDepths='DeMoN'
 
+# tarImageFileName = 'mit_w85_lounge1~wg_lounge1_1-0000055_baseline_2_v1.JPG'
+tarImageFileName = 'hotel_beijing~beijing_hotel_2-0000103_baseline_1_v0.JPG'
 
 renderer = vtk.vtkRenderer()
 renderer.SetBackground(0, 0, 0)
@@ -961,7 +839,7 @@ appendFilterModel = vtk.vtkAppendPolyData()
 initColmapGTRatio = 0
 
 class MyKeyPressInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
-    global initColmapGTRatio, appendFilterPC, appendFilterModel, alpha, tmpFittingCoef_Colmap_GT, scaleRecordMat, image_pairs, TheiaOrColmapOrGTPoses, DeMoNOrColmapOrGTDepths, sliderMin, sliderMax, interactor, renderer, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT
+    global initColmapGTRatio, appendFilterPC, appendFilterModel, alpha, tmpFittingCoef_Colmap_GT, scaleRecordMat, image_pairs, TheiaOrColmapOrGTPoses, DeMoNOrColmapOrGTDepths, sliderMin, sliderMax, interactor, renderer, One2MultiImagePairs_DeMoN, One2MultiImagePairs_GT, One2MultiImagePairs_Colmap, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT
 
     def __init__(self,parent=None):
         self.parent = interactor
@@ -972,7 +850,7 @@ class MyKeyPressInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
         key = self.parent.GetKeySym()
         if key == 'n':
             print("Key n is pressed: one more view will be added!")
-            visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, PoseSource=TheiaOrColmapOrGTPoses, DepthSource=DeMoNOrColmapOrGTDepths, initBool=True)
+            visOne2MultiPointCloudInGlobalFrame(renderer, alpha, image_pairs_One2Multi, One2MultiImagePairs_DeMoN, One2MultiImagePairs_GT, One2MultiImagePairs_Colmap, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, PoseSource=TheiaOrColmapOrGTPoses, DepthSource=DeMoNOrColmapOrGTDepths, initBool=True)
             renderer.Modified()
         return
 
@@ -1116,6 +994,17 @@ def findOne2MultiPairs(infile, ExhaustivePairInfile, data_format, target_K, w, h
         tmp_view2 = read_view(dataGT2[name2InSUN3D_H5])
         view2GT = adjust_intrinsics(tmp_view2, target_K, w, h,)
 
+        # # print(view1GT.depth)
+        # fig, ax = plt.subplots()
+        # cax = ax.imshow(view1GT.depth[0:3,0:4], cmap='Greys')
+        # cbar = fig.colorbar(cax, ticks=[-1, 0, 1], orientation='horizontal')
+        # cbar.ax.set_xticklabels(['Low', 'Medium', 'High'])  # horizontal colorbar
+        # # plt.imshow(view1GT.depth, cmap='Greys')
+        # plt.show()
+        # plt.imshow(view1GT.depth, cmap='Greys')
+        # plt.show()
+        # return
+
         ##### compute scales
         transScaleTheia = np.linalg.norm(np.linalg.inv(TheiaExtrinsics2_4by4)[0:3,3] - np.linalg.inv(TheiaExtrinsics1_4by4)[0:3,3])
         transScaleColmap = np.linalg.norm(np.linalg.inv(ColmapExtrinsics2_4by4)[0:3,3] - np.linalg.inv(ColmapExtrinsics1_4by4)[0:3,3])
@@ -1139,7 +1028,7 @@ def findOne2MultiPairs(infile, ExhaustivePairInfile, data_format, target_K, w, h
     print("number of image pairs retrieved = ", len(One2MultiImagePairs_GT))
     print("number of image pairs retrieved = ", len(One2MultiImagePairs_DeMoN))
 
-    if True:
+    if False:
         if len(image_pairs_One2Multi) >= 5:
             plt.figure()
 
@@ -1349,31 +1238,168 @@ def findOne2MultiPairs(infile, ExhaustivePairInfile, data_format, target_K, w, h
 
             plt.show()
 
-    return One2MultiImagePairs_DeMoN, One2MultiImagePairs_GT, One2MultiImagePairs_Colmap
+    return image_pairs_One2Multi, One2MultiImagePairs_DeMoN, One2MultiImagePairs_GT, One2MultiImagePairs_Colmap
+
+
+
+def checkDepthConsistencyPixelwise(image_pairs_One2Multi, One2MultiImagePairs_DeMoN, One2MultiImagePairs_GT, One2MultiImagePairs_Colmap, PoseSource='GT', DepthSource='DeMoN', w=256, h=192):
+    ###### Check Depth & InvDepth Stats
+    pixelwiseStats = np.zeros([h,w,4])
+    it = 0
+    for row in range(h):
+        for col in range(w):
+            # tmpDepthRecorder = np.zeros([len(list(One2MultiImagePairs_DeMoN.keys()))])
+            tmpDepthRecorder = []
+            tmpInvDepthRecorder = []
+
+            scaleRecorderMat = np.empty([1,3])
+            for image_pair12 in One2MultiImagePairs_DeMoN.keys():
+                ### check correlation between different scales regarding one-to-multi image pairs
+                if it==0:
+                    scaleRecorderMat = np.vstack((scaleRecorderMat,np.array([One2MultiImagePairs_DeMoN[image_pair12].scale12, One2MultiImagePairs_GT[image_pair12].scale12, One2MultiImagePairs_Colmap[image_pair12].scale12])))
+                    scaleRecorderMat = np.vstack((scaleRecorderMat,np.array([One2MultiImagePairs_DeMoN[image_pair12].scale21, One2MultiImagePairs_GT[image_pair12].scale21, One2MultiImagePairs_Colmap[image_pair12].scale21])))
+                    print("scaleRecorderMat.shape = ", scaleRecorderMat.shape)
+                scale_choice = 1
+                if DepthSource=='DeMoN':
+                    depth_choice = One2MultiImagePairs_DeMoN[image_pair12].depth1[row,col]
+                    if PoseSource=='Colmap':
+                        # scale_choice = One2MultiImagePairs_DeMoN[image_pair12].scale12
+                        scale_choice = One2MultiImagePairs_Colmap[image_pair12].scale12
+                    if PoseSource=='GT':
+                        # scale_choice = One2MultiImagePairs_DeMoN[image_pair12].scale12
+                        scale_choice = One2MultiImagePairs_GT[image_pair12].scale12
+                if DepthSource=='Colmap':
+                    depth_choice = One2MultiImagePairs_Colmap[image_pair12].depth1[row,col]
+                    if PoseSource=='GT':
+                        scale_choice = One2MultiImagePairs_GT[image_pair12].scale12/One2MultiImagePairs_Colmap[image_pair12].scale12    # or a fixed value
+                if DepthSource=='GT':
+                    depth_choice = One2MultiImagePairs_GT[image_pair12].depth1[row,col]
+                    if PoseSource=='Colmap':
+                        scale_choice = One2MultiImagePairs_Colmap[image_pair12].scale12/One2MultiImagePairs_GT[image_pair12].scale12    # or a fixed value
+                if depth_choice<0.001:
+                    continue
+                tmpScaledDepthValue = depth_choice * scale_choice
+                tmpDepthRecorder.append(tmpScaledDepthValue)
+                tmpScaledInvDepthValue = 1/tmpScaledDepthValue
+                tmpInvDepthRecorder.append(tmpScaledInvDepthValue)
+                # print("scale_choice = ", scale_choice)
+
+            if it==0:
+                plt.figure()
+                plt.scatter(scaleRecorderMat[:,0],scaleRecorderMat[:,1])
+                plt.xlabel('DeMoN Scale')
+                plt.ylabel('GT Scale')
+                plt.axis('equal')
+                plt.grid(True)
+                plt.show()
+                plt.figure()
+                plt.scatter(scaleRecorderMat[:,0],scaleRecorderMat[:,2])
+                plt.xlabel('DeMoN Scale')
+                plt.ylabel('Colmap Scale')
+                plt.axis('equal')
+                plt.grid(True)
+                plt.show()
+                plt.figure()
+                plt.scatter(scaleRecorderMat[:,2],scaleRecorderMat[:,1])
+                plt.xlabel('Colmap Scale')
+                plt.ylabel('GT Scale')
+                plt.axis('equal')
+                plt.grid(True)
+                plt.show()
+            it += 1
+            if len(tmpDepthRecorder) == 0:
+                pixelwiseStats[row,col,0] = np.nan
+                pixelwiseStats[row,col,1] = np.nan
+                pixelwiseStats[row,col,2] = np.nan
+                pixelwiseStats[row,col,3] = np.nan
+            # print("len(tmpDepthRecorder) = ", len(tmpDepthRecorder))
+            pixelwiseStats[row,col,0] = np.mean(tmpDepthRecorder)
+            pixelwiseStats[row,col,1] = np.std(tmpDepthRecorder)
+            pixelwiseStats[row,col,2] = np.mean(tmpInvDepthRecorder)
+            pixelwiseStats[row,col,3] = np.std(tmpInvDepthRecorder)
+    print("pixelwiseStats = ", pixelwiseStats)
+
+    # ClosePairs_Depth_DeMoNDepth_GTScale_GTPose_pixelwise_std_CDF.png
+    # ClosePairs_Depth_DeMoNDepth_ColmapScale_ColmapPose_pixelwise_std_CDF.png
+
+    data = pixelwiseStats[:,:,1].flatten()
+    print(data.shape)
+    data = data[data!=np.nan]
+    print(data.shape)
+    plt.figure()
+    num_bins = 2000
+    counts, bin_edges = np.histogram(data, bins=num_bins, normed=True)
+    cdf = np.cumsum(counts)
+    plt.plot(bin_edges[1:], cdf/cdf[-1])
+    plt.title('CDF of pixelwise std of depth values: mu={0}, sigma={1}, from {2} pairs'.format(np.mean(data), np.std(data), int(len(list(One2MultiImagePairs_DeMoN.keys())))))
+    plt.xlabel('pixelwise standard deviation of depth values')
+    plt.ylabel('Probability')
+    plt.show()
+
+    # for q in [50, 90, 95, 100]:
+    #     print ("{}%% percentile: {}".format (q, np.percentile(data, q)))
+    #
+    # plt.figure()
+    # hist = plt.hist(data, normed=False, bins=1000)
+    # # plt.plot(bin_edges[1:], counts)
+    # # plt.bar(bin_edges[1:], height=counts)
+    # plt.xlabel('pixelwise standard deviation of depth values')
+    # plt.ylabel('counts number')
+    # plt.title('Histogram of pixelwise standard deviation of depth values: mu={0}, sigma={1}'.format(np.mean(data), np.std(data)))
+    # # plt.axis([40, 160, 0, 0.03])
+    # plt.grid(True)
+    # plt.show()
+    #######################################################
+    data = pixelwiseStats[:,:,3].flatten()
+    print(data.shape)
+    data = data[data!=np.nan]
+    print(data.shape)
+    plt.figure()
+    num_bins = 2000
+    counts, bin_edges = np.histogram(data, bins=num_bins, normed=True)
+    cdf = np.cumsum(counts)
+    plt.plot(bin_edges[1:], cdf/cdf[-1])
+    plt.title('CDF of pixelwise std of inv_depth values: mu={0}, sigma={1}, from {2} pairs'.format(np.mean(data), np.std(data), int(len(list(One2MultiImagePairs_DeMoN.keys())))))
+    plt.xlabel('pixelwise standard deviation of inv_depth values')
+    plt.ylabel('Probability')
+    plt.show()
+
+    # for q in [50, 90, 95, 100]:
+    #     print ("{}%% percentile: {}".format (q, np.percentile(data, q)))
+    #
+    # plt.figure()
+    # hist = plt.hist(data, normed=False, bins=1000)
+    # # plt.plot(bin_edges[1:], counts)
+    # # plt.bar(bin_edges[1:], height=counts)
+    # plt.xlabel('pixelwise standard deviation of inv_depth values')
+    # plt.ylabel('counts number')
+    # plt.title('Histogram of pixelwise standard deviation of inv_depth values: mu={0}, sigma={1}'.format(np.mean(data), np.std(data)))
+    # # plt.axis([40, 160, 0, 0.03])
+    # plt.grid(True)
+    # plt.show()
+
+
+image_pairs_One2Multi, One2MultiImagePairs_DeMoN, One2MultiImagePairs_GT, One2MultiImagePairs_Colmap = findOne2MultiPairs(infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, tarImageFileName)
 
 def main():
-    global initColmapGTRatio, appendFilterPC, appendFilterModel, alpha, tmpFittingCoef_Colmap_GT, scaleRecordMat, image_pairs, TheiaOrColmapOrGTPoses, DeMoNOrColmapOrGTDepths, sliderMin, sliderMax, interactor, renderer, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT
-    print("alpha is set to ", alpha)
-    # tarImageFileName = 'hotel_beijing~beijing_hotel_2-0000126_baseline_1_v0.JPG'
-    # tarImageFileName = 'mit_w85_lounge1~wg_lounge1_1-0000082_baseline_3_v1.JPG'
-    tarImageFileName = 'mit_w85_lounge1~wg_lounge1_1-0000055_baseline_2_v1.JPG'
+    global initColmapGTRatio, appendFilterPC, appendFilterModel, alpha, tmpFittingCoef_Colmap_GT, scaleRecordMat, image_pairs, TheiaOrColmapOrGTPoses, DeMoNOrColmapOrGTDepths, sliderMin, sliderMax, interactor, renderer, image_pairs_One2Multi, One2MultiImagePairs_DeMoN, One2MultiImagePairs_GT, One2MultiImagePairs_Colmap, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT
 
-    findOne2MultiPairs(infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, tarImageFileName)
+    checkDepthConsistencyPixelwise(image_pairs_One2Multi, One2MultiImagePairs_DeMoN, One2MultiImagePairs_GT, One2MultiImagePairs_Colmap, PoseSource=TheiaOrColmapOrGTPoses, DepthSource=DeMoNOrColmapOrGTDepths, w=256, h=192)
 
-    # visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, PoseSource=TheiaOrColmapOrGTPoses, DepthSource=DeMoNOrColmapOrGTDepths, initBool=True, setColmapGTRatio=True)
-    #
-    # renwin = vtk.vtkRenderWindow()
-    # renwin.SetWindowName("Point Cloud Viewer")
-    # renwin.SetSize(800,600)
-    # renwin.AddRenderer(renderer)
-    #
-    # # An interactor
-    # interactor.SetInteractorStyle(MyKeyPressInteractorStyle())
-    # interactor.SetRenderWindow(renwin)
-    #
-    # # Start
-    # interactor.Initialize()
-    # interactor.Start()
+    visOne2MultiPointCloudInGlobalFrame(renderer, alpha, image_pairs_One2Multi, One2MultiImagePairs_DeMoN, One2MultiImagePairs_GT, One2MultiImagePairs_Colmap, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, PoseSource=TheiaOrColmapOrGTPoses, DepthSource=DeMoNOrColmapOrGTDepths, initBool=True, setColmapGTRatio=True)
+
+    renwin = vtk.vtkRenderWindow()
+    renwin.SetWindowName("Point Cloud Viewer")
+    renwin.SetSize(800,600)
+    renwin.AddRenderer(renderer)
+
+    # An interactor
+    interactor.SetInteractorStyle(MyKeyPressInteractorStyle())
+    interactor.SetRenderWindow(renwin)
+
+    # Start
+    interactor.Initialize()
+    interactor.Start()
 
 if __name__ == "__main__":
     main()
