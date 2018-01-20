@@ -1579,7 +1579,6 @@ def checkDepthConsistencyPixelwise(image_pairs_One2Multi, One2MultiImagePairs_De
     # plt.grid(True)
     # plt.show()
 
-
 image_pairs_One2Multi, One2MultiImagePairs_DeMoN, One2MultiImagePairs_GT, One2MultiImagePairs_Colmap = findOne2MultiPairs(infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, tarImageFileName)
 
 def main():
