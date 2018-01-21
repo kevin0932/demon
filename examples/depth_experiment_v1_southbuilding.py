@@ -366,25 +366,57 @@ def read_relative_poses_theia_output(path, path_img_id_map):
 
 
 def vtkSliderCallback2(obj, event):
-    global curIteration, alpha, TheiaOrColmapOrGTPoses, DeMoNOrColmapOrGTDepths, sliderMin, sliderMax, interactor, renderer, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT
+    global TheiaOrColmapOrGTPoses, DeMoNOrColmapOrGTDepths, sliderMin, sliderMax, interactor, renderer, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT
     sliderRepres = obj.GetRepresentation()
     pos = sliderRepres.GetValue()
+    # contourFilter.SetValue(0, pos)
     alpha=pos
 
-    visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, PoseSource=TheiaOrColmapOrGTPoses, DepthSource=DeMoNOrColmapOrGTDepths, initBool=False)
+    #close_window(interactor)
+    #del renWin, iren
+
+    # renderer = visPointCloudInGlobalFrame(alpha, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT)
+    visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, PoseSource=TheiaOrColmapOrGTPoses, DepthSource=DeMoNOrColmapOrGTDepths, initBool=True)
+    #renderer = visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, True)
     renderer.Modified()
     print("vtkSliderCallback2~~~~~~~~~~~~~~~")
+    # # #### vtk slidingbar to adjust some parameters Runtime
+    # SliderRepres = vtk.vtkSliderRepresentation2D()
+    # SliderRepres.SetMinimumValue(sliderMin)
+    # SliderRepres.SetMaximumValue(sliderMax)
+    # SliderRepres.SetValue(alpha)
+    # SliderRepres.SetTitleText("Slice")
+    # SliderRepres.GetPoint1Coordinate().SetCoordinateSystemToNormalizedDisplay()
+    # SliderRepres.GetPoint1Coordinate().SetValue(0.2, 0.6)
+    # SliderRepres.GetPoint2Coordinate().SetCoordinateSystemToNormalizedDisplay()
+    # SliderRepres.GetPoint2Coordinate().SetValue(0.4, 0.6)
+    #
+    # SliderRepres.SetSliderLength(0.02)
+    # SliderRepres.SetSliderWidth(0.03)
+    # SliderRepres.SetEndCapLength(0.01)
+    # SliderRepres.SetEndCapWidth(0.03)
+    # SliderRepres.SetTubeWidth(0.005)
+    # SliderRepres.SetLabelFormat("%3.0lf")
+    # SliderRepres.SetTitleHeight(0.02)
+    # SliderRepres.SetLabelHeight(0.02)
+    #
+    # SliderWidget = vtk.vtkSliderWidget()
+    # SliderWidget.SetInteractor(interactor)
+    # SliderWidget.SetRepresentation(SliderRepres)
+    # SliderWidget.KeyPressActivationOff()
+    # SliderWidget.SetAnimationModeToAnimate()
+    # SliderWidget.SetEnabled(True)
+    # SliderWidget.AddObserver("EndInteractionEvent", vtkSliderCallback2)
 
-
-# # # reading theia intermediate output relative poses from textfile
-# #TheiaRtfilepath = '/home/kevin/JohannesCode/theia_trial_demon/intermediate_results_southbuilding_01012018/RelativePoses_after_step7_global_position_estimation.txt'
-# TheiaRtfilepath = '/home/kevin/JohannesCode/theia_trial_demon/intermediate_results_southbuilding_01012018/RelativePoses_after_step9_BA.txt'
-# TheiaIDNamefilepath = '/home/kevin/JohannesCode/theia_trial_demon/intermediate_results_southbuilding_01012018/viewid_imagename_pairs_file.txt'
-# TheiaRelativePosesGT = read_relative_poses_theia_output(TheiaRtfilepath,TheiaIDNamefilepath)
-# # # reading theia intermediate output global poses from textfile
-# #TheiaGlobalPosesfilepath = '/home/kevin/JohannesCode/theia_trial_demon/intermediate_results_southbuilding_01012018/after_step7_global_position_estimation.txt'
-# TheiaGlobalPosesfilepath = '/home/kevin/JohannesCode/theia_trial_demon/intermediate_results_southbuilding_01012018/after_step9_BA.txt'
-# TheiaGlobalPosesGT = read_global_poses_theia_output(TheiaGlobalPosesfilepath,TheiaIDNamefilepath)
+# # reading theia intermediate output relative poses from textfile
+#TheiaRtfilepath = '/home/kevin/JohannesCode/theia_trial_demon/intermediate_results_southbuilding_01012018/RelativePoses_after_step7_global_position_estimation.txt'
+TheiaRtfilepath = '/home/kevin/JohannesCode/theia_trial_demon/intermediate_results_southbuilding_01012018/RelativePoses_after_step9_BA.txt'
+TheiaIDNamefilepath = '/home/kevin/JohannesCode/theia_trial_demon/intermediate_results_southbuilding_01012018/viewid_imagename_pairs_file.txt'
+TheiaRelativePosesGT = read_relative_poses_theia_output(TheiaRtfilepath,TheiaIDNamefilepath)
+# # reading theia intermediate output global poses from textfile
+#TheiaGlobalPosesfilepath = '/home/kevin/JohannesCode/theia_trial_demon/intermediate_results_southbuilding_01012018/after_step7_global_position_estimation.txt'
+TheiaGlobalPosesfilepath = '/home/kevin/JohannesCode/theia_trial_demon/intermediate_results_southbuilding_01012018/after_step9_BA.txt'
+TheiaGlobalPosesGT = read_global_poses_theia_output(TheiaGlobalPosesfilepath,TheiaIDNamefilepath)
 
 # # # reading theia intermediate output relative poses from textfile
 # TheiaRtfilepath = '/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/sun3d_train_0.1m_to_0.2m/hotel_beijing.beijing_hotel_2/demon_prediction/images_demon/TheiaReconstructionFromImage/intermediate_results/RelativePoses_after_step9_BA.txt'
@@ -394,13 +426,13 @@ def vtkSliderCallback2(obj, event):
 # TheiaGlobalPosesfilepath = '/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/sun3d_train_0.1m_to_0.2m/hotel_beijing.beijing_hotel_2/demon_prediction/images_demon/TheiaReconstructionFromImage/intermediate_results/after_step9_BA.txt'
 # TheiaGlobalPosesGT = read_global_poses_theia_output(TheiaGlobalPosesfilepath,TheiaIDNamefilepath)
 
-# # reading theia intermediate output relative poses from textfile
-TheiaRtfilepath = '/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/sun3d_train_0.1m_to_0.2m/hotel_beijing.beijing_hotel_2/demon_prediction/images_demon/TheiaReconstructionFromImage/intermediate_results/RelativePoses_after_step9_BA.txt'
-TheiaIDNamefilepath = '/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/sun3d_train_0.1m_to_0.2m/hotel_beijing.beijing_hotel_2/demon_prediction/images_demon/TheiaReconstructionFromImage/intermediate_results/viewid_imagename_pairs_file.txt'
-TheiaRelativePosesGT = read_relative_poses_theia_output(TheiaRtfilepath,TheiaIDNamefilepath)
-# # reading theia intermediate output global poses from textfile
-TheiaGlobalPosesfilepath = '/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/sun3d_train_0.1m_to_0.2m/hotel_beijing.beijing_hotel_2/demon_prediction/images_demon/TheiaReconstructionFromImage/intermediate_results/after_step9_BA.txt'
-TheiaGlobalPosesGT = read_global_poses_theia_output(TheiaGlobalPosesfilepath,TheiaIDNamefilepath)
+# # # reading theia intermediate output relative poses from textfile
+# TheiaRtfilepath = '/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/sun3d_train_0.1m_to_0.2m/hotel_beijing.beijing_hotel_2/demon_prediction/images_demon/TheiaReconstructionFromImage/intermediate_results/RelativePoses_after_step9_BA.txt'
+# TheiaIDNamefilepath = '/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/sun3d_train_0.1m_to_0.2m/hotel_beijing.beijing_hotel_2/demon_prediction/images_demon/TheiaReconstructionFromImage/intermediate_results/viewid_imagename_pairs_file.txt'
+# TheiaRelativePosesGT = read_relative_poses_theia_output(TheiaRtfilepath,TheiaIDNamefilepath)
+# # # reading theia intermediate output global poses from textfile
+# TheiaGlobalPosesfilepath = '/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/sun3d_train_0.1m_to_0.2m/hotel_beijing.beijing_hotel_2/demon_prediction/images_demon/TheiaReconstructionFromImage/intermediate_results/after_step9_BA.txt'
+# TheiaGlobalPosesGT = read_global_poses_theia_output(TheiaGlobalPosesfilepath,TheiaIDNamefilepath)
 
 # # weights_dir = '/home/ummenhof/projects/demon/weights'
 # weights_dir = '/home/kevin/anaconda_tensorflow_demon_ws/demon/weights'
@@ -442,10 +474,16 @@ TheiaGlobalPosesGT = read_global_poses_theia_output(TheiaGlobalPosesfilepath,The
 # recondir = "/home/kevin/ThesisDATA/CVG_Datasets_3Dsymmetric/barcelona_Dataset/dense/"
 # recondir = "/home/kevin/ThesisDATA/CVG_Datasets_3Dsymmetric/redmond_Dataset/dense/"
 
-outdir = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction"
-infile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/View128ColmapFilter_demon_sun3d_train_hotel_beijing~beijing_hotel_2.h5"
-ExhaustivePairInfile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/demon_sun3d_train_hotel_beijing~beijing_hotel_2.h5"
-recondir = '/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/images_demon/dense/'
+outdir = "/home/kevin/JohannesCode/ws1/demon_prediction/freiburgSettingBak"
+infile = "/home/kevin/JohannesCode/ws1/demon_prediction/freiburgSettingBak/View128ColmapFilter_fuse_southbuilding_demon.h5"
+ExhaustivePairInfile = "/home/kevin/JohannesCode/ws1/demon_prediction/freiburgSettingBak/kevin_southbuilding_predictions_06012018.h5"
+recondir = '/home/kevin/JohannesCode/ws1/dense/0/'
+
+
+# outdir = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction"
+# infile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/View128ColmapFilter_demon_sun3d_train_hotel_beijing~beijing_hotel_2.h5"
+# ExhaustivePairInfile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/demon_sun3d_train_hotel_beijing~beijing_hotel_2.h5"
+# recondir = '/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/images_demon/dense/'
 
 cameras = colmap.read_cameras_txt(os.path.join(recondir,'sparse','cameras.txt'))
 images = colmap.read_images_txt(os.path.join(recondir,'sparse','images.txt'))
@@ -461,6 +499,8 @@ inputSUN3D_trainFilePaths.append('/home/kevin/anaconda_tensorflow_demon_ws/demon
 inputSUN3D_trainFilePaths.append('/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/sun3d_train_0.8m_to_1.6m.h5')
 inputSUN3D_trainFilePaths.append('/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/sun3d_train_1.6m_to_infm.h5')
 
+# GTsourcefile = ''
+
 
 knn = 15 # 5
 max_angle = 90*math.pi/180  # 60*math.pi/180
@@ -474,6 +514,7 @@ target_K[1,1] = h*normalized_intrinsics[1]
 target_K[0,2] = w*normalized_intrinsics[2]
 target_K[1,2] = h*normalized_intrinsics[3]
 
+# if True:
 def get_tf_data_format():
     if tf.test.is_gpu_available(True):
         data_format='channels_first'
@@ -483,6 +524,21 @@ def get_tf_data_format():
     return data_format
 
 data_format = get_tf_data_format()
+
+    # gpu_options = tf.GPUOptions()
+    # gpu_options.per_process_gpu_memory_fraction=0.8
+    # session = tf.InteractiveSession(config=tf.ConfigProto(allow_soft_placement=True, gpu_options=gpu_options))
+    #
+    # # init networks
+    # bootstrap_net = BootstrapNet(session, data_format)
+    # iterative_net = IterativeNet(session, data_format)
+    # refine_net = RefinementNet(session, data_format)
+    #
+    # session.run(tf.global_variables_initializer())
+    #
+    # # load weights
+    # saver = tf.train.Saver()
+    # saver.restore(session,os.path.join(weights_dir,'demon_original'))
 
 def computeCorrectionScale(DeMoNPredictionInvDepth, GTDepth, DeMoNDepthThreshold):
     """ scale for correction is based on section 3.2 from paper by Eigen et. al 2014 https://arxiv.org/pdf/1406.2283.pdf"""
@@ -495,67 +551,39 @@ def computeCorrectionScale(DeMoNPredictionInvDepth, GTDepth, DeMoNDepthThreshold
     view1GTDepth = view1GTDepth[tmpFilter]
     correctionScale = np.exp(np.mean( (np.log(view1GTDepth) - np.log(DeMoNDepth)) ))
     return correctionScale
-
-
-def visPointCloudInGlobalFrame(rendererNotUsed, alpha, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, PoseSource='Theia', DepthSource='DeMoN', initBool=True, setColmapGTRatio=False):
+# if True:
+def visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, PoseSource='Theia', DepthSource='DeMoN', initBool=False):
 #def visPointCloudInGlobalFrame(NULLrenderer, alpha, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, initBool=False):
-    global initColmapGTRatio, renderer, appendFilterPC, appendFilterModel, curIteration, image_pairs, scaleRecordMat, tmpFittingCoef_Colmap_GT
     data = h5py.File(infile)
     dataExhaustivePairs = h5py.File(ExhaustivePairInfile)
 
-    ######### Clean all actors viz in the renderer before
-    if initBool == False:
-        renderer.SetBackground(0, 0, 0)
-        #renderer.RemoveAllViewProps()
-        actors_to_be_cleared = renderer.GetActors()
-        #print("actors_to_be_cleared = ", actors_to_be_cleared)
-        print("before: actors_to_be_cleared.GetNumberOfItems() = ", (actors_to_be_cleared.GetNumberOfItems()))
-        #or idx, actor in actors_to_be_cleared.items():
-        #    renderer.RemoveActor(actor)
-        for idx in range(actors_to_be_cleared.GetNumberOfItems()):
-            #actors_to_be_cleared.GetNextActor()
-            #nextActor = actors_to_be_cleared.GetNextActor()
-            nextActor = actors_to_be_cleared.GetLastActor()
-            renderer.RemoveActor(nextActor)
-            print("remove one actor")
-        renderer.Modified()
-        actors_currently = renderer.GetActors()
-        print("after: actors_currently.GetNumberOfItems() = ", (actors_currently.GetNumberOfItems()))
+    #renderer = vtk.vtkRenderer()
+    renderer.SetBackground(0, 0, 0)
+    #renderer.RemoveAllViewProps()
+    # renderer.ResetCamera()
+    actors_to_be_cleared = renderer.GetActors()
+    #print("actors_to_be_cleared = ", actors_to_be_cleared)
+    print("before: actors_to_be_cleared.GetNumberOfItems() = ", (actors_to_be_cleared.GetNumberOfItems()))
+    #or idx, actor in actors_to_be_cleared.items():
+    #    renderer.RemoveActor(actor)
+    for idx in range(actors_to_be_cleared.GetNumberOfItems()):
+        #actors_to_be_cleared.GetNextActor()
+        #nextActor = actors_to_be_cleared.GetNextActor()
+        nextActor = actors_to_be_cleared.GetLastActor()
+        renderer.RemoveActor(nextActor)
+        print("remove one actor")
+    renderer.Modified()
+    actors_currently = renderer.GetActors()
+    print("after: actors_currently.GetNumberOfItems() = ", (actors_currently.GetNumberOfItems()))
 
-    if initBool == False:
-        # print("before: inputs in appendFilterPC = ", appendFilterPC.GetInput())
-        for removeIdx in range(curIteration):
-            appendFilterPC.RemoveInputData(appendFilterPC.GetInput(removeIdx))
-            appendFilterModel.RemoveInputData(appendFilterModel.GetInput(removeIdx))
-        # print("after: inputs in appendFilterPC = ", appendFilterPC.GetInput())
-        # print("no. of inputs in appendFilterPC = ", len(appendFilterPC.GetInput()))
-        # print("number of items in appendFilterPC = ", appendFilterPC.GetNumberOfItems())
-
-    if initBool == False:
-        image_pairs.clear()
-        print("image_pairs is cleared!")
-
-    # appendFilterPC = vtk.vtkAppendPolyData()
-    # appendFilterModel = vtk.vtkAppendPolyData()
+    appendFilterPC = vtk.vtkAppendPolyData()
+    appendFilterModel = vtk.vtkAppendPolyData()
 
 # def visPointCloudInGlobalFrame(data, dataExhaustivePairs, data_format, renderer, appendFilterPC, appendFilterModel):
-    # image_pairs = set()
-    # it = 0
-    it = curIteration
+    image_pairs = set()
+    it = 0
 
-    # for image_pair12 in (data.keys()):
-    # print(list(data.keys()))
-    candidate_pool = []
-    if initBool==False:
-        for i in range(it):
-            candidate_pool.append(list(data.keys())[i])
-        print("recalculate all trajectory after adjusting alpha; the length of candidate_pool is ", len(candidate_pool))
-    else:
-        candidate_pool.append(list(data.keys())[it])
-    # image_pair12 = list(data.keys())[it]
-    # for image_pair12 in list(data.keys())[it]:
-    for image_pair12 in candidate_pool:
-    # if True:
+    for image_pair12 in data.keys():
         print("Processing", image_pair12)
 
         image_name1, image_name2 = image_pair12.split("---")
@@ -567,7 +595,7 @@ def visPointCloudInGlobalFrame(rendererNotUsed, alpha, infile, ExhaustivePairInf
         # #######
         image_pair21 = "{}---{}".format(image_name2, image_name1)
         # print(image_name1, "; ", image_name2)
-
+        ###########################################################################################
         # tmp_dict = {}
         # for image_id, image in images.items():
         #     # print(image.name, "; ", image_name1, "; ", image_name2)
@@ -579,11 +607,7 @@ def visPointCloudInGlobalFrame(rendererNotUsed, alpha, infile, ExhaustivePairInf
         # # tmp_dict = {image_id: image}
         # print("tmp_dict = ", tmp_dict)
         # if len(tmp_dict)<2:
-        #     if initBool==False:
-        #         continue
-        #     print("Warning: a pair is skipped because of inavailability of data")
-        #     curIteration += 1
-        #     return
+        #     continue
         # tmp_views = colmap.create_views(cameras, tmp_dict, os.path.join(recondir,'images'), os.path.join(recondir,'stereo','depth_maps'))
         # # print("tmp_views = ", tmp_views)
         # tmp_views[0] = adjust_intrinsics(tmp_views[0], target_K, w, h,)
@@ -594,7 +618,6 @@ def visPointCloudInGlobalFrame(rendererNotUsed, alpha, infile, ExhaustivePairInf
         # view2 = tmp_views[1]
         # # view1 = tmp_views[1]
         # # view2 = tmp_views[0]
-
         ###########################################################################################
 
         tmp_dict = {}
@@ -630,11 +653,7 @@ def visPointCloudInGlobalFrame(rendererNotUsed, alpha, infile, ExhaustivePairInf
         ###########################################################################################
 
         if image_pair12 in image_pairs:
-            if initBool==False:
-                continue
-            print("Warning: a pair is skipped because its view0 has been processed!")
-            curIteration += 1
-            return
+            continue
 
         # print("view1 = ", view1)
         image_pairs.add(image_pair12)
@@ -663,50 +682,47 @@ def visPointCloudInGlobalFrame(rendererNotUsed, alpha, infile, ExhaustivePairInf
         ColmapExtrinsics2_4by4[0:3,0:3] = view2.R
         ColmapExtrinsics2_4by4[0:3,3] = view2.t # -np.dot(val.rotmat, val.tvec) # theia output camera position in world frame instead of extrinsic t
 
-        ###### Retrieve Ground Truth Global poses for image 1 and 2
-        BaselineRange1 = image_name1[-8:-7]
-        tmpName1 = image_name1[:-18].split('~')
-        name1InSUN3D_H5 = tmpName1[0]+'.'+tmpName1[1]
-        vId1 = image_name1[-6:-4]
-        # print(BaselineRange1, name1InSUN3D_H5, vId1)
-        name1InSUN3D_H5 = name1InSUN3D_H5+'/frames/t0/' +vId1
-        # print(name1InSUN3D_H5)
-        # print(inputSUN3D_trainFilePaths[0])
-        dataGT1 = h5py.File(inputSUN3D_trainFilePaths[int(BaselineRange1)])
-        GTExtrinsics1_4by4 = np.eye(4)
-        K1GT, GTExtrinsics1_4by4[0:3,0:3], GTExtrinsics1_4by4[0:3,3] = read_camera_params(dataGT1[name1InSUN3D_H5]['camera'])
-        tmp_view1 = read_view(dataGT1[name1InSUN3D_H5])
-        view1GT = adjust_intrinsics(tmp_view1, target_K, w, h,)
-
-        BaselineRange2 = image_name2[-8:-7]
-        tmpName2 = image_name2[:-18].split('~')
-        name2InSUN3D_H5 = tmpName2[0]+'.'+tmpName2[1]
-        vId2 = image_name2[-6:-4]
-        print(BaselineRange2, name2InSUN3D_H5, vId2)
-        name2InSUN3D_H5 = name2InSUN3D_H5+'/frames/t0/' +vId2
-        print(name2InSUN3D_H5)
-        dataGT2 = h5py.File(inputSUN3D_trainFilePaths[int(BaselineRange2)])
-        GTExtrinsics2_4by4 = np.eye(4)
-        K2GT, GTExtrinsics2_4by4[0:3,0:3], GTExtrinsics2_4by4[0:3,3] = read_camera_params(dataGT2[name2InSUN3D_H5]['camera'])
-        tmp_view2 = read_view(dataGT2[name2InSUN3D_H5])
-        view2GT = adjust_intrinsics(tmp_view2, target_K, w, h,)
+        # ###### Retrieve Ground Truth Global poses for image 1 and 2
+        # BaselineRange1 = image_name1[-8:-7]
+        # tmpName1 = image_name1[:-18].split('~')
+        # name1InSUN3D_H5 = tmpName1[0]+'.'+tmpName1[1]
+        # vId1 = image_name1[-6:-4]
+        # # print(BaselineRange1, name1InSUN3D_H5, vId1)
+        # name1InSUN3D_H5 = name1InSUN3D_H5+'/frames/t0/' +vId1
+        # # print(name1InSUN3D_H5)
+        # # print(inputSUN3D_trainFilePaths[0])
+        # dataGT1 = h5py.File(inputSUN3D_trainFilePaths[int(BaselineRange1)])
+        # GTExtrinsics1_4by4 = np.eye(4)
+        # K1GT, GTExtrinsics1_4by4[0:3,0:3], GTExtrinsics1_4by4[0:3,3] = read_camera_params(dataGT1[name1InSUN3D_H5]['camera'])
+        # tmp_view1 = read_view(dataGT1[name1InSUN3D_H5])
+        # view1GT = adjust_intrinsics(tmp_view1, target_K, w, h,)
+        #
+        # BaselineRange2 = image_name2[-8:-7]
+        # tmpName2 = image_name2[:-18].split('~')
+        # name2InSUN3D_H5 = tmpName2[0]+'.'+tmpName2[1]
+        # vId2 = image_name2[-6:-4]
+        # print(BaselineRange2, name2InSUN3D_H5, vId2)
+        # name2InSUN3D_H5 = name2InSUN3D_H5+'/frames/t0/' +vId2
+        # print(name2InSUN3D_H5)
+        # dataGT2 = h5py.File(inputSUN3D_trainFilePaths[int(BaselineRange2)])
+        # GTExtrinsics2_4by4 = np.eye(4)
+        # K2GT, GTExtrinsics2_4by4[0:3,0:3], GTExtrinsics2_4by4[0:3,3] = read_camera_params(dataGT2[name2InSUN3D_H5]['camera'])
+        # tmp_view2 = read_view(dataGT2[name2InSUN3D_H5])
+        # view2GT = adjust_intrinsics(tmp_view2, target_K, w, h,)
 
         ##### compute scales
-        correctionScaleGT = computeCorrectionScale(data[image_pair12]['depth_upsampled'].value, view1GT.depth, 60)
-        correctionScaleColmap = computeCorrectionScale(data[image_pair12]['depth_upsampled'].value, view1.depth, 60)
+        correctionScaleColmap = computeCorrectionScale(data[image_pair12]['depth_upsampled'].value, view1.depth, 32)
         transScaleTheia = np.linalg.norm(np.linalg.inv(TheiaExtrinsics2_4by4)[0:3,3] - np.linalg.inv(TheiaExtrinsics1_4by4)[0:3,3])
         transScaleColmap = np.linalg.norm(np.linalg.inv(ColmapExtrinsics2_4by4)[0:3,3] - np.linalg.inv(ColmapExtrinsics1_4by4)[0:3,3])
-        transScaleGT = np.linalg.norm(np.linalg.inv(GTExtrinsics2_4by4)[0:3,3] - np.linalg.inv(GTExtrinsics1_4by4)[0:3,3])
-        print("transScaleTheia = ", transScaleTheia, "; transScaleColmap = ", transScaleColmap, "; transScaleGT = ", transScaleGT, "; demon scale = ", data[image_pair12]['scale'].value, "; correctionScaleGT scale = ", correctionScaleGT, "; correctionScaleColmap scale = ", correctionScaleColmap)
+        # transScaleGT = np.linalg.norm(np.linalg.inv(GTExtrinsics2_4by4)[0:3,3] - np.linalg.inv(GTExtrinsics1_4by4)[0:3,3])
+        # print("transScaleTheia = ", transScaleTheia, "; transScaleColmap = ", transScaleColmap, "; transScaleGT = ", transScaleGT, "; demon scale = ", data[image_pair12]['scale'].value)
+        print("transScaleTheia = ", transScaleTheia, "; transScaleColmap = ", transScaleColmap, "; demon scale = ", data[image_pair12]['scale'].value, "; correctionScaleColmap = ", correctionScaleColmap)
         pred_scale = data[image_pair12]['scale'].value
-        if setColmapGTRatio==True:
-            initColmapGTRatio = transScaleColmap/transScaleGT
-        if initBool == True:
-            if it==0:
-                scaleRecordMat = np.array([pred_scale, transScaleTheia, transScaleColmap, transScaleGT])
-                initColmapGTRatio = transScaleColmap/transScaleGT
-            else:
-                scaleRecordMat = np.vstack((scaleRecordMat, np.array([pred_scale, transScaleTheia, transScaleColmap, transScaleGT])))
+        if it==0:
+            scaleRecordMat = np.array([pred_scale, transScaleTheia, transScaleColmap, correctionScaleColmap])
+            # initColmapGTRatio = transScaleColmap/transScaleGT
+        else:
+            scaleRecordMat = np.vstack((scaleRecordMat, np.array([pred_scale, transScaleTheia, transScaleColmap, correctionScaleColmap])))
         print("scaleRecordMat.shape = ", scaleRecordMat.shape)
 
 
@@ -716,9 +732,9 @@ def visPointCloudInGlobalFrame(rendererNotUsed, alpha, infile, ExhaustivePairInf
         if PoseSource=='Colmap':
             GlobalExtrinsics1_4by4 = ColmapExtrinsics1_4by4
             GlobalExtrinsics2_4by4 = ColmapExtrinsics2_4by4
-        if PoseSource=='GT':
-            GlobalExtrinsics1_4by4 = GTExtrinsics1_4by4
-            GlobalExtrinsics2_4by4 = GTExtrinsics2_4by4
+        # if PoseSource=='GT':
+        #     GlobalExtrinsics1_4by4 = GTExtrinsics1_4by4
+        #     GlobalExtrinsics2_4by4 = GTExtrinsics2_4by4
 
         ###### scale global poses by a constant (Colmap and Theia may generate 3D reconstruction in different scales, which may differ from the real object depth scale)
         # alpha = 0.28 # 0.3 0.5
@@ -732,10 +748,10 @@ def visPointCloudInGlobalFrame(rendererNotUsed, alpha, infile, ExhaustivePairInf
                 scale_applied = transScaleTheia/transScaleColmap
             if PoseSource=='Colmap':
                 scale_applied = 1
-            if PoseSource=='GT':
-                # scale_applied = transScaleGT/transScaleColmap
-                # scale_applied = 1/initColmapGTRatio
-                scale_applied = 1/1.72921055    # fittedColmapGTRatio = 1.72921055
+            # if PoseSource=='GT':
+            #     # scale_applied = transScaleGT/transScaleColmap
+            #     # scale_applied = 1/initColmapGTRatio
+            #     scale_applied = 1/1.72921055    # fittedColmapGTRatio = 1.72921055
             tmp_PointCloud1 = visualize_prediction(
                         inverse_depth=1/view1.depth,
                         intrinsics = np.array([0.89115971, 1.18821287, 0.5, 0.5]), # sun3d intrinsics
@@ -750,13 +766,12 @@ def visPointCloudInGlobalFrame(rendererNotUsed, alpha, infile, ExhaustivePairInf
             if PoseSource=='Theia':
                 scale_applied = transScaleTheia
             if PoseSource=='Colmap':
-                scale_applied = transScaleColmap
+                # scale_applied = transScaleColmap
                 # scale_applied = data[image_pair12]['scale'].value
-                # scale_applied = correctionScaleColmap
-            if PoseSource=='GT':
-                scale_applied = transScaleGT
-                # scale_applied = data[image_pair12]['scale'].value
-                # scale_applied = correctionScaleGT
+                scale_applied = correctionScaleColmap
+            # if PoseSource=='GT':
+            #     scale_applied = transScaleGT
+            #     # scale_applied = data[image_pair12]['scale'].value
             tmp_PointCloud1 = visualize_prediction(
                         inverse_depth=data[image_pair12]['depth_upsampled'].value,
                         intrinsics = np.array([0.89115971, 1.18821287, 0.5, 0.5]), # sun3d intrinsics
@@ -766,28 +781,28 @@ def visPointCloudInGlobalFrame(rendererNotUsed, alpha, infile, ExhaustivePairInf
                         rotation=rotmat_To_angleaxis(np.dot(GlobalExtrinsics2_4by4[0:3,0:3], GlobalExtrinsics1_4by4[0:3,0:3].T)),
                         translation=GlobalExtrinsics2_4by4[0:3,3],   # should be changed, this is wrong!
                         scale=scale_applied)
-        elif DepthSource=='GT':
-            if PoseSource=='Theia':
-                scale_applied = transScaleTheia/transScaleGT
-            if PoseSource=='Colmap':
-                # scale_applied = transScaleColmap/transScaleGT
-                # scale_applied = initColmapGTRatio
-                scale_applied = 1.72921055    # fittedColmapGTRatio = 1.72921055
-            if PoseSource=='GT':
-                scale_applied = 1
-            tmp_PointCloud1 = visualize_prediction(
-                        inverse_depth=1/view1GT.depth,
-                        intrinsics = np.array([0.89115971, 1.18821287, 0.5, 0.5]), # sun3d intrinsics
-                        image=input_data['image_pair'][0,0:3] if data_format=='channels_first' else input_data['image_pair'].transpose([0,3,1,2])[0,0:3],
-                        R1=GlobalExtrinsics1_4by4[0:3,0:3],
-                        t1=GlobalExtrinsics1_4by4[0:3,3],
-                        rotation=rotmat_To_angleaxis(np.dot(GlobalExtrinsics2_4by4[0:3,0:3], GlobalExtrinsics1_4by4[0:3,0:3].T)),
-                        translation=GlobalExtrinsics2_4by4[0:3,3],   # should be changed, this is wrong!
-                        scale=scale_applied)
-        # vis2 = cv2.cvtColor(view1.depth, cv2.COLOR_GRAY2BGR)
-        # #Displayed the image
-        # cv2.imshow("WindowNameHere", vis2)
-        # cv2.waitKey(0)
+        # elif DepthSource=='GT':
+        #     if PoseSource=='Theia':
+        #         scale_applied = transScaleTheia/transScaleGT
+        #     if PoseSource=='Colmap':
+        #         # scale_applied = transScaleColmap/transScaleGT
+        #         # scale_applied = initColmapGTRatio
+        #         scale_applied = 1.72921055    # fittedColmapGTRatio = 1.72921055
+        #     if PoseSource=='GT':
+        #         scale_applied = 1
+        #     tmp_PointCloud1 = visualize_prediction(
+        #                 inverse_depth=1/view1GT.depth,
+        #                 intrinsics = np.array([0.89115971, 1.18821287, 0.5, 0.5]), # sun3d intrinsics
+        #                 image=input_data['image_pair'][0,0:3] if data_format=='channels_first' else input_data['image_pair'].transpose([0,3,1,2])[0,0:3],
+        #                 R1=GlobalExtrinsics1_4by4[0:3,0:3],
+        #                 t1=GlobalExtrinsics1_4by4[0:3,3],
+        #                 rotation=rotmat_To_angleaxis(np.dot(GlobalExtrinsics2_4by4[0:3,0:3], GlobalExtrinsics1_4by4[0:3,0:3].T)),
+        #                 translation=GlobalExtrinsics2_4by4[0:3,3],   # should be changed, this is wrong!
+        #                 scale=scale_applied)
+        # # vis2 = cv2.cvtColor(view1.depth, cv2.COLOR_GRAY2BGR)
+        # # #Displayed the image
+        # # cv2.imshow("WindowNameHere", vis2)
+        # # cv2.waitKey(0)
 
         pointcloud_actor = create_pointcloud_actor(
            points=tmp_PointCloud1['points'],
@@ -801,19 +816,17 @@ def visPointCloudInGlobalFrame(rendererNotUsed, alpha, infile, ExhaustivePairInf
                                                 )
         appendFilterPC.AddInputData(pc_polydata)
 
-        # if it==0:
-        #     PointClouds = tmp_PointCloud1
-        # else:
-        #     PointClouds['points'] = np.concatenate((PointClouds['points'],tmp_PointCloud1['points']), axis=0)
-        #     PointClouds['colors'] = np.concatenate((PointClouds['colors'],tmp_PointCloud1['colors']), axis=0)
+        if it==0:
+            PointClouds = tmp_PointCloud1
+        else:
+            PointClouds['points'] = np.concatenate((PointClouds['points'],tmp_PointCloud1['points']), axis=0)
+            PointClouds['colors'] = np.concatenate((PointClouds['colors'],tmp_PointCloud1['colors']), axis=0)
 
         cam1_actor = create_camera_actor(GlobalExtrinsics1_4by4[0:3,0:3], GlobalExtrinsics1_4by4[0:3,3])
         # cam1_actor.GetProperty().SetColor(0.5, 0.5, 1.0)
         renderer.AddActor(cam1_actor)
         cam1_polydata = create_camera_polydata(GlobalExtrinsics1_4by4[0:3,0:3],GlobalExtrinsics1_4by4[0:3,3], True)
         appendFilterModel.AddInputData(cam1_polydata)
-
-        renderer.Modified()
 
         if False:   # debug: if the second cam is added for visualization
             ###### get the 2nd point clouds
@@ -853,8 +866,8 @@ def visPointCloudInGlobalFrame(rendererNotUsed, alpha, infile, ExhaustivePairInf
                                                     )
             appendFilterPC.AddInputData(pc_polydata)
 
-            # PointClouds['points'] = np.concatenate((PointClouds['points'],tmp_PointCloud2['points']), axis=0)
-            # PointClouds['colors'] = np.concatenate((PointClouds['colors'],tmp_PointCloud2['colors']), axis=0)
+            PointClouds['points'] = np.concatenate((PointClouds['points'],tmp_PointCloud2['points']), axis=0)
+            PointClouds['colors'] = np.concatenate((PointClouds['colors'],tmp_PointCloud2['colors']), axis=0)
 
             cam2_actor = create_camera_actor(GlobalExtrinsics2_4by4[0:3,0:3], GlobalExtrinsics2_4by4[0:3,3])
             # cam2_actor.GetProperty().SetColor(0.5, 0.5, 1.0)
@@ -863,13 +876,12 @@ def visPointCloudInGlobalFrame(rendererNotUsed, alpha, infile, ExhaustivePairInf
             appendFilterModel.AddInputData(cam2_polydata)
 
         it +=1
-        if it>=len(data.keys()):
-            print("Warning: No more views(image pairs) can be added for visualization!")
-            # break
+        if it>=2000:
+            break
 
 
     appendFilterPC.Update()
-    renderer.Modified()
+
     # ###### Compute the slope of the fitted line to reflect the scale differences among DeMoN, Theia and Colmap
     # tmpFittingCoef_DeMoNTheia = np.polyfit(scaleRecordMat[:,0], scaleRecordMat[:,1], 1)
     # print("tmpFittingCoef_DeMoNTheia = ", tmpFittingCoef_DeMoNTheia)
@@ -877,9 +889,8 @@ def visPointCloudInGlobalFrame(rendererNotUsed, alpha, infile, ExhaustivePairInf
     # print("tmpFittingCoef_DeMoNColmap = ", tmpFittingCoef_DeMoNColmap)
     # tmpFittingCoef_TheiaColmap = np.polyfit(scaleRecordMat[:,1], scaleRecordMat[:,2], 1)
     # print("tmpFittingCoef_TheiaColmap = ", tmpFittingCoef_TheiaColmap)
-    if it > 1:
-        tmpFittingCoef_Colmap_GT = np.polyfit(scaleRecordMat[:,3], scaleRecordMat[:,2], 1)
-    print("tmpFittingCoef_Colmap_GT = ", tmpFittingCoef_Colmap_GT)
+    # tmpFittingCoef_Colmap_GT = np.polyfit(scaleRecordMat[:,3], scaleRecordMat[:,2], 1)
+    # print("tmpFittingCoef_Colmap_GT = ", tmpFittingCoef_Colmap_GT)
     # plot the scatter 2D data of scale records, to find out the correlation between the predicted scales and the calculated scales from global SfM
     np.savetxt(os.path.join(outdir,'scale_record_DeMoN_Theia_Colmap.txt'), scaleRecordMat, fmt='%f')
     if False:
@@ -889,7 +900,7 @@ def visPointCloudInGlobalFrame(rendererNotUsed, alpha, infile, ExhaustivePairInf
         plt.grid(True)
         plt.axis('equal')
         plt.show()
-    if False:
+    if True:
         plt.scatter(scaleRecordMat[:,0],scaleRecordMat[:,2])
         # plt.scatter(1/scaleRecordMat[:,0],scaleRecordMat[:,2])
         plt.ylabel('scales calculated from Colmap')
@@ -898,32 +909,50 @@ def visPointCloudInGlobalFrame(rendererNotUsed, alpha, infile, ExhaustivePairInf
         plt.grid(True)
         plt.axis('equal')
         plt.show()
-    if False:
+    if True:
         plt.scatter(scaleRecordMat[:,0],scaleRecordMat[:,3])
-        plt.ylabel('scales calculated from SUN3D Ground Truth')
+        # plt.scatter(1/scaleRecordMat[:,0],scaleRecordMat[:,2])
+        plt.ylabel('scales calculated from Colmap Depth Correction')
         plt.xlabel('scales predicted by DeMoN')
+        # plt.xlabel('inv_scales predicted by DeMoN')
         plt.grid(True)
         plt.axis('equal')
         plt.show()
-    if False:
+    if True:
         plt.scatter(scaleRecordMat[:,2],scaleRecordMat[:,3])
-        plt.ylabel('scales calculated from SUN3D Ground Truth')
+        # plt.scatter(1/scaleRecordMat[:,0],scaleRecordMat[:,2])
+        plt.ylabel('scales calculated from Colmap Depth Correction')
         plt.xlabel('scales calculated from Colmap')
+        # plt.xlabel('inv_scales predicted by DeMoN')
         plt.grid(True)
         plt.axis('equal')
         plt.show()
-    if False:
-        x = np.linspace(np.min(scaleRecordMat[:,3]), np.max(scaleRecordMat[:,3]), 1000)
-        # dashes = [10, 5, 100, 5]  # 10 points on, 5 off, 100 on, 5 off
-        y = 1.72921055*x+0.02395182
-        plt.plot(x, y, 'r-', lw=2)
-        plt.text(0.2, 0.15, r'fitted line with slope = 1.72921055')
-        plt.scatter(scaleRecordMat[:,3],scaleRecordMat[:,2])
-        plt.xlabel('scales calculated from SUN3D Ground Truth')
-        plt.ylabel('scales calculated from Colmap')
-        plt.grid(True)
-        plt.axis('equal')
-        plt.show()
+    # if False:
+    #     plt.scatter(scaleRecordMat[:,0],scaleRecordMat[:,3])
+    #     plt.ylabel('scales calculated from SUN3D Ground Truth')
+    #     plt.xlabel('scales predicted by DeMoN')
+    #     plt.grid(True)
+    #     plt.axis('equal')
+    #     plt.show()
+    # if False:
+    #     plt.scatter(scaleRecordMat[:,2],scaleRecordMat[:,3])
+    #     plt.ylabel('scales calculated from SUN3D Ground Truth')
+    #     plt.xlabel('scales calculated from Colmap')
+    #     plt.grid(True)
+    #     plt.axis('equal')
+    #     plt.show()
+    # if False:
+    #     x = np.linspace(np.min(scaleRecordMat[:,3]), np.max(scaleRecordMat[:,3]), 1000)
+    #     # dashes = [10, 5, 100, 5]  # 10 points on, 5 off, 100 on, 5 off
+    #     y = 1.72921055*x+0.02395182
+    #     plt.plot(x, y, 'r-', lw=2)
+    #     plt.text(0.2, 0.15, r'fitted line with slope = 1.72921055')
+    #     plt.scatter(scaleRecordMat[:,3],scaleRecordMat[:,2])
+    #     plt.xlabel('scales calculated from SUN3D Ground Truth')
+    #     plt.ylabel('scales calculated from Colmap')
+    #     plt.grid(True)
+    #     plt.axis('equal')
+    #     plt.show()
     if False:
         plt.scatter(scaleRecordMat[:,1],scaleRecordMat[:,2])
         plt.ylabel('scales calculated from Colmap')
@@ -936,13 +965,12 @@ def visPointCloudInGlobalFrame(rendererNotUsed, alpha, infile, ExhaustivePairInf
     appendFilterModel.AddInputData(appendFilterPC.GetOutput())
     appendFilterModel.Update()
 
-    if curIteration % 5 == 0:
-        plywriterModel = vtk.vtkPLYWriter()
-        plywriterModel.SetFileName(os.path.join(outdir,'fused_point_clouds_colmap_alpha{0}_iteration{1}_.ply'.format(int(alpha*10000), int(curIteration))))
-        plywriterModel.SetInputData(appendFilterModel.GetOutput())
-        # plywriterModel.SetFileTypeToASCII()
-        plywriterModel.SetArrayName('Colors')
-        plywriterModel.Write()
+    plywriterModel = vtk.vtkPLYWriter()
+    plywriterModel.SetFileName(os.path.join(outdir,'fused_point_clouds_colmap_alpha{0}.ply'.format(int(alpha*10000))))
+    plywriterModel.SetInputData(appendFilterModel.GetOutput())
+    # plywriterModel.SetFileTypeToASCII()
+    plywriterModel.SetArrayName('Colors')
+    plywriterModel.Write()
 
     axes = vtk.vtkAxesActor()
     axes.GetXAxisCaptionActor2D().SetHeight(0.05)
@@ -952,12 +980,37 @@ def visPointCloudInGlobalFrame(rendererNotUsed, alpha, infile, ExhaustivePairInf
     axes.SetShaftTypeToCylinder()
     renderer.AddActor(axes)
 
+    # if initBool == False:
+    #     renwin = vtk.vtkRenderWindow()
+    #     renwin.SetWindowName("Point Cloud Viewer")
+    #     renwin.SetSize(800,600)
+    #     renwin.AddRenderer(renderer)
+    #
+    #     # An interactor
+    #     interactor = vtk.vtkRenderWindowInteractor()
+    #     interstyle = vtk.vtkInteractorStyleTrackballCamera()
+    #     interactor.SetInteractorStyle(interstyle)
+    #     interactor.SetRenderWindow(renwin)
+    #
+    #     # Start
+    #     interactor.Initialize()
+    #     interactor.Start()
+
+    # SliderWidget.SetInteractor(interactor)
+    # SliderWidget.SetRepresentation(SliderRepres)
+    # # SliderWidget.KeyPressActivationOff()
+    # # SliderWidget.SetAnimationModeToAnimate()
+    # # SliderWidget.SetEnabled(True)
+    # SliderWidget.AddObserver("EndInteractionEvent", vtkSliderCallback2)
+
+    # return renderer
     renderer.Modified()
-    if initBool==True:
-        curIteration += 1
 
-    print("alpha = ", alpha)
-
+renderer = vtk.vtkRenderer()
+renderer.SetBackground(0, 0, 0)
+interactor = vtk.vtkRenderWindowInteractor()
+#SliderRepres = vtk.vtkSliderRepresentation2D()
+#SliderWidget = vtk.vtkSliderWidget()
 
 def close_window(iren):
     render_window = iren.GetRenderWindow()
@@ -967,50 +1020,31 @@ def close_window(iren):
 
 sliderMin = 0 #ImageViewer.GetSliceMin()
 sliderMax = 20 #ImageViewer.GetSliceMax()
-# TheiaOrColmapOrGTPoses='Colmap'
+TheiaOrColmapOrGTPoses='Colmap'
 # TheiaOrColmapOrGTPoses='Theia'
-TheiaOrColmapOrGTPoses='GT'
-# DeMoNOrColmapOrGTDepths='DeMoN'
+# TheiaOrColmapOrGTPoses='GT'
+DeMoNOrColmapOrGTDepths='DeMoN'
 # DeMoNOrColmapOrGTDepths='Colmap'
-DeMoNOrColmapOrGTDepths='GT'
-
-
-renderer = vtk.vtkRenderer()
-renderer.SetBackground(0, 0, 0)
-interactor = vtk.vtkRenderWindowInteractor()
-
-curIteration = 0
-image_pairs = set()
-# scaleRecordMat = []
-scaleRecordMat = np.empty((1,4))
-tmpFittingCoef_Colmap_GT = 0
-alpha = 1.0
-appendFilterPC = vtk.vtkAppendPolyData()
-appendFilterModel = vtk.vtkAppendPolyData()
-initColmapGTRatio = 0
-
-class MyKeyPressInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
-    global initColmapGTRatio, appendFilterPC, appendFilterModel, alpha, tmpFittingCoef_Colmap_GT, scaleRecordMat, image_pairs, TheiaOrColmapOrGTPoses, DeMoNOrColmapOrGTDepths, sliderMin, sliderMax, interactor, renderer, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT
-
-    def __init__(self,parent=None):
-        self.parent = interactor
-
-        self.AddObserver("KeyPressEvent",self.keyPressEvent)
-
-    def keyPressEvent(self,obj,event):
-        key = self.parent.GetKeySym()
-        if key == 'n':
-            print("Key n is pressed: one more view will be added!")
-            visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, PoseSource=TheiaOrColmapOrGTPoses, DepthSource=DeMoNOrColmapOrGTDepths, initBool=True)
-            renderer.Modified()
-        return
+# DeMoNOrColmapOrGTDepths='GT'
 
 def main():
-    global initColmapGTRatio, appendFilterPC, appendFilterModel, alpha, tmpFittingCoef_Colmap_GT, scaleRecordMat, image_pairs, TheiaOrColmapOrGTPoses, DeMoNOrColmapOrGTDepths, sliderMin, sliderMax, interactor, renderer, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT
-    # alpha = 1.0
+    #global SliderRepres, SliderWidget, interactor, renderer, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT
+    global TheiaOrColmapOrGTPoses, DeMoNOrColmapOrGTDepths, sliderMin, sliderMax, interactor, renderer, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT
+    # alpha = 0.128
+    alpha = 1.0
+    # renderer = visPointCloudInGlobalFrame(alpha, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, True)
     print("alpha is set to ", alpha)
 
-    visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, PoseSource=TheiaOrColmapOrGTPoses, DepthSource=DeMoNOrColmapOrGTDepths, initBool=True, setColmapGTRatio=True)
+    visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, PoseSource=TheiaOrColmapOrGTPoses, DepthSource=DeMoNOrColmapOrGTDepths, initBool=True)
+    #renderer = visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, True)
+
+    # axes = vtk.vtkAxesActor()
+    # axes.GetXAxisCaptionActor2D().SetHeight(0.05)
+    # axes.GetYAxisCaptionActor2D().SetHeight(0.05)
+    # axes.GetZAxisCaptionActor2D().SetHeight(0.05)
+    # axes.SetCylinderRadius(0.03)
+    # axes.SetShaftTypeToCylinder()
+    # renderer.AddActor(axes)
 
     renwin = vtk.vtkRenderWindow()
     renwin.SetWindowName("Point Cloud Viewer")
@@ -1018,10 +1052,9 @@ def main():
     renwin.AddRenderer(renderer)
 
     # An interactor
-    # # interactor = vtk.vtkRenderWindowInteractor()
-    # interstyle = vtk.vtkInteractorStyleTrackballCamera()
-    # interactor.SetInteractorStyle(interstyle)
-    interactor.SetInteractorStyle(MyKeyPressInteractorStyle())
+    # interactor = vtk.vtkRenderWindowInteractor()
+    interstyle = vtk.vtkInteractorStyleTrackballCamera()
+    interactor.SetInteractorStyle(interstyle)
     interactor.SetRenderWindow(renwin)
 
     # #### vtk slidingbar to adjust some parameters Runtime
