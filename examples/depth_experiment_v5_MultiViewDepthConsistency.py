@@ -431,19 +431,19 @@ TheiaGlobalPosesGT = read_global_poses_theia_output(TheiaGlobalPosesfilepath,The
 # recondir = "/home/kevin/ThesisDATA/CVG_Datasets_3Dsymmetric/barcelona_Dataset/dense/"
 # recondir = "/home/kevin/ThesisDATA/CVG_Datasets_3Dsymmetric/redmond_Dataset/dense/"
 
-outdir = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction"
-# infile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/View128ColmapFilter_demon_sun3d_train_hotel_beijing~beijing_hotel_2.h5"
-# ExhaustivePairInfile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/demon_sun3d_train_hotel_beijing~beijing_hotel_2.h5"
-#infile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/demon_sun3d_train_hotel_beijing~beijing_hotel_2.h5"
-infile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/kevin_southbuilding_demon.h5"
-ExhaustivePairInfile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/kevin_southbuilding_demon.h5"
-recondir = '/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/images_demon/dense/'
+# outdir = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction"
+# # infile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/View128ColmapFilter_demon_sun3d_train_hotel_beijing~beijing_hotel_2.h5"
+# # ExhaustivePairInfile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/demon_sun3d_train_hotel_beijing~beijing_hotel_2.h5"
+# #infile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/demon_sun3d_train_hotel_beijing~beijing_hotel_2.h5"
+# infile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/kevin_southbuilding_demon.h5"
+# ExhaustivePairInfile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/kevin_southbuilding_demon.h5"
+# recondir = '/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/images_demon/dense/'
 
-# outdir = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_mit_w85_lounge1~wg_lounge1_1/demon_prediction/images_demon/dense/1"
-# # infile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_mit_w85_lounge1~wg_lounge1_1/demon_prediction/images_demon/dense/1/kevin_exhaustive_demon.h5"
-# infile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_mit_w85_lounge1~wg_lounge1_1/demon_prediction/demon_sun3d_train_mit_w85_lounge1~wg_lounge1_1.h5"
-# ExhaustivePairInfile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_mit_w85_lounge1~wg_lounge1_1/demon_prediction/images_demon/dense/1/kevin_exhaustive_demon.h5"
-# recondir = '/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_mit_w85_lounge1~wg_lounge1_1/demon_prediction/images_demon/dense/1'
+outdir = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_mit_w85_lounge1~wg_lounge1_1/demon_prediction/images_demon/dense/1"
+# infile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_mit_w85_lounge1~wg_lounge1_1/demon_prediction/images_demon/dense/1/kevin_exhaustive_demon.h5"
+infile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_mit_w85_lounge1~wg_lounge1_1/demon_prediction/demon_sun3d_train_mit_w85_lounge1~wg_lounge1_1.h5"
+ExhaustivePairInfile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_mit_w85_lounge1~wg_lounge1_1/demon_prediction/images_demon/dense/1/kevin_exhaustive_demon.h5"
+recondir = '/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_mit_w85_lounge1~wg_lounge1_1/demon_prediction/images_demon/dense/1'
 
 
 cameras = colmap.read_cameras_txt(os.path.join(recondir,'sparse','cameras.txt'))
@@ -519,7 +519,7 @@ def computeCorrectionScale(DeMoNPredictionInvDepth, GTDepth, DeMoNDepthThreshold
     correctionScale = np.exp(np.mean( (np.log(view1GTDepth) - np.log(DeMoNDepth)) ))
     return correctionScale
 
-def visOne2MultiPointCloudInGlobalFrame(rendererNotUsed, alpha, image_pairs_One2Multi, One2MultiImagePairs_DeMoN, One2MultiImagePairs_GT, One2MultiImagePairs_Colmap, One2MultiImagePairs_correctionGT, One2MultiImagePairs_correctionColmap, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, PoseSource='Theia', DepthSource='DeMoN', initBool=True, setColmapGTRatio=False):
+def visMultiViewsPointCloudInGlobalFrame(rendererNotUsed, alpha, image_pairs_One2Multi, One2MultiImagePairs_DeMoN, One2MultiImagePairs_GT, One2MultiImagePairs_Colmap, One2MultiImagePairs_correctionGT, One2MultiImagePairs_correctionColmap, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, PoseSource='Theia', DepthSource='DeMoN', initBool=True, setColmapGTRatio=False):
     global initColmapGTRatio, renderer, appendFilterPC, appendFilterModel, curIteration, image_pairs, scaleRecordMat, tmpFittingCoef_Colmap_GT
     data = h5py.File(infile)
     dataExhaustivePairs = h5py.File(ExhaustivePairInfile)
@@ -545,7 +545,7 @@ def visOne2MultiPointCloudInGlobalFrame(rendererNotUsed, alpha, image_pairs_One2
 
     if initBool == False:
         # print("before: inputs in appendFilterPC = ", appendFilterPC.GetInput())
-        for removeIdx in range(curIteration):
+        for removeIdx in range(curIteration*2):
             appendFilterPC.RemoveInputData(appendFilterPC.GetInput(removeIdx))
             appendFilterModel.RemoveInputData(appendFilterModel.GetInput(removeIdx))
         # print("after: inputs in appendFilterPC = ", appendFilterPC.GetInput())
@@ -717,31 +717,83 @@ def visOne2MultiPointCloudInGlobalFrame(rendererNotUsed, alpha, image_pairs_One2
 
         renderer.Modified()
 
-        if False:   # debug: if the second cam is added for visualization
-            ###### get the 2nd point clouds
-            input_data = prepare_input_data(view2.image, view1.image, data_format)
-            transScale = np.linalg.norm(GlobalExtrinsics1_4by4.T[0:3,3] - GlobalExtrinsics2_4by4.T[0:3,3])
-            tmp_PointCloud2 = visualize_prediction(
-                        inverse_depth=1/view2.depth,
-                        # inverse_depth=1/(view2.depth*transScale),
-                        intrinsics = np.array([0.89115971, 1.18821287, 0.5, 0.5]), # sun3d intrinsics
-                        image=input_data['image_pair'][0,0:3] if data_format=='channels_first' else input_data['image_pair'].transpose([0,3,1,2])[0,0:3],
-                        R1=GlobalExtrinsics2_4by4[0:3,0:3],
-                        t1=GlobalExtrinsics2_4by4[0:3,3],
-                        rotation=rotmat_To_angleaxis(np.dot(GlobalExtrinsics1_4by4[0:3,0:3], GlobalExtrinsics2_4by4[0:3,0:3].T)),
-                        translation=GlobalExtrinsics1_4by4[0:3,3],   # should be changed, this is wrong!
-                        # scale=data[image_pair12]['scale'].value)
-                        # scale=transScale)
-                        # scale=1/transScale)
-                        # scale=1/data[image_pair12]['scale'].value)
-                        # scale=transScale/data[image_pair12]['scale'].value)
-                        # scale=data[image_pair12]['scale'].value*transScale)
-                        scale=1)
+        if True:   # debug: if the second cam is added for visualization
+            ##### compute scales
+            transScaleTheia = 0
+            transScaleColmap = One2MultiImagePairs_Colmap[image_pair12].scale21
+            transScaleGT = One2MultiImagePairs_GT[image_pair12].scale21
+            correctionScaleColmap = One2MultiImagePairs_correctionColmap[image_pair12].scale21
+            correctionScaleGT = One2MultiImagePairs_correctionGT[image_pair12].scale21
+            print("transScaleTheia = ", transScaleTheia, "; transScaleColmap = ", transScaleColmap, "; transScaleGT = ", transScaleGT, "; demon scale = ",  One2MultiImagePairs_DeMoN[image_pair12].scale21)
+            pred_scale =  One2MultiImagePairs_DeMoN[image_pair12].scale21
 
+            ###### get the second point clouds
+            input_data = prepare_input_data(One2MultiImagePairs_GT[image_pair12].image2, One2MultiImagePairs_GT[image_pair12].image1, data_format)
+            if DepthSource=='Colmap':
+                if PoseSource=='Theia':
+                    scale_applied = transScaleTheia/transScaleColmap
+                if PoseSource=='Colmap':
+                    scale_applied = 1
+                if PoseSource=='GT':
+                    # scale_applied = transScaleGT/transScaleColmap
+                    # scale_applied = 1/initColmapGTRatio
+                    # scale_applied = 1/1.72921055    # fittedColmapGTRatio = 1.72921055
+                    scale_applied = correctionScaleGT/correctionScaleColmap
+                tmp_PointCloud2 = visualize_prediction(
+                            inverse_depth=1/One2MultiImagePairs_Colmap[image_pair12].depth2,
+                            intrinsics = np.array([0.89115971, 1.18821287, 0.5, 0.5]), # sun3d intrinsics
+                            image=input_data['image_pair'][0,0:3] if data_format=='channels_first' else input_data['image_pair'].transpose([0,3,1,2])[0,0:3],
+                            R1=GlobalExtrinsics2_4by4[0:3,0:3],
+                            t1=GlobalExtrinsics2_4by4[0:3,3],
+                            rotation=rotmat_To_angleaxis(np.dot(GlobalExtrinsics2_4by4[0:3,0:3], GlobalExtrinsics1_4by4[0:3,0:3].T)),
+                            translation=GlobalExtrinsics2_4by4[0:3,3],   # should be changed, this is wrong!
+                            scale=scale_applied)
+
+            elif DepthSource=='DeMoN':
+                if PoseSource=='Theia':
+                    scale_applied = transScaleTheia
+                if PoseSource=='Colmap':
+                    # scale_applied = transScaleColmap
+                    # scale_applied = pred_scale
+                    # scale_applied = 1
+                    scale_applied = correctionScaleColmap
+                if PoseSource=='GT':
+                    # scale_applied = transScaleGT
+                    # scale_applied = 1/pred_scale
+                    # scale_applied = pred_scale
+                    # scale_applied = 1
+                    scale_applied = correctionScaleGT
+                tmp_PointCloud2 = visualize_prediction(
+                            inverse_depth=1/One2MultiImagePairs_DeMoN[image_pair12].depth2,### in previous data retrieval part, the predicted inv_depth has been inversed to depth for later access!
+                            intrinsics = np.array([0.89115971, 1.18821287, 0.5, 0.5]), # sun3d intrinsics
+                            image=input_data['image_pair'][0,0:3] if data_format=='channels_first' else input_data['image_pair'].transpose([0,3,1,2])[0,0:3],
+                            R1=GlobalExtrinsics2_4by4[0:3,0:3],
+                            t1=GlobalExtrinsics2_4by4[0:3,3],
+                            rotation=rotmat_To_angleaxis(np.dot(GlobalExtrinsics1_4by4[0:3,0:3], GlobalExtrinsics2_4by4[0:3,0:3].T)),
+                            translation=GlobalExtrinsics2_4by4[0:3,3],   # should be changed, this is wrong!
+                            scale=scale_applied)
+            elif DepthSource=='GT':
+                if PoseSource=='Theia':
+                    scale_applied = transScaleTheia/transScaleGT
+                if PoseSource=='Colmap':
+                    # scale_applied = transScaleColmap/transScaleGT
+                    # scale_applied = initColmapGTRatio
+                    scale_applied = 1.72921055    # fittedColmapGTRatio = 1.72921055
+                if PoseSource=='GT':
+                    scale_applied = 1
+                tmp_PointCloud2 = visualize_prediction(
+                            inverse_depth=1/One2MultiImagePairs_GT[image_pair12].depth2,
+                            intrinsics = np.array([0.89115971, 1.18821287, 0.5, 0.5]), # sun3d intrinsics
+                            image=input_data['image_pair'][0,0:3] if data_format=='channels_first' else input_data['image_pair'].transpose([0,3,1,2])[0,0:3],
+                            R1=GlobalExtrinsics2_4by4[0:3,0:3],
+                            t1=GlobalExtrinsics2_4by4[0:3,3],
+                            rotation=rotmat_To_angleaxis(np.dot(GlobalExtrinsics2_4by4[0:3,0:3], GlobalExtrinsics1_4by4[0:3,0:3].T)),
+                            translation=GlobalExtrinsics2_4by4[0:3,3],   # should be changed, this is wrong!
+                            scale=scale_applied)
 
             pointcloud_actor = create_pointcloud_actor(
                points=tmp_PointCloud2['points'],
-               colors=tmp_PointCloud2['colors'] if 'colors' in tmp_PointCloud2 else None,
+               colors=tmp_PointCloud2['colors'] if 'colors' in tmp_PointCloud1 else None,
                )
             renderer.AddActor(pointcloud_actor)
 
@@ -751,14 +803,19 @@ def visOne2MultiPointCloudInGlobalFrame(rendererNotUsed, alpha, image_pairs_One2
                                                     )
             appendFilterPC.AddInputData(pc_polydata)
 
-            # PointClouds['points'] = np.concatenate((PointClouds['points'],tmp_PointCloud2['points']), axis=0)
-            # PointClouds['colors'] = np.concatenate((PointClouds['colors'],tmp_PointCloud2['colors']), axis=0)
+            # if it==0:
+            #     PointClouds = tmp_PointCloud2
+            # else:
+            #     PointClouds['points'] = np.concatenate((PointClouds['points'],tmp_PointCloud2['points']), axis=0)
+            #     PointClouds['colors'] = np.concatenate((PointClouds['colors'],tmp_PointCloud2['colors']), axis=0)
 
             cam2_actor = create_camera_actor(GlobalExtrinsics2_4by4[0:3,0:3], GlobalExtrinsics2_4by4[0:3,3])
             # cam2_actor.GetProperty().SetColor(0.5, 0.5, 1.0)
             renderer.AddActor(cam2_actor)
             cam2_polydata = create_camera_polydata(GlobalExtrinsics2_4by4[0:3,0:3],GlobalExtrinsics2_4by4[0:3,3], True)
             appendFilterModel.AddInputData(cam2_polydata)
+
+            renderer.Modified()
 
         it +=1
         if it>=len(One2MultiImagePairs_DeMoN.keys()):
@@ -860,11 +917,11 @@ def visOne2MultiPointCloudInGlobalFrame(rendererNotUsed, alpha, image_pairs_One2
 # TheiaOrColmapOrGTPoses='Theia'
 TheiaOrColmapOrGTPoses='GT'
 # DeMoNOrColmapOrGTDepths='GT'
-DeMoNOrColmapOrGTDepths='Colmap'
-# DeMoNOrColmapOrGTDepths='DeMoN'
+# DeMoNOrColmapOrGTDepths='Colmap'
+DeMoNOrColmapOrGTDepths='DeMoN'
 
-# tarImageFileName = 'mit_w85_lounge1~wg_lounge1_1-0000055_baseline_2_v1.JPG'
-tarImageFileName = 'hotel_beijing~beijing_hotel_2-0000103_baseline_1_v0.JPG'
+tarImageFileName = 'mit_w85_lounge1~wg_lounge1_1-0000055_baseline_2_v1.JPG'
+# tarImageFileName = 'hotel_beijing~beijing_hotel_2-0000103_baseline_1_v0.JPG'
 
 renderer = vtk.vtkRenderer()
 renderer.SetBackground(0, 0, 0)
@@ -892,7 +949,7 @@ class MyKeyPressInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
         key = self.parent.GetKeySym()
         if key == 'n':
             print("Key n is pressed: one more view will be added!")
-            visOne2MultiPointCloudInGlobalFrame(renderer, alpha, image_pairs_One2Multi, One2MultiImagePairs_DeMoN, One2MultiImagePairs_GT, One2MultiImagePairs_Colmap, One2MultiImagePairs_correctionGT, One2MultiImagePairs_correctionColmap, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, PoseSource=TheiaOrColmapOrGTPoses, DepthSource=DeMoNOrColmapOrGTDepths, initBool=True)
+            visMultiViewsPointCloudInGlobalFrame(renderer, alpha, image_pairs_One2Multi, One2MultiImagePairs_DeMoN, One2MultiImagePairs_GT, One2MultiImagePairs_Colmap, One2MultiImagePairs_correctionGT, One2MultiImagePairs_correctionColmap, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, PoseSource=TheiaOrColmapOrGTPoses, DepthSource=DeMoNOrColmapOrGTDepths, initBool=True)
             renderer.Modified()
         return
 
@@ -1314,7 +1371,7 @@ def findOne2MultiPairs(infile, ExhaustivePairInfile, data_format, target_K, w, h
 
 
 
-def checkDepthConsistencyPixelwise_OldInefficientNestedLoops(image_pairs_One2Multi, One2MultiImagePairs_DeMoN, One2MultiImagePairs_GT, One2MultiImagePairs_Colmap, One2MultiImagePairs_correctionGT, One2MultiImagePairs_correctionColmap, PoseSource='GT', DepthSource='DeMoN', w=256, h=192):
+def checkDepthConsistencyPixelwise_One2Multi_OldInefficientNestedLoops(image_pairs_One2Multi, One2MultiImagePairs_DeMoN, One2MultiImagePairs_GT, One2MultiImagePairs_Colmap, One2MultiImagePairs_correctionGT, One2MultiImagePairs_correctionColmap, PoseSource='GT', DepthSource='DeMoN', w=256, h=192):
     ###### Check Depth & InvDepth Stats
     pixelwiseStats = np.zeros([h,w,4])
     it = 0
@@ -1490,7 +1547,7 @@ def checkDepthConsistencyPixelwise_OldInefficientNestedLoops(image_pairs_One2Mul
     # plt.show()
 
 
-def checkDepthConsistencyPixelwise(image_pairs_One2Multi, One2MultiImagePairs_DeMoN, One2MultiImagePairs_GT, One2MultiImagePairs_Colmap, One2MultiImagePairs_correctionGT, One2MultiImagePairs_correctionColmap, PoseSource='GT', DepthSource='DeMoN', w=256, h=192):
+def checkDepthConsistencyPixelwise_One2Multi(image_pairs_One2Multi, One2MultiImagePairs_DeMoN, One2MultiImagePairs_GT, One2MultiImagePairs_Colmap, One2MultiImagePairs_correctionGT, One2MultiImagePairs_correctionColmap, PoseSource='GT', DepthSource='DeMoN', w=256, h=192):
     ###### Check Depth & InvDepth Stats
     pixelwiseStats = np.zeros([h*w,4])
     # scaleRecorderMat = np.empty([1,3])
@@ -1639,19 +1696,260 @@ def checkDepthConsistencyPixelwise(image_pairs_One2Multi, One2MultiImagePairs_De
     # plt.show()
 
 
+def flow_from_depth(depth, R, T, K):
+    # K = np.eye(3)
+    # K[0, 0] = K[1, 1] = F
+    # K[0, 2] = depth.shape[1] / 2
+    # K[1, 2] = depth.shape[0] / 2
+    y, x = np.mgrid[0:depth.shape[0], 0:depth.shape[1]]
+    z = 1 / depth[:]
+    coords1 = np.column_stack((x.ravel(), y.ravel(), np.ones_like(x.ravel())))
+    coords2 = np.dot(coords1, np.linalg.inv(K).T)
+    coords2[:,0] *= z.ravel()
+    coords2[:,1] *= z.ravel()
+    coords2[:,2] = z.ravel()
+    coords2 = np.dot(coords2, R[:].T) + T[:]
+    coords2 = np.dot(coords2, K.T)
+    coords2 /= coords2[:, 2][:, None]
+    flow12 = coords2 - coords1
+    flowx = flow12[:, 0].reshape(depth.shape) / depth.shape[1]
+    flowy = flow12[:, 1].reshape(depth.shape) / depth.shape[0]
+    return np.concatenate((flowx[None], flowy[None]), axis=0)
+
+
+def flow_to_matches(flow):
+    fx = np.round(flow[0] * flow.shape[2]).astype(np.int)
+    fy = np.round(flow[1] * flow.shape[1]).astype(np.int)
+    y1, x1 = np.mgrid[0:flow.shape[1], 0:flow.shape[2]]
+    x2 = x1.ravel() + fx.ravel()
+    y2 = y1.ravel() + fy.ravel()
+    mask = (x2 >= 0) & (x2 < flow.shape[2]) & (y2 >= 0) & (y2 < flow.shape[1])
+    matches = np.zeros((mask.size, 2), dtype=np.uint32)
+    matches[:, 0] = np.arange(mask.size)
+    matches[:, 1] = y2 * flow.shape[2] + x2
+    # matches = matches[mask].copy()
+    # coords1 = np.column_stack((x1.ravel(), y1.ravel()))[mask]
+    # coords2 = np.column_stack((x2, y2))[mask]
+    coords1 = np.column_stack((x1.ravel(), y1.ravel()))
+    coords2 = np.column_stack((x2, y2))
+    return matches, coords1, coords2, mask
+
+def checkDepthConsistencyPixelwise_MultiViews(image_pairs_One2Multi, One2MultiImagePairs_DeMoN, One2MultiImagePairs_GT, One2MultiImagePairs_Colmap, One2MultiImagePairs_correctionGT, One2MultiImagePairs_correctionColmap, PoseSource='GT', DepthSource='DeMoN', w=256, h=192):
+    global target_K
+    ###### Check Depth & InvDepth Stats
+    pixelwiseStats = np.zeros([h*w,4])
+    # scaleRecorderMat = np.empty([1,3])
+    viewCnt=0
+    for image_pair12 in One2MultiImagePairs_DeMoN.keys():
+        ### check correlation between different scales regarding one-to-multi image pairs
+        if viewCnt==0:
+            scaleRecorderMat = np.array([One2MultiImagePairs_DeMoN[image_pair12].scale12, One2MultiImagePairs_GT[image_pair12].scale12, One2MultiImagePairs_Colmap[image_pair12].scale12, One2MultiImagePairs_correctionGT[image_pair12].scale12, One2MultiImagePairs_correctionColmap[image_pair12].scale12])
+            scaleRecorderMat = np.vstack((scaleRecorderMat,np.array([One2MultiImagePairs_DeMoN[image_pair12].scale21, One2MultiImagePairs_GT[image_pair12].scale21, One2MultiImagePairs_Colmap[image_pair12].scale21, One2MultiImagePairs_correctionGT[image_pair12].scale12, One2MultiImagePairs_correctionColmap[image_pair12].scale12])))
+        else:
+            scaleRecorderMat = np.vstack((scaleRecorderMat,np.array([One2MultiImagePairs_DeMoN[image_pair12].scale12, One2MultiImagePairs_GT[image_pair12].scale12, One2MultiImagePairs_Colmap[image_pair12].scale12, One2MultiImagePairs_correctionGT[image_pair12].scale12, One2MultiImagePairs_correctionColmap[image_pair12].scale12])))
+            scaleRecorderMat = np.vstack((scaleRecorderMat,np.array([One2MultiImagePairs_DeMoN[image_pair12].scale21, One2MultiImagePairs_GT[image_pair12].scale21, One2MultiImagePairs_Colmap[image_pair12].scale21, One2MultiImagePairs_correctionGT[image_pair12].scale12, One2MultiImagePairs_correctionColmap[image_pair12].scale12])))
+        print("scaleRecorderMat.shape = ", scaleRecorderMat.shape)
+
+        ###### Add view1 in image_pair12
+        scale_choice = 1
+        if DepthSource=='DeMoN':
+            depth_choice = One2MultiImagePairs_DeMoN[image_pair12].depth1
+            if PoseSource=='Colmap':
+                # scale_choice = One2MultiImagePairs_DeMoN[image_pair12].scale12
+                # scale_choice = One2MultiImagePairs_Colmap[image_pair12].scale12
+                scale_choice = One2MultiImagePairs_correctionColmap[image_pair12].scale12
+            if PoseSource=='GT':
+                # scale_choice = One2MultiImagePairs_DeMoN[image_pair12].scale12
+                # scale_choice = One2MultiImagePairs_GT[image_pair12].scale12
+                scale_choice = One2MultiImagePairs_correctionGT[image_pair12].scale12
+        if DepthSource=='Colmap':
+            depth_choice = One2MultiImagePairs_Colmap[image_pair12].depth1
+            if PoseSource=='GT':
+                # scale_choice = One2MultiImagePairs_GT[image_pair12].scale12/One2MultiImagePairs_Colmap[image_pair12].scale12    # or a fixed value
+                scale_choice = One2MultiImagePairs_correctionGT[image_pair12].scale12/One2MultiImagePairs_correctionColmap[image_pair12].scale12    # or a fixed value
+        if DepthSource=='GT':
+            depth_choice = One2MultiImagePairs_GT[image_pair12].depth1
+            if PoseSource=='Colmap':
+                # scale_choice = One2MultiImagePairs_Colmap[image_pair12].scale12/One2MultiImagePairs_GT[image_pair12].scale12    # or a fixed value
+                scale_choice = One2MultiImagePairs_correctionColmap[image_pair12].scale12/One2MultiImagePairs_correctionGT[image_pair12].scale12    # or a fixed value
+
+        tmpScaledDepthMap =  depth_choice * scale_choice
+        tmpScaledInvDepthMap = 1/tmpScaledDepthMap
+        if viewCnt==0:
+            DepthMapRecorder = tmpScaledDepthMap
+            InvDepthMapRecorder = tmpScaledInvDepthMap
+        else:
+            DepthMapRecorder = np.dstack((DepthMapRecorder,tmpScaledDepthMap))
+            InvDepthMapRecorder = np.dstack((InvDepthMapRecorder,tmpScaledInvDepthMap))
+        viewCnt += 1
+
+
+        ###### Add view2 in image_pair12, i.e. view1 in image_pair21
+        scale_choice = 1
+        if DepthSource=='DeMoN':
+            depth_choice = One2MultiImagePairs_DeMoN[image_pair12].depth2
+            if PoseSource=='Colmap':
+                # scale_choice = One2MultiImagePairs_DeMoN[image_pair12].scale21
+                # scale_choice = One2MultiImagePairs_Colmap[image_pair12].scale21
+                scale_choice = One2MultiImagePairs_correctionColmap[image_pair12].scale21
+            if PoseSource=='GT':
+                # scale_choice = One2MultiImagePairs_DeMoN[image_pair12].scale21
+                # scale_choice = One2MultiImagePairs_GT[image_pair12].scale21
+                scale_choice = One2MultiImagePairs_correctionGT[image_pair12].scale21
+        if DepthSource=='Colmap':
+            depth_choice = One2MultiImagePairs_Colmap[image_pair12].depth2
+            if PoseSource=='GT':
+                # scale_choice = One2MultiImagePairs_GT[image_pair12].scale12/One2MultiImagePairs_Colmap[image_pair12].scale21    # or a fixed value
+                scale_choice = One2MultiImagePairs_correctionGT[image_pair12].scale12/One2MultiImagePairs_correctionColmap[image_pair12].scale21    # or a fixed value
+        if DepthSource=='GT':
+            depth_choice = One2MultiImagePairs_GT[image_pair12].depth2
+            if PoseSource=='Colmap':
+                # scale_choice = One2MultiImagePairs_Colmap[image_pair12].scale12/One2MultiImagePairs_GT[image_pair12].scale21    # or a fixed value
+                scale_choice = One2MultiImagePairs_correctionColmap[image_pair12].scale12/One2MultiImagePairs_correctionGT[image_pair12].scale21    # or a fixed value
+
+        tmpScaledDepthMap2 =  depth_choice * scale_choice
+        tmpScaledInvDepthMa2 = 1/tmpScaledDepthMap2
+
+        ## retrieve corresponding depth values in other views
+        if PoseSource=='Colmap':
+            flow12 = flow_from_depth(tmpScaledDepthMap, One2MultiImagePairs_Colmap[image_pair12].Relative12_4by4[0:3,0:3], One2MultiImagePairs_Colmap[image_pair12].Relative12_4by4[0:3,3], target_K)
+        if PoseSource=='GT':
+            flow12 = flow_from_depth(tmpScaledDepthMap, One2MultiImagePairs_GT[image_pair12].Relative12_4by4[0:3,0:3], One2MultiImagePairs_GT[image_pair12].Relative12_4by4[0:3,3], target_K)
+        matches12, coords121, coords122, mask12 = flow_to_matches(flow12)
+        print("flow12.shape = ", flow12.shape)
+        print("coords122.shape = ", coords122.shape)
+        print("coords121 x max = ", np.max(coords121[:,0]), "; coords121 y max = ", np.max(coords121[:,1]))
+
+        matchedDepthMapView2 = np.empty((tmpScaledDepthMap2.shape[0],tmpScaledDepthMap2.shape[1]))
+        matchedDepthMapView2[:] = np.nan
+        matchedInvDepthMapView2 = np.empty((tmpScaledDepthMap2.shape[0],tmpScaledDepthMap2.shape[1]))
+        matchedInvDepthMapView2[:] = np.nan
+        for pixIdx in range(len(mask12)):
+            if mask12[pixIdx] == True:
+                # print("(", coords121[pixIdx,0], coords121[pixIdx,1], ") (", coords122[pixIdx,0], coords122[pixIdx,1], ")")
+                matchedDepthMapView2[coords121[pixIdx,1], coords121[pixIdx,0]] = tmpScaledDepthMap2[coords122[pixIdx,1], coords122[pixIdx,0]]
+                matchedInvDepthMapView2[coords121[pixIdx,1], coords121[pixIdx,0]] = tmpScaledInvDepthMa2[coords122[pixIdx,1], coords122[pixIdx,0]]
+
+        DepthMapRecorder = np.dstack((DepthMapRecorder,matchedDepthMapView2))
+        InvDepthMapRecorder = np.dstack((InvDepthMapRecorder,matchedInvDepthMapView2))
+
+        viewCnt += 1
+
+        print("viewCnt = ", viewCnt, ": DepthMapRecorder.shape = ", DepthMapRecorder.shape)
+
+    DepthMapRecorder = np.reshape(DepthMapRecorder, [DepthMapRecorder.shape[0]*DepthMapRecorder.shape[1], DepthMapRecorder.shape[2]])
+    InvDepthMapRecorder = np.reshape(InvDepthMapRecorder, [InvDepthMapRecorder.shape[0]*InvDepthMapRecorder.shape[1], InvDepthMapRecorder.shape[2]])
+    pixelwiseStats[:,0] = np.nanmean(DepthMapRecorder, axis=1)
+    pixelwiseStats[:,1] = np.nanstd(DepthMapRecorder, axis=1)
+    pixelwiseStats[:,2] = np.nanmean(InvDepthMapRecorder, axis=1)
+    pixelwiseStats[:,3] = np.nanstd(InvDepthMapRecorder, axis=1)
+    print("pixelwiseStats = ", pixelwiseStats)
+    print("scaleRecorderMat.shape = ", scaleRecorderMat.shape)
+    np.savetxt(os.path.join(outdir, 'scale_matrix.txt'),scaleRecorderMat)
+    if True:
+        plt.figure()
+        plt.scatter(scaleRecorderMat[:,0],scaleRecorderMat[:,1])
+        plt.axis((0,1.2*np.max(scaleRecorderMat[:,0]),0,1.2*np.max(scaleRecorderMat[:,1])))
+        #plt.axis((0,1,0,1.2*np.max(scaleRecorderMat[:,1])))
+        plt.xlabel('DeMoN Scale')
+        plt.ylabel('GT Scale')
+        #plt.axis('equal')
+        plt.grid(True)
+        plt.show()
+        plt.figure()
+        plt.scatter(scaleRecorderMat[:,0],scaleRecorderMat[:,2])
+        plt.axis((0,1.2*np.max(scaleRecorderMat[:,0]),0,1.2*np.max(scaleRecorderMat[:,2])))
+        #plt.axis((0,1,0,1.2*np.max(scaleRecorderMat[:,2])))
+        plt.xlabel('DeMoN Scale')
+        plt.ylabel('Colmap Scale')
+        #plt.axis('equal')
+        plt.grid(True)
+        plt.show()
+        plt.figure()
+        plt.scatter(scaleRecorderMat[:,2],scaleRecorderMat[:,1])
+        plt.axis((0,1.2*np.max(scaleRecorderMat[:,2]),0,1.2*np.max(scaleRecorderMat[:,1])))
+        plt.xlabel('Colmap Scale')
+        plt.ylabel('GT Scale')
+        #plt.axis('equal')
+        plt.grid(True)
+        plt.show()
+    # ClosePairs_Depth_DeMoNDepth_GTScale_GTPose_pixelwise_std_CDF.png
+    # ClosePairs_Depth_DeMoNDepth_ColmapScale_ColmapPose_pixelwise_std_CDF.png
+
+    data = pixelwiseStats[:,1].flatten()
+    print(data.shape)
+    # data = data[data!=np.nan]
+    # data = data[data!=np.inf]
+    data = data[np.isfinite(data)]
+    print(data.shape)
+    plt.figure()
+    num_bins = 2000
+    counts, bin_edges = np.histogram(data, bins=num_bins, normed=True)
+    cdf = np.cumsum(counts)
+    plt.plot(bin_edges[1:], cdf/cdf[-1])
+    plt.title('CDF of pixelwise std of depth values: mu={0}, sigma={1}, from {2} pairs'.format(np.mean(data), np.std(data), int(len(list(One2MultiImagePairs_DeMoN.keys())))))
+    plt.xlabel('pixelwise standard deviation of depth values')
+    plt.ylabel('Probability')
+    plt.show()
+
+    # for q in [50, 90, 95, 100]:
+    #     print ("{}%% percentile: {}".format (q, np.percentile(data, q)))
+    #
+    # plt.figure()
+    # hist = plt.hist(data, normed=False, bins=1000)
+    # # plt.plot(bin_edges[1:], counts)
+    # # plt.bar(bin_edges[1:], height=counts)
+    # plt.xlabel('pixelwise standard deviation of depth values')
+    # plt.ylabel('counts number')
+    # plt.title('Histogram of pixelwise standard deviation of depth values: mu={0}, sigma={1}'.format(np.mean(data), np.std(data)))
+    # # plt.axis([40, 160, 0, 0.03])
+    # plt.grid(True)
+    # plt.show()
+    #######################################################
+    data = pixelwiseStats[:,3].flatten()
+    print(data.shape)
+    # data = data[data!=np.nan]
+    # data = data[data!=np.inf]
+    data = data[np.isfinite(data)]
+    print(data.shape)
+    plt.figure()
+    num_bins = 2000
+    counts, bin_edges = np.histogram(data, bins=num_bins, normed=True)
+    cdf = np.cumsum(counts)
+    plt.plot(bin_edges[1:], cdf/cdf[-1])
+    plt.title('CDF of pixelwise std of inv_depth values: mu={0}, sigma={1}, from {2} pairs'.format(np.mean(data), np.std(data), int(len(list(One2MultiImagePairs_DeMoN.keys())))))
+    plt.xlabel('pixelwise standard deviation of inv_depth values')
+    plt.ylabel('Probability')
+    plt.show()
+
+    # for q in [50, 90, 95, 100]:
+    #     print ("{}%% percentile: {}".format (q, np.percentile(data, q)))
+    #
+    # plt.figure()
+    # hist = plt.hist(data, normed=False, bins=1000)
+    # # plt.plot(bin_edges[1:], counts)
+    # # plt.bar(bin_edges[1:], height=counts)
+    # plt.xlabel('pixelwise standard deviation of inv_depth values')
+    # plt.ylabel('counts number')
+    # plt.title('Histogram of pixelwise standard deviation of inv_depth values: mu={0}, sigma={1}'.format(np.mean(data), np.std(data)))
+    # # plt.axis([40, 160, 0, 0.03])
+    # plt.grid(True)
+    # plt.show()
+
+
 image_pairs_One2Multi, One2MultiImagePairs_DeMoN, One2MultiImagePairs_GT, One2MultiImagePairs_Colmap, One2MultiImagePairs_correctionGT, One2MultiImagePairs_correctionColmap = findOne2MultiPairs(infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, tarImageFileName)
 
 def main():
     global curIteration, initColmapGTRatio, appendFilterPC, appendFilterModel, alpha, tmpFittingCoef_Colmap_GT, scaleRecordMat, image_pairs, TheiaOrColmapOrGTPoses, DeMoNOrColmapOrGTDepths, sliderMin, sliderMax, interactor, renderer, image_pairs_One2Multi, One2MultiImagePairs_DeMoN, One2MultiImagePairs_GT, One2MultiImagePairs_Colmap, One2MultiImagePairs_correctionGT, One2MultiImagePairs_correctionColmap, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT
 
-    checkDepthConsistencyPixelwise(image_pairs_One2Multi, One2MultiImagePairs_DeMoN, One2MultiImagePairs_GT, One2MultiImagePairs_Colmap, One2MultiImagePairs_correctionGT, One2MultiImagePairs_correctionColmap, PoseSource=TheiaOrColmapOrGTPoses, DepthSource=DeMoNOrColmapOrGTDepths, w=256, h=192)
+    checkDepthConsistencyPixelwise_MultiViews(image_pairs_One2Multi, One2MultiImagePairs_DeMoN, One2MultiImagePairs_GT, One2MultiImagePairs_Colmap, One2MultiImagePairs_correctionGT, One2MultiImagePairs_correctionColmap, PoseSource=TheiaOrColmapOrGTPoses, DepthSource=DeMoNOrColmapOrGTDepths, w=256, h=192)
 
     # ###### visualize the view one by one
-    # visOne2MultiPointCloudInGlobalFrame(renderer, alpha, image_pairs_One2Multi, One2MultiImagePairs_DeMoN, One2MultiImagePairs_GT, One2MultiImagePairs_Colmap, One2MultiImagePairs_correctionGT, One2MultiImagePairs_correctionColmap, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, PoseSource=TheiaOrColmapOrGTPoses, DepthSource=DeMoNOrColmapOrGTDepths, initBool=True, setColmapGTRatio=True)
+    # visMultiViewsPointCloudInGlobalFrame(renderer, alpha, image_pairs_One2Multi, One2MultiImagePairs_DeMoN, One2MultiImagePairs_GT, One2MultiImagePairs_Colmap, One2MultiImagePairs_correctionGT, One2MultiImagePairs_correctionColmap, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, PoseSource=TheiaOrColmapOrGTPoses, DepthSource=DeMoNOrColmapOrGTDepths, initBool=True, setColmapGTRatio=True)
     ###### visualize all retrieved the views
     curIteration = len(One2MultiImagePairs_DeMoN)
     print("curIteration = ", curIteration)
-    visOne2MultiPointCloudInGlobalFrame(renderer, alpha, image_pairs_One2Multi, One2MultiImagePairs_DeMoN, One2MultiImagePairs_GT, One2MultiImagePairs_Colmap, One2MultiImagePairs_correctionGT, One2MultiImagePairs_correctionColmap, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, PoseSource=TheiaOrColmapOrGTPoses, DepthSource=DeMoNOrColmapOrGTDepths, initBool=False, setColmapGTRatio=True)
+    visMultiViewsPointCloudInGlobalFrame(renderer, alpha, image_pairs_One2Multi, One2MultiImagePairs_DeMoN, One2MultiImagePairs_GT, One2MultiImagePairs_Colmap, One2MultiImagePairs_correctionGT, One2MultiImagePairs_correctionColmap, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, PoseSource=TheiaOrColmapOrGTPoses, DepthSource=DeMoNOrColmapOrGTDepths, initBool=False, setColmapGTRatio=True)
 
     renwin = vtk.vtkRenderWindow()
     renwin.SetWindowName("Point Cloud Viewer")
