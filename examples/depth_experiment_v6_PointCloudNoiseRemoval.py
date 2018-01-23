@@ -19,6 +19,32 @@ from pyquaternion import Quaternion
 import nibabel.quaternions as nq
 import vtk
 
+
+def compute_normals_from_depth(depth_numpyArr):
+    h = depth_numpyArr.shape[0]
+    w = depth_numpyArr.shape[1]
+    normal_map = np.empty([h,w,3],dtype=np.float32)
+    for x in range(w):
+        for y in range(h):
+            if x==0 or y==0 or x==w-1 or y==h-1:
+                n = np.array([0,0,1])
+            else:
+                dzdx = (depth_numpyArr[y, x+1] - depth_numpyArr[y, x-1]) / 2.0;
+                dzdy = (depth_numpyArr[y+1, x] - depth_numpyArr[y-1, x]) / 2.0;
+                n = np.array([-dzdx, -dzdy, 1])
+                n = n/np.linalg.norm(n)
+            normal_map[y,x,:] = n
+
+    # print(normal_map)
+    # np.savetxt('test.txt', normal_map[:,:,0])
+    print(normal_map.shape)
+    # plt.imshow((normal_map-np.min(normal_map))/(np.max(normal_map)-np.min(normal_map)))
+    plt.imshow(normal_map/2+0.5)
+    print(np.min(normal_map), " ", np.max(normal_map))
+    plt.show()
+
+    return normal_map
+
 def prepare_input_data(img1, img2, data_format):
     """Creates the arrays used as input from the two images."""
     # scale images if necessary
@@ -654,6 +680,9 @@ def visMultiViewsPointCloudInGlobalFrame(rendererNotUsed, alpha, image_pairs_One
                 # scale_applied = pred_scale
                 # scale_applied = 1
                 scale_applied = correctionScaleGT
+
+            normal_map = compute_normals_from_depth(One2MultiImagePairs_DeMoN[image_pair12].depth1*scale_applied*100)
+            normal_map = np.transpose(normal_map, (2, 0, 1))
             # tmp_PointCloud1 = visualize_prediction(
             tmp_PointCloud1 = organize_data_for_noise_removal_stage1(
                         inverse_depth=1/One2MultiImagePairs_DeMoN[image_pair12].depth1,### in previous data retrieval part, the predicted inv_depth has been inversed to depth for later access!
@@ -661,6 +690,7 @@ def visMultiViewsPointCloudInGlobalFrame(rendererNotUsed, alpha, image_pairs_One
                         image=input_data['image_pair'][0,0:3] if data_format=='channels_first' else input_data['image_pair'].transpose([0,3,1,2])[0,0:3],
                         R1=GlobalExtrinsics1_4by4[0:3,0:3],
                         t1=GlobalExtrinsics1_4by4[0:3,3],
+                        normals=normal_map,
                         # rotation=rotmat_To_angleaxis(np.dot(GlobalExtrinsics2_4by4[0:3,0:3], GlobalExtrinsics1_4by4[0:3,0:3].T)),
                         # translation=GlobalExtrinsics2_4by4[0:3,3],   # should be changed, this is wrong!
                         scale=scale_applied)
@@ -713,7 +743,7 @@ def visMultiViewsPointCloudInGlobalFrame(rendererNotUsed, alpha, image_pairs_One
         pointclouds_beforefiltering[image_pair12] = tmp_PointCloud1
 
 
-        if False:   # debug: if the second cam is added for visualization
+        if True:   # debug: if the second cam is added for visualization
             ##### compute scales
             transScaleTheia = 0
             transScaleColmap = One2MultiImagePairs_Colmap[image_pair12].scale21
@@ -735,14 +765,15 @@ def visMultiViewsPointCloudInGlobalFrame(rendererNotUsed, alpha, image_pairs_One
                     # scale_applied = 1/initColmapGTRatio
                     # scale_applied = 1/1.72921055    # fittedColmapGTRatio = 1.72921055
                     scale_applied = correctionScaleGT/correctionScaleColmap
-                tmp_PointCloud2 = visualize_prediction(
+                # tmp_PointCloud2 = visualize_prediction(
+                tmp_PointCloud2 = organize_data_for_noise_removal_stage1(
                             inverse_depth=1/One2MultiImagePairs_Colmap[image_pair12].depth2,
                             intrinsics = np.array([0.89115971, 1.18821287, 0.5, 0.5]), # sun3d intrinsics
                             image=input_data['image_pair'][0,0:3] if data_format=='channels_first' else input_data['image_pair'].transpose([0,3,1,2])[0,0:3],
                             R1=GlobalExtrinsics2_4by4[0:3,0:3],
                             t1=GlobalExtrinsics2_4by4[0:3,3],
-                            rotation=rotmat_To_angleaxis(np.dot(GlobalExtrinsics2_4by4[0:3,0:3], GlobalExtrinsics1_4by4[0:3,0:3].T)),
-                            translation=GlobalExtrinsics2_4by4[0:3,3],   # should be changed, this is wrong!
+                            # rotation=rotmat_To_angleaxis(np.dot(GlobalExtrinsics2_4by4[0:3,0:3], GlobalExtrinsics1_4by4[0:3,0:3].T)),
+                            # translation=GlobalExtrinsics2_4by4[0:3,3],   # should be changed, this is wrong!
                             scale=scale_applied)
 
             elif DepthSource=='DeMoN':
@@ -759,14 +790,15 @@ def visMultiViewsPointCloudInGlobalFrame(rendererNotUsed, alpha, image_pairs_One
                     # scale_applied = pred_scale
                     # scale_applied = 1
                     scale_applied = correctionScaleGT
-                tmp_PointCloud2 = visualize_prediction(
+                # tmp_PointCloud2 = visualize_prediction(
+                tmp_PointCloud2 = organize_data_for_noise_removal_stage1(
                             inverse_depth=1/One2MultiImagePairs_DeMoN[image_pair12].depth2,### in previous data retrieval part, the predicted inv_depth has been inversed to depth for later access!
                             intrinsics = np.array([0.89115971, 1.18821287, 0.5, 0.5]), # sun3d intrinsics
                             image=input_data['image_pair'][0,0:3] if data_format=='channels_first' else input_data['image_pair'].transpose([0,3,1,2])[0,0:3],
                             R1=GlobalExtrinsics2_4by4[0:3,0:3],
                             t1=GlobalExtrinsics2_4by4[0:3,3],
-                            rotation=rotmat_To_angleaxis(np.dot(GlobalExtrinsics1_4by4[0:3,0:3], GlobalExtrinsics2_4by4[0:3,0:3].T)),
-                            translation=GlobalExtrinsics2_4by4[0:3,3],   # should be changed, this is wrong!
+                            # rotation=rotmat_To_angleaxis(np.dot(GlobalExtrinsics1_4by4[0:3,0:3], GlobalExtrinsics2_4by4[0:3,0:3].T)),
+                            # translation=GlobalExtrinsics2_4by4[0:3,3],   # should be changed, this is wrong!
                             scale=scale_applied)
             elif DepthSource=='GT':
                 if PoseSource=='Theia':
@@ -777,14 +809,15 @@ def visMultiViewsPointCloudInGlobalFrame(rendererNotUsed, alpha, image_pairs_One
                     scale_applied = 1.72921055    # fittedColmapGTRatio = 1.72921055
                 if PoseSource=='GT':
                     scale_applied = 1
-                tmp_PointCloud2 = visualize_prediction(
+                # tmp_PointCloud2 = visualize_prediction(
+                tmp_PointCloud2 = organize_data_for_noise_removal_stage1(
                             inverse_depth=1/One2MultiImagePairs_GT[image_pair12].depth2,
                             intrinsics = np.array([0.89115971, 1.18821287, 0.5, 0.5]), # sun3d intrinsics
                             image=input_data['image_pair'][0,0:3] if data_format=='channels_first' else input_data['image_pair'].transpose([0,3,1,2])[0,0:3],
                             R1=GlobalExtrinsics2_4by4[0:3,0:3],
                             t1=GlobalExtrinsics2_4by4[0:3,3],
-                            rotation=rotmat_To_angleaxis(np.dot(GlobalExtrinsics2_4by4[0:3,0:3], GlobalExtrinsics1_4by4[0:3,0:3].T)),
-                            translation=GlobalExtrinsics2_4by4[0:3,3],   # should be changed, this is wrong!
+                            # rotation=rotmat_To_angleaxis(np.dot(GlobalExtrinsics2_4by4[0:3,0:3], GlobalExtrinsics1_4by4[0:3,0:3].T)),
+                            # translation=GlobalExtrinsics2_4by4[0:3,3],   # should be changed, this is wrong!
                             scale=scale_applied)
 
             pointcloud_actor = create_pointcloud_actor(
@@ -812,6 +845,9 @@ def visMultiViewsPointCloudInGlobalFrame(rendererNotUsed, alpha, image_pairs_One
             appendFilterModel.AddInputData(cam2_polydata)
 
             renderer.Modified()
+
+            pointclouds_beforefiltering[image_pair21] = tmp_PointCloud2
+
 
         it +=1
         if it>=len(One2MultiImagePairs_DeMoN.keys()):
@@ -952,7 +988,7 @@ class MyKeyPressInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
 # One2MultiImagePair = collections.namedtuple("One2MultiImagePair", ["name1", "name2", "image1", "image2", "depth1", "depth2", "Extrinsic1_4by4_Colmap", "Extrinsic2_4by4_Colmap", "Extrinsic1_4by4_GT", "Extrinsic2_4by4_GT", "Extrinsic1_4by4_DeMoN", "Extrinsic2_4by4_DeMoN", "Relative12_4by4_Colmap", "Relative12_4by4_GT", "Relative12_4by4_DeMoN", "scale_Colmap", "scale_GT", "scale_DeMoN"])
 One2MultiImagePair = collections.namedtuple("One2MultiImagePair", ["name1", "name2", "image1", "image2", "depth1", "depth2", "Extrinsic1_4by4", "Extrinsic2_4by4", "Relative12_4by4", "Relative21_4by4", "scale12", "scale21"])
 
-def findOne2MultiPairs(infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, image1_filename='hotel_beijing~beijing_hotel_2-0000181_baseline_1_v0.JPG'):
+def findMultiPairs(infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, image1_filename='hotel_beijing~beijing_hotel_2-0000181_baseline_1_v0.JPG'):
     # global initColmapGTRatio, renderer, appendFilterPC, appendFilterModel, curIteration, image_pairs, scaleRecordMat, tmpFittingCoef_Colmap_GT
 
     One2MultiImagePairs_Colmap = {}
@@ -1106,6 +1142,17 @@ def findOne2MultiPairs(infile, ExhaustivePairInfile, data_format, target_K, w, h
         DeMoNRelative12_4by4[0:3,0:3] = data[image_pair12]['rotation'].value
         DeMoNRelative12_4by4[0:3,3] = data[image_pair12]['translation'].value
         One2MultiImagePairs_DeMoN[image_pair12] = One2MultiImagePair(name1=image_name1, name2=image_name2, image1=view1.image, image2=view2.image, depth1=1/data[image_pair12]['depth_upsampled'].value, depth2=1/data[image_pair21]['depth_upsampled'].value, Extrinsic1_4by4=np.eye(4), Extrinsic2_4by4=DeMoNRelative12_4by4, Relative12_4by4=DeMoNRelative12_4by4, Relative21_4by4=np.linalg.inv(DeMoNRelative12_4by4), scale12=data[image_pair12]['scale'].value, scale21=data[image_pair21]['scale'].value)
+
+        ###### record reverse pair data in corresponding data structure for later access
+        One2MultiImagePairs_Colmap[image_pair21] = One2MultiImagePair(name1=image_name2, name2=image_name1, image1=view2.image, image2=view1.image, depth1=view2.depth, depth2=view1.depth, Extrinsic1_4by4=ColmapExtrinsics2_4by4, Extrinsic2_4by4=ColmapExtrinsics1_4by4, Relative12_4by4=np.dot(ColmapExtrinsics1_4by4, np.linalg.inv(ColmapExtrinsics2_4by4)), Relative21_4by4=np.dot(ColmapExtrinsics2_4by4, np.linalg.inv(ColmapExtrinsics1_4by4)), scale12=transScaleColmap, scale21=transScaleColmap)
+        One2MultiImagePairs_correctionColmap[image_pair21] = One2MultiImagePair(name1=image_name2, name2=image_name1, image1=view2.image, image2=view1.image, depth1=view2.depth, depth2=view1.depth, Extrinsic1_4by4=ColmapExtrinsics2_4by4, Extrinsic2_4by4=ColmapExtrinsics1_4by4, Relative12_4by4=np.dot(ColmapExtrinsics1_4by4, np.linalg.inv(ColmapExtrinsics2_4by4)), Relative21_4by4=np.dot(ColmapExtrinsics2_4by4, np.linalg.inv(ColmapExtrinsics1_4by4)), scale12=correctionScaleColmap21, scale21=correctionScaleColmap12)
+        One2MultiImagePairs_GT[image_pair21] = One2MultiImagePair(name1=image_name2, name2=image_name1, image1=view2GT.image, image2=view1GT.image, depth1=view2GT.depth, depth2=view1GT.depth, Extrinsic1_4by4=GTExtrinsics2_4by4, Extrinsic2_4by4=GTExtrinsics1_4by4, Relative12_4by4=np.dot(GTExtrinsics1_4by4, np.linalg.inv(GTExtrinsics2_4by4)), Relative21_4by4=np.dot(GTExtrinsics2_4by4, np.linalg.inv(GTExtrinsics1_4by4)), scale12=transScaleGT, scale21=transScaleGT)
+        One2MultiImagePairs_correctionGT[image_pair21] = One2MultiImagePair(name1=image_name2, name2=image_name1, image1=view2GT.image, image2=view1GT.image, depth1=view2GT.depth, depth2=view1GT.depth, Extrinsic1_4by4=GTExtrinsics2_4by4, Extrinsic2_4by4=GTExtrinsics1_4by4, Relative12_4by4=np.dot(GTExtrinsics1_4by4, np.linalg.inv(GTExtrinsics2_4by4)), Relative21_4by4=np.dot(GTExtrinsics2_4by4, np.linalg.inv(GTExtrinsics1_4by4)), scale12=correctionScaleGT21, scale21=correctionScaleGT12)
+        DeMoNRelative12_4by4 = np.eye(4)
+        DeMoNRelative12_4by4[0:3,0:3] = data[image_pair12]['rotation'].value
+        DeMoNRelative12_4by4[0:3,3] = data[image_pair12]['translation'].value
+        One2MultiImagePairs_DeMoN[image_pair21] = One2MultiImagePair(name1=image_name2, name2=image_name1, image1=view2.image, image2=view1.image, depth1=1/data[image_pair21]['depth_upsampled'].value, depth2=1/data[image_pair12]['depth_upsampled'].value, Extrinsic1_4by4=np.eye(4), Extrinsic2_4by4=np.linalg.inv(DeMoNRelative12_4by4), Relative12_4by4=np.linalg.inv(DeMoNRelative12_4by4), Relative21_4by4=DeMoNRelative12_4by4, scale12=data[image_pair21]['scale'].value, scale21=data[image_pair12]['scale'].value)
+
 
     print("Colmap image pairs retrieved = ", (One2MultiImagePairs_Colmap))
     print("GT image pairs retrieved = ", (One2MultiImagePairs_GT))
@@ -1932,14 +1979,15 @@ def checkDepthConsistencyPixelwise_MultiViews(image_pairs_One2Multi, One2MultiIm
     # plt.show()
 
 
-image_pairs_One2Multi, One2MultiImagePairs_DeMoN, One2MultiImagePairs_GT, One2MultiImagePairs_Colmap, One2MultiImagePairs_correctionGT, One2MultiImagePairs_correctionColmap = findOne2MultiPairs(infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, tarImageFileName)
+image_pairs_One2Multi, One2MultiImagePairs_DeMoN, One2MultiImagePairs_GT, One2MultiImagePairs_Colmap, One2MultiImagePairs_correctionGT, One2MultiImagePairs_correctionColmap = findMultiPairs(infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, tarImageFileName)
 
 pointclouds_beforefiltering = {}
 
 def main():
     global pointclouds_beforefiltering, curIteration, initColmapGTRatio, appendFilterPC, appendFilterModel, alpha, tmpFittingCoef_Colmap_GT, scaleRecordMat, image_pairs, TheiaOrColmapOrGTPoses, DeMoNOrColmapOrGTDepths, sliderMin, sliderMax, interactor, renderer, image_pairs_One2Multi, One2MultiImagePairs_DeMoN, One2MultiImagePairs_GT, One2MultiImagePairs_Colmap, One2MultiImagePairs_correctionGT, One2MultiImagePairs_correctionColmap, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT
 
-    checkDepthConsistencyPixelwise_MultiViews(image_pairs_One2Multi, One2MultiImagePairs_DeMoN, One2MultiImagePairs_GT, One2MultiImagePairs_Colmap, One2MultiImagePairs_correctionGT, One2MultiImagePairs_correctionColmap, PoseSource=TheiaOrColmapOrGTPoses, DepthSource=DeMoNOrColmapOrGTDepths, w=256, h=192)
+    # ###### check the statistics of generated point clouds
+    # checkDepthConsistencyPixelwise_MultiViews(image_pairs_One2Multi, One2MultiImagePairs_DeMoN, One2MultiImagePairs_GT, One2MultiImagePairs_Colmap, One2MultiImagePairs_correctionGT, One2MultiImagePairs_correctionColmap, PoseSource=TheiaOrColmapOrGTPoses, DepthSource=DeMoNOrColmapOrGTDepths, w=256, h=192)
 
     # ###### visualize the view one by one
     # visMultiViewsPointCloudInGlobalFrame(renderer, alpha, image_pairs_One2Multi, One2MultiImagePairs_DeMoN, One2MultiImagePairs_GT, One2MultiImagePairs_Colmap, One2MultiImagePairs_correctionGT, One2MultiImagePairs_correctionColmap, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, PoseSource=TheiaOrColmapOrGTPoses, DepthSource=DeMoNOrColmapOrGTDepths, initBool=True, setColmapGTRatio=True)
@@ -1950,6 +1998,34 @@ def main():
 
     print("len(pointclouds_beforefiltering) = ", len(pointclouds_beforefiltering))
 
+    sigma = 0
+    td = 0
+    tp = 0
+    tv = 0
+
+    for image_pair12_i in pointclouds_beforefiltering.keys():
+        print("len(pointclouds_beforefiltering[image_pair12_i]['points']) = ", len(pointclouds_beforefiltering[image_pair12_i]['points']))
+        for ptIdx in range(len(pointclouds_beforefiltering[image_pair12_i]['points'])):
+            d_pt = 0
+            w_pt = 0
+            v_pt = 0
+            s = 0
+            s2 = 0
+            for image_pair12_j in pointclouds_beforefiltering.keys():
+                # if image_pair12_i != image_pair12_j:
+                if True:
+
+                    cam_vi = np.linalg.inv(One2MultiImagePairs_GT[image_pair12_i].Extrinsic1_4by4)[0:3,3]
+                    cam_vj = np.linalg.inv(One2MultiImagePairs_GT[image_pair12_j].Extrinsic1_4by4)[0:3,3]
+                    if np.dot(cam_vi, cam_vj) > 0:
+                        # print("skipped camera centers = ", cam_vi, "; ", cam_vj)
+                        continue
+
+                    # print("testing")
+
+    # pointclouds_afterfiltering
+
+    ###### VTK Visualization
     # renwin = vtk.vtkRenderWindow()
     # renwin.SetWindowName("Point Cloud Viewer")
     # renwin.SetSize(800,600)
