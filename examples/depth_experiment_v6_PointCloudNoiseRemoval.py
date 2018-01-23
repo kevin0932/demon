@@ -375,21 +375,8 @@ TheiaRelativePosesGT = read_relative_poses_theia_output(TheiaRtfilepath,TheiaIDN
 TheiaGlobalPosesfilepath = '/home/kevin/JohannesCode/theia_trial_demon/intermediate_results_southbuilding_01012018/after_step9_BA.txt'
 TheiaGlobalPosesGT = read_global_poses_theia_output(TheiaGlobalPosesfilepath,TheiaIDNamefilepath)
 
-# # # reading theia intermediate output relative poses from textfile
-# TheiaRtfilepath = '/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/sun3d_train_0.1m_to_0.2m/hotel_beijing.beijing_hotel_2/demon_prediction/images_demon/TheiaReconstructionFromImage/intermediate_results/RelativePoses_after_step9_BA.txt'
-# TheiaIDNamefilepath = '/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/sun3d_train_0.1m_to_0.2m/hotel_beijing.beijing_hotel_2/demon_prediction/images_demon/TheiaReconstructionFromImage/intermediate_results/viewid_imagename_pairs_file.txt'
-# TheiaRelativePosesGT = read_relative_poses_theia_output(TheiaRtfilepath,TheiaIDNamefilepath)
-# # # reading theia intermediate output global poses from textfile
-# TheiaGlobalPosesfilepath = '/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/sun3d_train_0.1m_to_0.2m/hotel_beijing.beijing_hotel_2/demon_prediction/images_demon/TheiaReconstructionFromImage/intermediate_results/after_step9_BA.txt'
-# TheiaGlobalPosesGT = read_global_poses_theia_output(TheiaGlobalPosesfilepath,TheiaIDNamefilepath)
 
-# # # reading theia intermediate output relative poses from textfile
-# TheiaRtfilepath = '/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/sun3d_train_0.1m_to_0.2m/hotel_beijing.beijing_hotel_2/demon_prediction/images_demon/TheiaReconstructionFromImage/intermediate_results/RelativePoses_after_step9_BA.txt'
-# TheiaIDNamefilepath = '/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/sun3d_train_0.1m_to_0.2m/hotel_beijing.beijing_hotel_2/demon_prediction/images_demon/TheiaReconstructionFromImage/intermediate_results/viewid_imagename_pairs_file.txt'
-# TheiaRelativePosesGT = read_relative_poses_theia_output(TheiaRtfilepath,TheiaIDNamefilepath)
-# # # reading theia intermediate output global poses from textfile
-# TheiaGlobalPosesfilepath = '/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/sun3d_train_0.1m_to_0.2m/hotel_beijing.beijing_hotel_2/demon_prediction/images_demon/TheiaReconstructionFromImage/intermediate_results/after_step9_BA.txt'
-# TheiaGlobalPosesGT = read_global_poses_theia_output(TheiaGlobalPosesfilepath,TheiaIDNamefilepath)
+
 
 # # weights_dir = '/home/ummenhof/projects/demon/weights'
 # weights_dir = '/home/kevin/anaconda_tensorflow_demon_ws/demon/weights'
@@ -520,7 +507,7 @@ def computeCorrectionScale(DeMoNPredictionInvDepth, GTDepth, DeMoNDepthThreshold
     return correctionScale
 
 def visMultiViewsPointCloudInGlobalFrame(rendererNotUsed, alpha, image_pairs_One2Multi, One2MultiImagePairs_DeMoN, One2MultiImagePairs_GT, One2MultiImagePairs_Colmap, One2MultiImagePairs_correctionGT, One2MultiImagePairs_correctionColmap, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, PoseSource='Theia', DepthSource='DeMoN', initBool=True, setColmapGTRatio=False):
-    global initColmapGTRatio, renderer, appendFilterPC, appendFilterModel, curIteration, image_pairs, scaleRecordMat, tmpFittingCoef_Colmap_GT
+    global pointclouds_beforefiltering, initColmapGTRatio, renderer, appendFilterPC, appendFilterModel, curIteration, image_pairs, scaleRecordMat, tmpFittingCoef_Colmap_GT
     data = h5py.File(infile)
     dataExhaustivePairs = h5py.File(ExhaustivePairInfile)
 
@@ -573,6 +560,9 @@ def visMultiViewsPointCloudInGlobalFrame(rendererNotUsed, alpha, image_pairs_One
         print("recalculate all trajectory after adjusting alpha; the length of candidate_pool is ", len(candidate_pool))
     else:
         candidate_pool.append(list(One2MultiImagePairs_DeMoN.keys())[it])
+
+
+    # pointclouds_beforefiltering = {}
 
     for image_pair12 in candidate_pool:
         print("Processing", image_pair12)
@@ -639,14 +629,15 @@ def visMultiViewsPointCloudInGlobalFrame(rendererNotUsed, alpha, image_pairs_One
                 # scale_applied = 1/initColmapGTRatio
                 # scale_applied = 1/1.72921055    # fittedColmapGTRatio = 1.72921055
                 scale_applied = correctionScaleGT/correctionScaleColmap
-            tmp_PointCloud1 = visualize_prediction(
+            # tmp_PointCloud1 = visualize_prediction(
+            tmp_PointCloud1 = organize_data_for_noise_removal_stage1(
                         inverse_depth=1/One2MultiImagePairs_Colmap[image_pair12].depth1,
                         intrinsics = np.array([0.89115971, 1.18821287, 0.5, 0.5]), # sun3d intrinsics
                         image=input_data['image_pair'][0,0:3] if data_format=='channels_first' else input_data['image_pair'].transpose([0,3,1,2])[0,0:3],
                         R1=GlobalExtrinsics1_4by4[0:3,0:3],
                         t1=GlobalExtrinsics1_4by4[0:3,3],
-                        rotation=rotmat_To_angleaxis(np.dot(GlobalExtrinsics2_4by4[0:3,0:3], GlobalExtrinsics1_4by4[0:3,0:3].T)),
-                        translation=GlobalExtrinsics2_4by4[0:3,3],   # should be changed, this is wrong!
+                        # rotation=rotmat_To_angleaxis(np.dot(GlobalExtrinsics2_4by4[0:3,0:3], GlobalExtrinsics1_4by4[0:3,0:3].T)),
+                        # translation=GlobalExtrinsics2_4by4[0:3,3],   # should be changed, this is wrong!
                         scale=scale_applied)
 
         elif DepthSource=='DeMoN':
@@ -663,14 +654,15 @@ def visMultiViewsPointCloudInGlobalFrame(rendererNotUsed, alpha, image_pairs_One
                 # scale_applied = pred_scale
                 # scale_applied = 1
                 scale_applied = correctionScaleGT
-            tmp_PointCloud1 = visualize_prediction(
+            # tmp_PointCloud1 = visualize_prediction(
+            tmp_PointCloud1 = organize_data_for_noise_removal_stage1(
                         inverse_depth=1/One2MultiImagePairs_DeMoN[image_pair12].depth1,### in previous data retrieval part, the predicted inv_depth has been inversed to depth for later access!
                         intrinsics = np.array([0.89115971, 1.18821287, 0.5, 0.5]), # sun3d intrinsics
                         image=input_data['image_pair'][0,0:3] if data_format=='channels_first' else input_data['image_pair'].transpose([0,3,1,2])[0,0:3],
                         R1=GlobalExtrinsics1_4by4[0:3,0:3],
                         t1=GlobalExtrinsics1_4by4[0:3,3],
-                        rotation=rotmat_To_angleaxis(np.dot(GlobalExtrinsics2_4by4[0:3,0:3], GlobalExtrinsics1_4by4[0:3,0:3].T)),
-                        translation=GlobalExtrinsics2_4by4[0:3,3],   # should be changed, this is wrong!
+                        # rotation=rotmat_To_angleaxis(np.dot(GlobalExtrinsics2_4by4[0:3,0:3], GlobalExtrinsics1_4by4[0:3,0:3].T)),
+                        # translation=GlobalExtrinsics2_4by4[0:3,3],   # should be changed, this is wrong!
                         scale=scale_applied)
         elif DepthSource=='GT':
             if PoseSource=='Theia':
@@ -681,14 +673,15 @@ def visMultiViewsPointCloudInGlobalFrame(rendererNotUsed, alpha, image_pairs_One
                 scale_applied = 1.72921055    # fittedColmapGTRatio = 1.72921055
             if PoseSource=='GT':
                 scale_applied = 1
-            tmp_PointCloud1 = visualize_prediction(
+            # tmp_PointCloud1 = visualize_prediction(
+            tmp_PointCloud1 = organize_data_for_noise_removal_stage1(
                         inverse_depth=1/One2MultiImagePairs_GT[image_pair12].depth1,
                         intrinsics = np.array([0.89115971, 1.18821287, 0.5, 0.5]), # sun3d intrinsics
                         image=input_data['image_pair'][0,0:3] if data_format=='channels_first' else input_data['image_pair'].transpose([0,3,1,2])[0,0:3],
                         R1=GlobalExtrinsics1_4by4[0:3,0:3],
                         t1=GlobalExtrinsics1_4by4[0:3,3],
-                        rotation=rotmat_To_angleaxis(np.dot(GlobalExtrinsics2_4by4[0:3,0:3], GlobalExtrinsics1_4by4[0:3,0:3].T)),
-                        translation=GlobalExtrinsics2_4by4[0:3,3],   # should be changed, this is wrong!
+                        # rotation=rotmat_To_angleaxis(np.dot(GlobalExtrinsics2_4by4[0:3,0:3], GlobalExtrinsics1_4by4[0:3,0:3].T)),
+                        # translation=GlobalExtrinsics2_4by4[0:3,3],   # should be changed, this is wrong!
                         scale=scale_applied)
 
         pointcloud_actor = create_pointcloud_actor(
@@ -717,7 +710,10 @@ def visMultiViewsPointCloudInGlobalFrame(rendererNotUsed, alpha, image_pairs_One
 
         renderer.Modified()
 
-        if True:   # debug: if the second cam is added for visualization
+        pointclouds_beforefiltering[image_pair12] = tmp_PointCloud1
+
+
+        if False:   # debug: if the second cam is added for visualization
             ##### compute scales
             transScaleTheia = 0
             transScaleColmap = One2MultiImagePairs_Colmap[image_pair12].scale21
@@ -912,7 +908,6 @@ def visMultiViewsPointCloudInGlobalFrame(rendererNotUsed, alpha, image_pairs_One
         curIteration += 1
 
 
-
 # TheiaOrColmapOrGTPoses='Colmap'
 # TheiaOrColmapOrGTPoses='Theia'
 TheiaOrColmapOrGTPoses='GT'
@@ -938,7 +933,7 @@ appendFilterModel = vtk.vtkAppendPolyData()
 initColmapGTRatio = 0
 
 class MyKeyPressInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
-    global initColmapGTRatio, appendFilterPC, appendFilterModel, alpha, tmpFittingCoef_Colmap_GT, scaleRecordMat, image_pairs, TheiaOrColmapOrGTPoses, DeMoNOrColmapOrGTDepths, sliderMin, sliderMax, interactor, renderer, One2MultiImagePairs_DeMoN, One2MultiImagePairs_GT, One2MultiImagePairs_Colmap, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT
+    global pointclouds_beforefiltering, initColmapGTRatio, appendFilterPC, appendFilterModel, alpha, tmpFittingCoef_Colmap_GT, scaleRecordMat, image_pairs, TheiaOrColmapOrGTPoses, DeMoNOrColmapOrGTDepths, sliderMin, sliderMax, interactor, renderer, One2MultiImagePairs_DeMoN, One2MultiImagePairs_GT, One2MultiImagePairs_Colmap, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT
 
     def __init__(self,parent=None):
         self.parent = interactor
@@ -1939,8 +1934,10 @@ def checkDepthConsistencyPixelwise_MultiViews(image_pairs_One2Multi, One2MultiIm
 
 image_pairs_One2Multi, One2MultiImagePairs_DeMoN, One2MultiImagePairs_GT, One2MultiImagePairs_Colmap, One2MultiImagePairs_correctionGT, One2MultiImagePairs_correctionColmap = findOne2MultiPairs(infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, tarImageFileName)
 
+pointclouds_beforefiltering = {}
+
 def main():
-    global curIteration, initColmapGTRatio, appendFilterPC, appendFilterModel, alpha, tmpFittingCoef_Colmap_GT, scaleRecordMat, image_pairs, TheiaOrColmapOrGTPoses, DeMoNOrColmapOrGTDepths, sliderMin, sliderMax, interactor, renderer, image_pairs_One2Multi, One2MultiImagePairs_DeMoN, One2MultiImagePairs_GT, One2MultiImagePairs_Colmap, One2MultiImagePairs_correctionGT, One2MultiImagePairs_correctionColmap, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT
+    global pointclouds_beforefiltering, curIteration, initColmapGTRatio, appendFilterPC, appendFilterModel, alpha, tmpFittingCoef_Colmap_GT, scaleRecordMat, image_pairs, TheiaOrColmapOrGTPoses, DeMoNOrColmapOrGTDepths, sliderMin, sliderMax, interactor, renderer, image_pairs_One2Multi, One2MultiImagePairs_DeMoN, One2MultiImagePairs_GT, One2MultiImagePairs_Colmap, One2MultiImagePairs_correctionGT, One2MultiImagePairs_correctionColmap, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT
 
     checkDepthConsistencyPixelwise_MultiViews(image_pairs_One2Multi, One2MultiImagePairs_DeMoN, One2MultiImagePairs_GT, One2MultiImagePairs_Colmap, One2MultiImagePairs_correctionGT, One2MultiImagePairs_correctionColmap, PoseSource=TheiaOrColmapOrGTPoses, DepthSource=DeMoNOrColmapOrGTDepths, w=256, h=192)
 
@@ -1951,18 +1948,20 @@ def main():
     print("curIteration = ", curIteration)
     visMultiViewsPointCloudInGlobalFrame(renderer, alpha, image_pairs_One2Multi, One2MultiImagePairs_DeMoN, One2MultiImagePairs_GT, One2MultiImagePairs_Colmap, One2MultiImagePairs_correctionGT, One2MultiImagePairs_correctionColmap, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, PoseSource=TheiaOrColmapOrGTPoses, DepthSource=DeMoNOrColmapOrGTDepths, initBool=False, setColmapGTRatio=True)
 
-    renwin = vtk.vtkRenderWindow()
-    renwin.SetWindowName("Point Cloud Viewer")
-    renwin.SetSize(800,600)
-    renwin.AddRenderer(renderer)
+    print("len(pointclouds_beforefiltering) = ", len(pointclouds_beforefiltering))
 
-    # An interactor
-    interactor.SetInteractorStyle(MyKeyPressInteractorStyle())
-    interactor.SetRenderWindow(renwin)
-
-    # Start
-    interactor.Initialize()
-    interactor.Start()
+    # renwin = vtk.vtkRenderWindow()
+    # renwin.SetWindowName("Point Cloud Viewer")
+    # renwin.SetSize(800,600)
+    # renwin.AddRenderer(renderer)
+    #
+    # # An interactor
+    # interactor.SetInteractorStyle(MyKeyPressInteractorStyle())
+    # interactor.SetRenderWindow(renwin)
+    #
+    # # Start
+    # interactor.Initialize()
+    # interactor.Start()
 
 if __name__ == "__main__":
     main()
