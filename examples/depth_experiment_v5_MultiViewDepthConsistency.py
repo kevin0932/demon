@@ -434,8 +434,8 @@ TheiaGlobalPosesGT = read_global_poses_theia_output(TheiaGlobalPosesfilepath,The
 outdir = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction"
 # infile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/View128ColmapFilter_demon_sun3d_train_hotel_beijing~beijing_hotel_2.h5"
 # ExhaustivePairInfile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/demon_sun3d_train_hotel_beijing~beijing_hotel_2.h5"
-infile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/demon_sun3d_train_hotel_beijing~beijing_hotel_2.h5"
-# infile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/kevin_southbuilding_demon.h5"
+#infile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/demon_sun3d_train_hotel_beijing~beijing_hotel_2.h5"
+infile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/kevin_southbuilding_demon.h5"
 ExhaustivePairInfile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/kevin_southbuilding_demon.h5"
 recondir = '/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/images_demon/dense/'
 
@@ -483,8 +483,43 @@ def get_tf_data_format():
 
 data_format = get_tf_data_format()
 
+def computePoint2LineDist(pt, lineP1=None, lineP2=None, lineNormal=None):
+    if lineNormal is None:
+        lineNormal=np.array([1,-1])
+    if lineP1 is None:
+        lineP1=np.array([0,0])
+    if lineP2 is None:
+        lineP2=np.array([1,1])
 
-def visOne2MultiPointCloudInGlobalFrame(rendererNotUsed, alpha, image_pairs_One2Multi, One2MultiImagePairs_DeMoN, One2MultiImagePairs_GT, One2MultiImagePairs_Colmap, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, PoseSource='Theia', DepthSource='DeMoN', initBool=True, setColmapGTRatio=False):
+    line = (lineP2-lineP1)/np.linalg.norm(lineP2-lineP1)
+    ap = pt - lineP1
+    t = np.dot(ap, line)
+    x =  lineP1 + t * line #  x is a point on line
+    # print("point pt to be checked  :", pt)
+    # print("point on line  :", x)
+    print("distance from p:", np.linalg.norm(pt - x))
+
+    # # cross product for distance
+    # distN = np.linalg.norm(np.dot(ap, lineNormal))
+    # print("distN cross prod:", distN)
+    # # cross product for distance
+    dist = np.linalg.norm(np.cross(ap, line))
+    print("dist cross prod:", dist)
+    return dist
+
+def computeCorrectionScale(DeMoNPredictionInvDepth, GTDepth, DeMoNDepthThreshold):
+    """ scale for correction is based on section 3.2 from paper by Eigen et. al 2014 https://arxiv.org/pdf/1406.2283.pdf"""
+    """ don't count the DeMoN prediction depth (1/inv_depth) further than DeMoNDepthThreshold """
+    DeMoNDepth = 1/DeMoNPredictionInvDepth
+    DeMoNDepth = np.reshape(DeMoNDepth, [DeMoNDepth.shape[0]*DeMoNDepth.shape[1]])
+    view1GTDepth = np.reshape(GTDepth, [GTDepth.shape[0]*GTDepth.shape[1]])
+    tmpFilter = np.logical_and(view1GTDepth>0, DeMoNDepth<=DeMoNDepthThreshold)
+    DeMoNDepth = DeMoNDepth[tmpFilter]
+    view1GTDepth = view1GTDepth[tmpFilter]
+    correctionScale = np.exp(np.mean( (np.log(view1GTDepth) - np.log(DeMoNDepth)) ))
+    return correctionScale
+
+def visOne2MultiPointCloudInGlobalFrame(rendererNotUsed, alpha, image_pairs_One2Multi, One2MultiImagePairs_DeMoN, One2MultiImagePairs_GT, One2MultiImagePairs_Colmap, One2MultiImagePairs_correctionGT, One2MultiImagePairs_correctionColmap, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, PoseSource='Theia', DepthSource='DeMoN', initBool=True, setColmapGTRatio=False):
     global initColmapGTRatio, renderer, appendFilterPC, appendFilterModel, curIteration, image_pairs, scaleRecordMat, tmpFittingCoef_Colmap_GT
     data = h5py.File(infile)
     dataExhaustivePairs = h5py.File(ExhaustivePairInfile)
@@ -532,6 +567,7 @@ def visOne2MultiPointCloudInGlobalFrame(rendererNotUsed, alpha, image_pairs_One2
     # print(list(data.keys()))
     candidate_pool = []
     if initBool==False:
+        print("it = ", it)
         for i in range(it):
             candidate_pool.append(list(One2MultiImagePairs_DeMoN.keys())[i])
         print("recalculate all trajectory after adjusting alpha; the length of candidate_pool is ", len(candidate_pool))
@@ -560,8 +596,11 @@ def visOne2MultiPointCloudInGlobalFrame(rendererNotUsed, alpha, image_pairs_One2
         transScaleTheia = 0
         transScaleColmap = One2MultiImagePairs_Colmap[image_pair12].scale12
         transScaleGT = One2MultiImagePairs_GT[image_pair12].scale12
+        correctionScaleColmap = One2MultiImagePairs_correctionColmap[image_pair12].scale12
+        correctionScaleGT = One2MultiImagePairs_correctionGT[image_pair12].scale12
         print("transScaleTheia = ", transScaleTheia, "; transScaleColmap = ", transScaleColmap, "; transScaleGT = ", transScaleGT, "; demon scale = ",  One2MultiImagePairs_DeMoN[image_pair12].scale12)
         pred_scale =  One2MultiImagePairs_DeMoN[image_pair12].scale12
+
         if setColmapGTRatio==True:
             initColmapGTRatio = transScaleColmap/transScaleGT
         if initBool == True:
@@ -597,8 +636,9 @@ def visOne2MultiPointCloudInGlobalFrame(rendererNotUsed, alpha, image_pairs_One2
                 scale_applied = 1
             if PoseSource=='GT':
                 # scale_applied = transScaleGT/transScaleColmap
-                scale_applied = 1/initColmapGTRatio
+                # scale_applied = 1/initColmapGTRatio
                 # scale_applied = 1/1.72921055    # fittedColmapGTRatio = 1.72921055
+                scale_applied = correctionScaleGT/correctionScaleColmap
             tmp_PointCloud1 = visualize_prediction(
                         inverse_depth=1/One2MultiImagePairs_Colmap[image_pair12].depth1,
                         intrinsics = np.array([0.89115971, 1.18821287, 0.5, 0.5]), # sun3d intrinsics
@@ -613,14 +653,16 @@ def visOne2MultiPointCloudInGlobalFrame(rendererNotUsed, alpha, image_pairs_One2
             if PoseSource=='Theia':
                 scale_applied = transScaleTheia
             if PoseSource=='Colmap':
-                scale_applied = transScaleColmap
+                # scale_applied = transScaleColmap
                 # scale_applied = pred_scale
                 # scale_applied = 1
+                scale_applied = correctionScaleColmap
             if PoseSource=='GT':
-                scale_applied = transScaleGT
+                # scale_applied = transScaleGT
                 # scale_applied = 1/pred_scale
                 # scale_applied = pred_scale
                 # scale_applied = 1
+                scale_applied = correctionScaleGT
             tmp_PointCloud1 = visualize_prediction(
                         inverse_depth=1/One2MultiImagePairs_DeMoN[image_pair12].depth1,### in previous data retrieval part, the predicted inv_depth has been inversed to depth for later access!
                         intrinsics = np.array([0.89115971, 1.18821287, 0.5, 0.5]), # sun3d intrinsics
@@ -818,8 +860,8 @@ def visOne2MultiPointCloudInGlobalFrame(rendererNotUsed, alpha, image_pairs_One2
 # TheiaOrColmapOrGTPoses='Theia'
 TheiaOrColmapOrGTPoses='GT'
 # DeMoNOrColmapOrGTDepths='GT'
-# DeMoNOrColmapOrGTDepths='Colmap'
-DeMoNOrColmapOrGTDepths='DeMoN'
+DeMoNOrColmapOrGTDepths='Colmap'
+# DeMoNOrColmapOrGTDepths='DeMoN'
 
 # tarImageFileName = 'mit_w85_lounge1~wg_lounge1_1-0000055_baseline_2_v1.JPG'
 tarImageFileName = 'hotel_beijing~beijing_hotel_2-0000103_baseline_1_v0.JPG'
@@ -850,7 +892,7 @@ class MyKeyPressInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
         key = self.parent.GetKeySym()
         if key == 'n':
             print("Key n is pressed: one more view will be added!")
-            visOne2MultiPointCloudInGlobalFrame(renderer, alpha, image_pairs_One2Multi, One2MultiImagePairs_DeMoN, One2MultiImagePairs_GT, One2MultiImagePairs_Colmap, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, PoseSource=TheiaOrColmapOrGTPoses, DepthSource=DeMoNOrColmapOrGTDepths, initBool=True)
+            visOne2MultiPointCloudInGlobalFrame(renderer, alpha, image_pairs_One2Multi, One2MultiImagePairs_DeMoN, One2MultiImagePairs_GT, One2MultiImagePairs_Colmap, One2MultiImagePairs_correctionGT, One2MultiImagePairs_correctionColmap, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, PoseSource=TheiaOrColmapOrGTPoses, DepthSource=DeMoNOrColmapOrGTDepths, initBool=True)
             renderer.Modified()
         return
 
@@ -862,7 +904,9 @@ def findOne2MultiPairs(infile, ExhaustivePairInfile, data_format, target_K, w, h
     # global initColmapGTRatio, renderer, appendFilterPC, appendFilterModel, curIteration, image_pairs, scaleRecordMat, tmpFittingCoef_Colmap_GT
 
     One2MultiImagePairs_Colmap = {}
+    One2MultiImagePairs_correctionColmap = {}
     One2MultiImagePairs_GT = {}
+    One2MultiImagePairs_correctionGT = {}
     One2MultiImagePairs_DeMoN = {}
 
     data = h5py.File(infile)
@@ -871,6 +915,9 @@ def findOne2MultiPairs(infile, ExhaustivePairInfile, data_format, target_K, w, h
     image_pairs_One2Multi = set()
     it = 0
     # it = curIteration
+
+    inlierfile = open(os.path.join(outdir, "inlier_image_pairs.txt"), "w")
+    outlierfile = open(os.path.join(outdir, "outlier_image_pairs.txt"), "w")
 
     for image_pair12 in (data.keys()):
         image_name1, image_name2 = image_pair12.split("---")
@@ -882,30 +929,6 @@ def findOne2MultiPairs(infile, ExhaustivePairInfile, data_format, target_K, w, h
         print(image_name1, "; ", image_name2)
         if image_pair21 not in data.keys():
             continue
-
-        # tmp_dict = {}
-        # for image_id, image in images.items():
-        #     # print(image.name, "; ", image_name1, "; ", image_name2)
-        #     if image.name == image_name1:
-        #         tmp_dict[image_id] = image
-        #     if image.name == image_name2:
-        #         tmp_dict[image_id] = image
-        #
-        # # tmp_dict = {image_id: image}
-        # print("tmp_dict = ", tmp_dict)
-        # if len(tmp_dict)<2:
-        #     print("Warning: a pair is skipped because of inavailability of data")
-        #     continue
-        # tmp_views = colmap.create_views(cameras, tmp_dict, os.path.join(recondir,'images'), os.path.join(recondir,'stereo','depth_maps'))
-        # tmp_views[0] = adjust_intrinsics(tmp_views[0], target_K, w, h,)
-        # tmp_views[1] = adjust_intrinsics(tmp_views[1], target_K, w, h,)
-        #
-        # view1 = tmp_views[0]
-        # view2 = tmp_views[1]
-        # # view1 = tmp_views[1]
-        # # view2 = tmp_views[0]
-
-        ###########################################################################################
 
         tmp_dict = {}
         for image_id, image in images.items():
@@ -1006,15 +1029,27 @@ def findOne2MultiPairs(infile, ExhaustivePairInfile, data_format, target_K, w, h
         # return
 
         ##### compute scales
+        correctionScaleGT12 = computeCorrectionScale(data[image_pair12]['depth_upsampled'].value, view1GT.depth, 60)
+        correctionScaleColmap12 = computeCorrectionScale(data[image_pair12]['depth_upsampled'].value, view1.depth, 60)
+        correctionScaleGT21 = computeCorrectionScale(data[image_pair21]['depth_upsampled'].value, view2GT.depth, 60)
+        correctionScaleColmap21 = computeCorrectionScale(data[image_pair21]['depth_upsampled'].value, view2.depth, 60)
         transScaleTheia = np.linalg.norm(np.linalg.inv(TheiaExtrinsics2_4by4)[0:3,3] - np.linalg.inv(TheiaExtrinsics1_4by4)[0:3,3])
         transScaleColmap = np.linalg.norm(np.linalg.inv(ColmapExtrinsics2_4by4)[0:3,3] - np.linalg.inv(ColmapExtrinsics1_4by4)[0:3,3])
         transScaleGT = np.linalg.norm(np.linalg.inv(GTExtrinsics2_4by4)[0:3,3] - np.linalg.inv(GTExtrinsics1_4by4)[0:3,3])
         print("transScaleTheia = ", transScaleTheia, "; transScaleColmap = ", transScaleColmap, "; transScaleGT = ", transScaleGT, "; demon scale = ", data[image_pair12]['scale'].value)
         pred_scale = data[image_pair12]['scale'].value
 
+        GTbaselineLength = np.linalg.norm(-np.dot(view2GT.R.T, view2GT.t)+np.dot(view1GT.R.T, view1GT.t))
+        # if computePoint2LineDist(np.array([correctionScaleGT,transScaleGT]))>0.010:
+        #     outlierfile.write('{0} {1} {2} {3} {4} {5} {6} {7}\n'.format(image_pair12, GTbaselineLength, pred_scale, transScaleTheia, transScaleColmap, transScaleGT, correctionScaleGT, correctionScaleColmap))
+        #     continue
+        # inlierfile.write('{0} {1} {2} {3} {4} {5} {6} {7}\n'.format(image_pair12, GTbaselineLength, pred_scale, transScaleTheia, transScaleColmap, transScaleGT, correctionScaleGT, correctionScaleColmap))
+
         ###### record data in corresponding data structure for later access
         One2MultiImagePairs_Colmap[image_pair12] = One2MultiImagePair(name1=image_name1, name2=image_name2, image1=view1.image, image2=view2.image, depth1=view1.depth, depth2=view2.depth, Extrinsic1_4by4=ColmapExtrinsics1_4by4, Extrinsic2_4by4=ColmapExtrinsics2_4by4, Relative12_4by4=np.dot(ColmapExtrinsics2_4by4, np.linalg.inv(ColmapExtrinsics1_4by4)), Relative21_4by4=np.dot(ColmapExtrinsics1_4by4, np.linalg.inv(ColmapExtrinsics2_4by4)), scale12=transScaleColmap, scale21=transScaleColmap)
+        One2MultiImagePairs_correctionColmap[image_pair12] = One2MultiImagePair(name1=image_name1, name2=image_name2, image1=view1.image, image2=view2.image, depth1=view1.depth, depth2=view2.depth, Extrinsic1_4by4=ColmapExtrinsics1_4by4, Extrinsic2_4by4=ColmapExtrinsics2_4by4, Relative12_4by4=np.dot(ColmapExtrinsics2_4by4, np.linalg.inv(ColmapExtrinsics1_4by4)), Relative21_4by4=np.dot(ColmapExtrinsics1_4by4, np.linalg.inv(ColmapExtrinsics2_4by4)), scale12=correctionScaleColmap12, scale21=correctionScaleColmap21)
         One2MultiImagePairs_GT[image_pair12] = One2MultiImagePair(name1=image_name1, name2=image_name2, image1=view1GT.image, image2=view2GT.image, depth1=view1GT.depth, depth2=view2GT.depth, Extrinsic1_4by4=GTExtrinsics1_4by4, Extrinsic2_4by4=GTExtrinsics2_4by4, Relative12_4by4=np.dot(GTExtrinsics2_4by4, np.linalg.inv(GTExtrinsics1_4by4)), Relative21_4by4=np.dot(GTExtrinsics1_4by4, np.linalg.inv(GTExtrinsics2_4by4)), scale12=transScaleGT, scale21=transScaleGT)
+        One2MultiImagePairs_correctionGT[image_pair12] = One2MultiImagePair(name1=image_name1, name2=image_name2, image1=view1GT.image, image2=view2GT.image, depth1=view1GT.depth, depth2=view2GT.depth, Extrinsic1_4by4=GTExtrinsics1_4by4, Extrinsic2_4by4=GTExtrinsics2_4by4, Relative12_4by4=np.dot(GTExtrinsics2_4by4, np.linalg.inv(GTExtrinsics1_4by4)), Relative21_4by4=np.dot(GTExtrinsics1_4by4, np.linalg.inv(GTExtrinsics2_4by4)), scale12=correctionScaleGT12, scale21=correctionScaleGT21)
         DeMoNRelative12_4by4 = np.eye(4)
         DeMoNRelative12_4by4[0:3,0:3] = data[image_pair12]['rotation'].value
         DeMoNRelative12_4by4[0:3,3] = data[image_pair12]['translation'].value
@@ -1022,33 +1057,49 @@ def findOne2MultiPairs(infile, ExhaustivePairInfile, data_format, target_K, w, h
 
     print("Colmap image pairs retrieved = ", (One2MultiImagePairs_Colmap))
     print("GT image pairs retrieved = ", (One2MultiImagePairs_GT))
+    print("correctionColmap image pairs retrieved = ", (One2MultiImagePairs_correctionColmap))
+    print("correctionGT image pairs retrieved = ", (One2MultiImagePairs_correctionGT))
     print("DeMoN image pairs retrieved = ", (One2MultiImagePairs_DeMoN))
     print("number of image pairs retrieved = ", len(image_pairs_One2Multi))
     print("number of image pairs retrieved = ", len(One2MultiImagePairs_Colmap))
     print("number of image pairs retrieved = ", len(One2MultiImagePairs_GT))
     print("number of image pairs retrieved = ", len(One2MultiImagePairs_DeMoN))
 
-    if True:
+    inlierfile.close()
+    print("inlier matches num = ", it)
+    outlierfile.close()
+
+    if False:
         if len(image_pairs_One2Multi) >= 5:
             print("pair 1 (img1+img2): DeMoN scale12 = ", One2MultiImagePairs_DeMoN[list(image_pairs_One2Multi)[0]].scale12, ", while DeMoN scale21 = ", One2MultiImagePairs_DeMoN[list(image_pairs_One2Multi)[0]].scale21)
             print("pair 1 (img1+img2): GT scale12 = ", One2MultiImagePairs_GT[list(image_pairs_One2Multi)[0]].scale12, ", while GT scale21 = ", One2MultiImagePairs_GT[list(image_pairs_One2Multi)[0]].scale21)
             print("pair 1 (img1+img2): Colmap scale12 = ", One2MultiImagePairs_Colmap[list(image_pairs_One2Multi)[0]].scale12, ", while Colmap scale21 = ", One2MultiImagePairs_Colmap[list(image_pairs_One2Multi)[0]].scale21)
+            print("pair 1 (img1+img2): correctionGT scale12 = ", One2MultiImagePairs_correctionGT[list(image_pairs_One2Multi)[0]].scale12, ", while correctionGT scale21 = ", One2MultiImagePairs_correctionGT[list(image_pairs_One2Multi)[0]].scale21)
+            print("pair 1 (img1+img2): correctionColmap scale12 = ", One2MultiImagePairs_correctionColmap[list(image_pairs_One2Multi)[0]].scale12, ", while correctionColmap scale21 = ", One2MultiImagePairs_correctionColmap[list(image_pairs_One2Multi)[0]].scale21)
 
             print("pair 2 (img1+img3): DeMoN scale12 = ", One2MultiImagePairs_DeMoN[list(image_pairs_One2Multi)[1]].scale12, ", while DeMoN scale21 = ", One2MultiImagePairs_DeMoN[list(image_pairs_One2Multi)[1]].scale21)
             print("pair 2 (img1+img3): GT scale12 = ", One2MultiImagePairs_GT[list(image_pairs_One2Multi)[1]].scale12, ", while GT scale21 = ", One2MultiImagePairs_GT[list(image_pairs_One2Multi)[1]].scale21)
             print("pair 2 (img1+img3): Colmap scale12 = ", One2MultiImagePairs_Colmap[list(image_pairs_One2Multi)[1]].scale12, ", while Colmap scale21 = ", One2MultiImagePairs_Colmap[list(image_pairs_One2Multi)[1]].scale21)
+            print("pair 2 (img1+img3): correctionGT scale12 = ", One2MultiImagePairs_correctionGT[list(image_pairs_One2Multi)[1]].scale12, ", while correctionGT scale21 = ", One2MultiImagePairs_correctionGT[list(image_pairs_One2Multi)[1]].scale21)
+            print("pair 2 (img1+img3): correctionColmap scale12 = ", One2MultiImagePairs_correctionColmap[list(image_pairs_One2Multi)[1]].scale12, ", while correctionColmap scale21 = ", One2MultiImagePairs_correctionColmap[list(image_pairs_One2Multi)[1]].scale21)
 
             print("pair 3 (img1+img4): DeMoN scale12 = ", One2MultiImagePairs_DeMoN[list(image_pairs_One2Multi)[2]].scale12, ", while DeMoN scale21 = ", One2MultiImagePairs_DeMoN[list(image_pairs_One2Multi)[2]].scale21)
             print("pair 3 (img1+img4): GT scale12 = ", One2MultiImagePairs_GT[list(image_pairs_One2Multi)[2]].scale12, ", while GT scale21 = ", One2MultiImagePairs_GT[list(image_pairs_One2Multi)[2]].scale21)
             print("pair 3 (img1+img4): Colmap scale12 = ", One2MultiImagePairs_Colmap[list(image_pairs_One2Multi)[2]].scale12, ", while Colmap scale21 = ", One2MultiImagePairs_Colmap[list(image_pairs_One2Multi)[2]].scale21)
+            print("pair 3 (img1+img4): correctionGT scale12 = ", One2MultiImagePairs_correctionGT[list(image_pairs_One2Multi)[2]].scale12, ", while correctionGT scale21 = ", One2MultiImagePairs_correctionGT[list(image_pairs_One2Multi)[2]].scale21)
+            print("pair 3 (img1+img4): correctionColmap scale12 = ", One2MultiImagePairs_correctionColmap[list(image_pairs_One2Multi)[2]].scale12, ", while correctionColmap scale21 = ", One2MultiImagePairs_correctionColmap[list(image_pairs_One2Multi)[2]].scale21)
 
             print("pair 4 (img1+img5): DeMoN scale12 = ", One2MultiImagePairs_DeMoN[list(image_pairs_One2Multi)[3]].scale12, ", while DeMoN scale21 = ", One2MultiImagePairs_DeMoN[list(image_pairs_One2Multi)[3]].scale21)
             print("pair 4 (img1+img5): GT scale12 = ", One2MultiImagePairs_GT[list(image_pairs_One2Multi)[3]].scale12, ", while GT scale21 = ", One2MultiImagePairs_GT[list(image_pairs_One2Multi)[3]].scale21)
             print("pair 4 (img1+img5): Colmap scale12 = ", One2MultiImagePairs_Colmap[list(image_pairs_One2Multi)[3]].scale12, ", while Colmap scale21 = ", One2MultiImagePairs_Colmap[list(image_pairs_One2Multi)[3]].scale21)
+            print("pair 4 (img1+img5): correctionGT scale12 = ", One2MultiImagePairs_correctionGT[list(image_pairs_One2Multi)[3]].scale12, ", while correctionGT scale21 = ", One2MultiImagePairs_correctionGT[list(image_pairs_One2Multi)[3]].scale21)
+            print("pair 4 (img1+img5): correctionColmap scale12 = ", One2MultiImagePairs_correctionColmap[list(image_pairs_One2Multi)[3]].scale12, ", while correctionColmap scale21 = ", One2MultiImagePairs_correctionColmap[list(image_pairs_One2Multi)[3]].scale21)
 
             print("pair 5 (img1+img6): DeMoN scale12 = ", One2MultiImagePairs_DeMoN[list(image_pairs_One2Multi)[4]].scale12, ", while DeMoN scale21 = ", One2MultiImagePairs_DeMoN[list(image_pairs_One2Multi)[4]].scale21)
             print("pair 5 (img1+img6): GT scale12 = ", One2MultiImagePairs_GT[list(image_pairs_One2Multi)[4]].scale12, ", while GT scale21 = ", One2MultiImagePairs_GT[list(image_pairs_One2Multi)[4]].scale21)
             print("pair 5 (img1+img6): Colmap scale12 = ", One2MultiImagePairs_Colmap[list(image_pairs_One2Multi)[4]].scale12, ", while Colmap scale21 = ", One2MultiImagePairs_Colmap[list(image_pairs_One2Multi)[4]].scale21)
+            print("pair 5 (img1+img6): correctionGT scale12 = ", One2MultiImagePairs_correctionGT[list(image_pairs_One2Multi)[4]].scale12, ", while correctionGT scale21 = ", One2MultiImagePairs_correctionGT[list(image_pairs_One2Multi)[4]].scale21)
+            print("pair 5 (img1+img6): correctionColmap scale12 = ", One2MultiImagePairs_correctionColmap[list(image_pairs_One2Multi)[4]].scale12, ", while correctionColmap scale21 = ", One2MultiImagePairs_correctionColmap[list(image_pairs_One2Multi)[4]].scale21)
 
 
             plt.figure()
@@ -1259,11 +1310,11 @@ def findOne2MultiPairs(infile, ExhaustivePairInfile, data_format, target_K, w, h
 
             plt.show()
 
-    return image_pairs_One2Multi, One2MultiImagePairs_DeMoN, One2MultiImagePairs_GT, One2MultiImagePairs_Colmap
+    return image_pairs_One2Multi, One2MultiImagePairs_DeMoN, One2MultiImagePairs_GT, One2MultiImagePairs_Colmap, One2MultiImagePairs_correctionGT, One2MultiImagePairs_correctionColmap
 
 
 
-def checkDepthConsistencyPixelwise_OldInefficientNestedLoops(image_pairs_One2Multi, One2MultiImagePairs_DeMoN, One2MultiImagePairs_GT, One2MultiImagePairs_Colmap, PoseSource='GT', DepthSource='DeMoN', w=256, h=192):
+def checkDepthConsistencyPixelwise_OldInefficientNestedLoops(image_pairs_One2Multi, One2MultiImagePairs_DeMoN, One2MultiImagePairs_GT, One2MultiImagePairs_Colmap, One2MultiImagePairs_correctionGT, One2MultiImagePairs_correctionColmap, PoseSource='GT', DepthSource='DeMoN', w=256, h=192):
     ###### Check Depth & InvDepth Stats
     pixelwiseStats = np.zeros([h,w,4])
     it = 0
@@ -1439,7 +1490,7 @@ def checkDepthConsistencyPixelwise_OldInefficientNestedLoops(image_pairs_One2Mul
     # plt.show()
 
 
-def checkDepthConsistencyPixelwise(image_pairs_One2Multi, One2MultiImagePairs_DeMoN, One2MultiImagePairs_GT, One2MultiImagePairs_Colmap, PoseSource='GT', DepthSource='DeMoN', w=256, h=192):
+def checkDepthConsistencyPixelwise(image_pairs_One2Multi, One2MultiImagePairs_DeMoN, One2MultiImagePairs_GT, One2MultiImagePairs_Colmap, One2MultiImagePairs_correctionGT, One2MultiImagePairs_correctionColmap, PoseSource='GT', DepthSource='DeMoN', w=256, h=192):
     ###### Check Depth & InvDepth Stats
     pixelwiseStats = np.zeros([h*w,4])
     # scaleRecorderMat = np.empty([1,3])
@@ -1447,11 +1498,11 @@ def checkDepthConsistencyPixelwise(image_pairs_One2Multi, One2MultiImagePairs_De
     for image_pair12 in One2MultiImagePairs_DeMoN.keys():
         ### check correlation between different scales regarding one-to-multi image pairs
         if viewCnt==0:
-            scaleRecorderMat = np.array([One2MultiImagePairs_DeMoN[image_pair12].scale12, One2MultiImagePairs_GT[image_pair12].scale12, One2MultiImagePairs_Colmap[image_pair12].scale12])
-            scaleRecorderMat = np.vstack((scaleRecorderMat,np.array([One2MultiImagePairs_DeMoN[image_pair12].scale21, One2MultiImagePairs_GT[image_pair12].scale21, One2MultiImagePairs_Colmap[image_pair12].scale21])))
+            scaleRecorderMat = np.array([One2MultiImagePairs_DeMoN[image_pair12].scale12, One2MultiImagePairs_GT[image_pair12].scale12, One2MultiImagePairs_Colmap[image_pair12].scale12, One2MultiImagePairs_correctionGT[image_pair12].scale12, One2MultiImagePairs_correctionColmap[image_pair12].scale12])
+            scaleRecorderMat = np.vstack((scaleRecorderMat,np.array([One2MultiImagePairs_DeMoN[image_pair12].scale21, One2MultiImagePairs_GT[image_pair12].scale21, One2MultiImagePairs_Colmap[image_pair12].scale21, One2MultiImagePairs_correctionGT[image_pair12].scale12, One2MultiImagePairs_correctionColmap[image_pair12].scale12])))
         else:
-            scaleRecorderMat = np.vstack((scaleRecorderMat,np.array([One2MultiImagePairs_DeMoN[image_pair12].scale12, One2MultiImagePairs_GT[image_pair12].scale12, One2MultiImagePairs_Colmap[image_pair12].scale12])))
-            scaleRecorderMat = np.vstack((scaleRecorderMat,np.array([One2MultiImagePairs_DeMoN[image_pair12].scale21, One2MultiImagePairs_GT[image_pair12].scale21, One2MultiImagePairs_Colmap[image_pair12].scale21])))
+            scaleRecorderMat = np.vstack((scaleRecorderMat,np.array([One2MultiImagePairs_DeMoN[image_pair12].scale12, One2MultiImagePairs_GT[image_pair12].scale12, One2MultiImagePairs_Colmap[image_pair12].scale12, One2MultiImagePairs_correctionGT[image_pair12].scale12, One2MultiImagePairs_correctionColmap[image_pair12].scale12])))
+            scaleRecorderMat = np.vstack((scaleRecorderMat,np.array([One2MultiImagePairs_DeMoN[image_pair12].scale21, One2MultiImagePairs_GT[image_pair12].scale21, One2MultiImagePairs_Colmap[image_pair12].scale21, One2MultiImagePairs_correctionGT[image_pair12].scale12, One2MultiImagePairs_correctionColmap[image_pair12].scale12])))
         print("scaleRecorderMat.shape = ", scaleRecorderMat.shape)
 
         scale_choice = 1
@@ -1459,18 +1510,22 @@ def checkDepthConsistencyPixelwise(image_pairs_One2Multi, One2MultiImagePairs_De
             depth_choice = One2MultiImagePairs_DeMoN[image_pair12].depth1
             if PoseSource=='Colmap':
                 # scale_choice = One2MultiImagePairs_DeMoN[image_pair12].scale12
-                scale_choice = One2MultiImagePairs_Colmap[image_pair12].scale12
+                # scale_choice = One2MultiImagePairs_Colmap[image_pair12].scale12
+                scale_choice = One2MultiImagePairs_correctionColmap[image_pair12].scale12
             if PoseSource=='GT':
                 # scale_choice = One2MultiImagePairs_DeMoN[image_pair12].scale12
-                scale_choice = One2MultiImagePairs_GT[image_pair12].scale12
+                # scale_choice = One2MultiImagePairs_GT[image_pair12].scale12
+                scale_choice = One2MultiImagePairs_correctionGT[image_pair12].scale12
         if DepthSource=='Colmap':
             depth_choice = One2MultiImagePairs_Colmap[image_pair12].depth1
             if PoseSource=='GT':
-                scale_choice = One2MultiImagePairs_GT[image_pair12].scale12/One2MultiImagePairs_Colmap[image_pair12].scale12    # or a fixed value
+                # scale_choice = One2MultiImagePairs_GT[image_pair12].scale12/One2MultiImagePairs_Colmap[image_pair12].scale12    # or a fixed value
+                scale_choice = One2MultiImagePairs_correctionGT[image_pair12].scale12/One2MultiImagePairs_correctionColmap[image_pair12].scale12    # or a fixed value
         if DepthSource=='GT':
             depth_choice = One2MultiImagePairs_GT[image_pair12].depth1
             if PoseSource=='Colmap':
-                scale_choice = One2MultiImagePairs_Colmap[image_pair12].scale12/One2MultiImagePairs_GT[image_pair12].scale12    # or a fixed value
+                # scale_choice = One2MultiImagePairs_Colmap[image_pair12].scale12/One2MultiImagePairs_GT[image_pair12].scale12    # or a fixed value
+                scale_choice = One2MultiImagePairs_correctionColmap[image_pair12].scale12/One2MultiImagePairs_correctionGT[image_pair12].scale12    # or a fixed value
 
         tmpScaledDepthMap =  depth_choice * scale_choice
         tmpScaledInvDepthMap = 1/tmpScaledDepthMap
@@ -1525,7 +1580,9 @@ def checkDepthConsistencyPixelwise(image_pairs_One2Multi, One2MultiImagePairs_De
 
     data = pixelwiseStats[:,1].flatten()
     print(data.shape)
-    data = data[data!=np.nan]
+    # data = data[data!=np.nan]
+    # data = data[data!=np.inf]
+    data = data[np.isfinite(data)]
     print(data.shape)
     plt.figure()
     num_bins = 2000
@@ -1553,7 +1610,9 @@ def checkDepthConsistencyPixelwise(image_pairs_One2Multi, One2MultiImagePairs_De
     #######################################################
     data = pixelwiseStats[:,3].flatten()
     print(data.shape)
-    data = data[data!=np.nan]
+    # data = data[data!=np.nan]
+    # data = data[data!=np.inf]
+    data = data[np.isfinite(data)]
     print(data.shape)
     plt.figure()
     num_bins = 2000
@@ -1579,14 +1638,20 @@ def checkDepthConsistencyPixelwise(image_pairs_One2Multi, One2MultiImagePairs_De
     # plt.grid(True)
     # plt.show()
 
-image_pairs_One2Multi, One2MultiImagePairs_DeMoN, One2MultiImagePairs_GT, One2MultiImagePairs_Colmap = findOne2MultiPairs(infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, tarImageFileName)
+
+image_pairs_One2Multi, One2MultiImagePairs_DeMoN, One2MultiImagePairs_GT, One2MultiImagePairs_Colmap, One2MultiImagePairs_correctionGT, One2MultiImagePairs_correctionColmap = findOne2MultiPairs(infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, tarImageFileName)
 
 def main():
-    global initColmapGTRatio, appendFilterPC, appendFilterModel, alpha, tmpFittingCoef_Colmap_GT, scaleRecordMat, image_pairs, TheiaOrColmapOrGTPoses, DeMoNOrColmapOrGTDepths, sliderMin, sliderMax, interactor, renderer, image_pairs_One2Multi, One2MultiImagePairs_DeMoN, One2MultiImagePairs_GT, One2MultiImagePairs_Colmap, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT
+    global curIteration, initColmapGTRatio, appendFilterPC, appendFilterModel, alpha, tmpFittingCoef_Colmap_GT, scaleRecordMat, image_pairs, TheiaOrColmapOrGTPoses, DeMoNOrColmapOrGTDepths, sliderMin, sliderMax, interactor, renderer, image_pairs_One2Multi, One2MultiImagePairs_DeMoN, One2MultiImagePairs_GT, One2MultiImagePairs_Colmap, One2MultiImagePairs_correctionGT, One2MultiImagePairs_correctionColmap, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT
 
-    checkDepthConsistencyPixelwise(image_pairs_One2Multi, One2MultiImagePairs_DeMoN, One2MultiImagePairs_GT, One2MultiImagePairs_Colmap, PoseSource=TheiaOrColmapOrGTPoses, DepthSource=DeMoNOrColmapOrGTDepths, w=256, h=192)
+    checkDepthConsistencyPixelwise(image_pairs_One2Multi, One2MultiImagePairs_DeMoN, One2MultiImagePairs_GT, One2MultiImagePairs_Colmap, One2MultiImagePairs_correctionGT, One2MultiImagePairs_correctionColmap, PoseSource=TheiaOrColmapOrGTPoses, DepthSource=DeMoNOrColmapOrGTDepths, w=256, h=192)
 
-    visOne2MultiPointCloudInGlobalFrame(renderer, alpha, image_pairs_One2Multi, One2MultiImagePairs_DeMoN, One2MultiImagePairs_GT, One2MultiImagePairs_Colmap, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, PoseSource=TheiaOrColmapOrGTPoses, DepthSource=DeMoNOrColmapOrGTDepths, initBool=True, setColmapGTRatio=True)
+    # ###### visualize the view one by one
+    # visOne2MultiPointCloudInGlobalFrame(renderer, alpha, image_pairs_One2Multi, One2MultiImagePairs_DeMoN, One2MultiImagePairs_GT, One2MultiImagePairs_Colmap, One2MultiImagePairs_correctionGT, One2MultiImagePairs_correctionColmap, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, PoseSource=TheiaOrColmapOrGTPoses, DepthSource=DeMoNOrColmapOrGTDepths, initBool=True, setColmapGTRatio=True)
+    ###### visualize all retrieved the views
+    curIteration = len(One2MultiImagePairs_DeMoN)
+    print("curIteration = ", curIteration)
+    visOne2MultiPointCloudInGlobalFrame(renderer, alpha, image_pairs_One2Multi, One2MultiImagePairs_DeMoN, One2MultiImagePairs_GT, One2MultiImagePairs_Colmap, One2MultiImagePairs_correctionGT, One2MultiImagePairs_correctionColmap, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, PoseSource=TheiaOrColmapOrGTPoses, DepthSource=DeMoNOrColmapOrGTDepths, initBool=False, setColmapGTRatio=True)
 
     renwin = vtk.vtkRenderWindow()
     renwin.SetWindowName("Point Cloud Viewer")

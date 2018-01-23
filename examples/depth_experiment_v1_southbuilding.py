@@ -540,6 +540,30 @@ data_format = get_tf_data_format()
     # saver = tf.train.Saver()
     # saver.restore(session,os.path.join(weights_dir,'demon_original'))
 
+def computePoint2LineDist(pt, lineP1=None, lineP2=None, lineNormal=None):
+    if lineNormal is None:
+        lineNormal=np.array([1,-1])
+    if lineP1 is None:
+        lineP1=np.array([0,0])
+    if lineP2 is None:
+        lineP2=np.array([1,1])
+
+    line = (lineP2-lineP1)/np.linalg.norm(lineP2-lineP1)
+    ap = pt - lineP1
+    t = np.dot(ap, line)
+    x =  lineP1 + t * line #  x is a point on line
+    # print("point pt to be checked  :", pt)
+    # print("point on line  :", x)
+    print("distance from p:", np.linalg.norm(pt - x))
+
+    # # cross product for distance
+    # distN = np.linalg.norm(np.dot(ap, lineNormal))
+    # print("distN cross prod:", distN)
+    # # cross product for distance
+    dist = np.linalg.norm(np.cross(ap, line))
+    print("dist cross prod:", dist)
+    return dist
+
 def computeCorrectionScale(DeMoNPredictionInvDepth, GTDepth, DeMoNDepthThreshold):
     """ scale for correction is based on section 3.2 from paper by Eigen et. al 2014 https://arxiv.org/pdf/1406.2283.pdf"""
     """ don't count the DeMoN prediction depth (1/inv_depth) further than DeMoNDepthThreshold """
@@ -582,6 +606,9 @@ def visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, da
 # def visPointCloudInGlobalFrame(data, dataExhaustivePairs, data_format, renderer, appendFilterPC, appendFilterModel):
     image_pairs = set()
     it = 0
+
+    inlierfile = open(os.path.join(outdir, "inlier_image_pairs.txt"), "w")
+    outlierfile = open(os.path.join(outdir, "outlier_image_pairs.txt"), "w")
 
     for image_pair12 in data.keys():
         print("Processing", image_pair12)
@@ -718,6 +745,18 @@ def visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, da
         # print("transScaleTheia = ", transScaleTheia, "; transScaleColmap = ", transScaleColmap, "; transScaleGT = ", transScaleGT, "; demon scale = ", data[image_pair12]['scale'].value)
         print("transScaleTheia = ", transScaleTheia, "; transScaleColmap = ", transScaleColmap, "; demon scale = ", data[image_pair12]['scale'].value, "; correctionScaleColmap = ", correctionScaleColmap)
         pred_scale = data[image_pair12]['scale'].value
+
+        # GTbaselineLength_v2 = np.linalg.norm(view2GT.t-view1GT.t)
+        GTbaselineLength = np.linalg.norm(-np.dot(view2.R.T, view2.t)+np.dot(view1.R.T, view1.t))
+        # print(GTbaselineLength, " ", GTbaselineLength_v2)
+        # if GTbaselineLength != GTbaselineLength_v2:
+        #     print("Error in baseline calculation!")
+        #     return
+        if computePoint2LineDist(np.array([correctionScaleColmap,transScaleColmap]))>0.010:
+            outlierfile.write('{0} {1} {2} {3} {4} {5}\n'.format(image_pair12, GTbaselineLength, pred_scale, transScaleTheia, transScaleColmap, correctionScaleColmap))
+            continue
+        inlierfile.write('{0} {1} {2} {3} {4} {5}\n'.format(image_pair12, GTbaselineLength, pred_scale, transScaleTheia, transScaleColmap, correctionScaleColmap))
+
         if it==0:
             scaleRecordMat = np.array([pred_scale, transScaleTheia, transScaleColmap, correctionScaleColmap])
             # initColmapGTRatio = transScaleColmap/transScaleGT
@@ -881,7 +920,9 @@ def visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, da
 
 
     appendFilterPC.Update()
-
+    inlierfile.close()
+    print("inlier matches num = ", it)
+    outlierfile.close()
     # ###### Compute the slope of the fitted line to reflect the scale differences among DeMoN, Theia and Colmap
     # tmpFittingCoef_DeMoNTheia = np.polyfit(scaleRecordMat[:,0], scaleRecordMat[:,1], 1)
     # print("tmpFittingCoef_DeMoNTheia = ", tmpFittingCoef_DeMoNTheia)

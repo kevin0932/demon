@@ -476,6 +476,7 @@ TheiaGlobalPosesGT = read_global_poses_theia_output(TheiaGlobalPosesfilepath,The
 
 outdir = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction"
 infile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/View128ColmapFilter_demon_sun3d_train_hotel_beijing~beijing_hotel_2.h5"
+# infile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/demon_sun3d_train_hotel_beijing~beijing_hotel_2.h5"
 ExhaustivePairInfile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/demon_sun3d_train_hotel_beijing~beijing_hotel_2.h5"
 recondir = '/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/images_demon/dense/'
 
@@ -534,6 +535,29 @@ data_format = get_tf_data_format()
     # saver = tf.train.Saver()
     # saver.restore(session,os.path.join(weights_dir,'demon_original'))
 
+def computePoint2LineDist(pt, lineP1=None, lineP2=None, lineNormal=None):
+    if lineNormal is None:
+        lineNormal=np.array([1,-1])
+    if lineP1 is None:
+        lineP1=np.array([0,0])
+    if lineP2 is None:
+        lineP2=np.array([1,1])
+
+    line = (lineP2-lineP1)/np.linalg.norm(lineP2-lineP1)
+    ap = pt - lineP1
+    t = np.dot(ap, line)
+    x =  lineP1 + t * line #  x is a point on line
+    # print("point pt to be checked  :", pt)
+    # print("point on line  :", x)
+    print("distance from p:", np.linalg.norm(pt - x))
+
+    # # cross product for distance
+    # distN = np.linalg.norm(np.dot(ap, lineNormal))
+    # print("distN cross prod:", distN)
+    # # cross product for distance
+    dist = np.linalg.norm(np.cross(ap, line))
+    print("dist cross prod:", dist)
+    return dist
 
 def computeCorrectionScale(DeMoNPredictionInvDepth, GTDepth, DeMoNDepthThreshold):
     """ scale for correction is based on section 3.2 from paper by Eigen et. al 2014 https://arxiv.org/pdf/1406.2283.pdf"""
@@ -578,6 +602,9 @@ def visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, da
 # def visPointCloudInGlobalFrame(data, dataExhaustivePairs, data_format, renderer, appendFilterPC, appendFilterModel):
     image_pairs = set()
     it = 0
+
+    inlierfile = open(os.path.join(outdir, "inlier_image_pairs.txt"), "w")
+    outlierfile = open(os.path.join(outdir, "outlier_image_pairs.txt"), "w")
 
     for image_pair12 in data.keys():
         print("Processing", image_pair12)
@@ -714,6 +741,18 @@ def visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, da
         transScaleGT = np.linalg.norm(np.linalg.inv(GTExtrinsics2_4by4)[0:3,3] - np.linalg.inv(GTExtrinsics1_4by4)[0:3,3])
         print("transScaleTheia = ", transScaleTheia, "; transScaleColmap = ", transScaleColmap, "; transScaleGT = ", transScaleGT, "; demon scale = ", data[image_pair12]['scale'].value, "; correctionScaleGT = ", correctionScaleGT, "; correctionScaleColmap = ", correctionScaleColmap)
         pred_scale = data[image_pair12]['scale'].value
+
+        # GTbaselineLength_v2 = np.linalg.norm(view2GT.t-view1GT.t)
+        GTbaselineLength = np.linalg.norm(-np.dot(view2GT.R.T, view2GT.t)+np.dot(view1GT.R.T, view1GT.t))
+        # print(GTbaselineLength, " ", GTbaselineLength_v2)
+        # if GTbaselineLength != GTbaselineLength_v2:
+        #     print("Error in baseline calculation!")
+        #     return
+        if computePoint2LineDist(np.array([correctionScaleGT,transScaleGT]))>0.010:
+            outlierfile.write('{0} {1} {2} {3} {4} {5} {6} {7}\n'.format(image_pair12, GTbaselineLength, pred_scale, transScaleTheia, transScaleColmap, transScaleGT, correctionScaleGT, correctionScaleColmap))
+            continue
+        inlierfile.write('{0} {1} {2} {3} {4} {5} {6} {7}\n'.format(image_pair12, GTbaselineLength, pred_scale, transScaleTheia, transScaleColmap, transScaleGT, correctionScaleGT, correctionScaleColmap))
+
         if it==0:
             scaleRecordMat = np.array([pred_scale, transScaleTheia, transScaleColmap, transScaleGT, correctionScaleGT, correctionScaleColmap])
             initColmapGTRatio = transScaleColmap/transScaleGT
@@ -762,13 +801,13 @@ def visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, da
             if PoseSource=='Theia':
                 scale_applied = transScaleTheia
             if PoseSource=='Colmap':
-                # scale_applied = transScaleColmap
+                scale_applied = transScaleColmap
                 # scale_applied = data[image_pair12]['scale'].value
-                scale_applied = correctionScaleColmap
+                # scale_applied = correctionScaleColmap
             if PoseSource=='GT':
-                # scale_applied = transScaleGT
+                scale_applied = transScaleGT
                 # scale_applied = data[image_pair12]['scale'].value
-                scale_applied = correctionScaleGT
+                # scale_applied = correctionScaleGT
             tmp_PointCloud1 = visualize_prediction(
                         inverse_depth=data[image_pair12]['depth_upsampled'].value,
                         intrinsics = np.array([0.89115971, 1.18821287, 0.5, 0.5]), # sun3d intrinsics
@@ -878,6 +917,9 @@ def visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, da
 
 
     appendFilterPC.Update()
+    inlierfile.close()
+    print("inlier matches num = ", it)
+    outlierfile.close()
 
     # ###### Compute the slope of the fitted line to reflect the scale differences among DeMoN, Theia and Colmap
     # tmpFittingCoef_DeMoNTheia = np.polyfit(scaleRecordMat[:,0], scaleRecordMat[:,1], 1)
@@ -889,7 +931,7 @@ def visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, da
     tmpFittingCoef_Colmap_GT = np.polyfit(scaleRecordMat[:,3], scaleRecordMat[:,2], 1)
     print("tmpFittingCoef_Colmap_GT = ", tmpFittingCoef_Colmap_GT)
     # plot the scatter 2D data of scale records, to find out the correlation between the predicted scales and the calculated scales from global SfM
-    np.savetxt(os.path.join(outdir,'scale_record_DeMoN_Theia_Colmap.txt'), scaleRecordMat, fmt='%f')
+    np.savetxt(os.path.join(outdir,'scale_record_DeMoN_Theia_Colmap_GT_correctionGT_correctionColmap.txt'), scaleRecordMat, fmt='%f')
     if False:
         plt.scatter(scaleRecordMat[:,0],scaleRecordMat[:,1])
         plt.ylabel('scales calculated from Theia global SfM')
@@ -1041,9 +1083,9 @@ def close_window(iren):
 
 sliderMin = 0 #ImageViewer.GetSliceMin()
 sliderMax = 20 #ImageViewer.GetSliceMax()
-TheiaOrColmapOrGTPoses='Colmap'
+# TheiaOrColmapOrGTPoses='Colmap'
 # TheiaOrColmapOrGTPoses='Theia'
-# TheiaOrColmapOrGTPoses='GT'
+TheiaOrColmapOrGTPoses='GT'
 DeMoNOrColmapOrGTDepths='DeMoN'
 # DeMoNOrColmapOrGTDepths='Colmap'
 # DeMoNOrColmapOrGTDepths='GT'

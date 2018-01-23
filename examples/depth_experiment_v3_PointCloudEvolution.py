@@ -750,13 +750,13 @@ def visPointCloudInGlobalFrame(rendererNotUsed, alpha, infile, ExhaustivePairInf
             if PoseSource=='Theia':
                 scale_applied = transScaleTheia
             if PoseSource=='Colmap':
-                scale_applied = transScaleColmap
+                # scale_applied = transScaleColmap
                 # scale_applied = data[image_pair12]['scale'].value
-                # scale_applied = correctionScaleColmap
+                scale_applied = correctionScaleColmap
             if PoseSource=='GT':
-                scale_applied = transScaleGT
+                # scale_applied = transScaleGT
                 # scale_applied = data[image_pair12]['scale'].value
-                # scale_applied = correctionScaleGT
+                scale_applied = correctionScaleGT
             tmp_PointCloud1 = visualize_prediction(
                         inverse_depth=data[image_pair12]['depth_upsampled'].value,
                         intrinsics = np.array([0.89115971, 1.18821287, 0.5, 0.5]), # sun3d intrinsics
@@ -936,7 +936,7 @@ def visPointCloudInGlobalFrame(rendererNotUsed, alpha, infile, ExhaustivePairInf
     appendFilterModel.AddInputData(appendFilterPC.GetOutput())
     appendFilterModel.Update()
 
-    if curIteration % 5 == 0:
+    if curIteration % 25 == 0:
         plywriterModel = vtk.vtkPLYWriter()
         plywriterModel.SetFileName(os.path.join(outdir,'fused_point_clouds_colmap_alpha{0}_iteration{1}_.ply'.format(int(alpha*10000), int(curIteration))))
         plywriterModel.SetInputData(appendFilterModel.GetOutput())
@@ -970,9 +970,9 @@ sliderMax = 20 #ImageViewer.GetSliceMax()
 # TheiaOrColmapOrGTPoses='Colmap'
 # TheiaOrColmapOrGTPoses='Theia'
 TheiaOrColmapOrGTPoses='GT'
-# DeMoNOrColmapOrGTDepths='DeMoN'
+DeMoNOrColmapOrGTDepths='DeMoN'
 # DeMoNOrColmapOrGTDepths='Colmap'
-DeMoNOrColmapOrGTDepths='GT'
+# DeMoNOrColmapOrGTDepths='GT'
 
 
 renderer = vtk.vtkRenderer()
