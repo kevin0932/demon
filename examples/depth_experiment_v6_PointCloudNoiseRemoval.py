@@ -19,6 +19,12 @@ from pyquaternion import Quaternion
 import nibabel.quaternions as nq
 import vtk
 
+from scipy.spatial import distance
+from scipy import spatial
+import math
+import sys
+examples_dir = os.path.dirname(__file__)
+sys.path.insert(0, os.path.join(examples_dir, '..', 'lmbspecialops', 'python'))
 
 def compute_normals_from_depth(depth_numpyArr):
     h = depth_numpyArr.shape[0]
@@ -32,16 +38,20 @@ def compute_normals_from_depth(depth_numpyArr):
                 dzdx = (depth_numpyArr[y, x+1] - depth_numpyArr[y, x-1]) / 2.0;
                 dzdy = (depth_numpyArr[y+1, x] - depth_numpyArr[y-1, x]) / 2.0;
                 n = np.array([-dzdx, -dzdy, 1])
+                # n = np.array([-dzdx, -dzdy, depth_numpyArr[y, x]])
+                # n = np.array([-dzdx, -dzdy, 1/depth_numpyArr[y, x]])
+                # print(n)
                 n = n/np.linalg.norm(n)
             normal_map[y,x,:] = n
 
     # print(normal_map)
     # np.savetxt('test.txt', normal_map[:,:,0])
     print(normal_map.shape)
-    # plt.imshow((normal_map-np.min(normal_map))/(np.max(normal_map)-np.min(normal_map)))
-    plt.imshow(normal_map/2+0.5)
-    print(np.min(normal_map), " ", np.max(normal_map))
-    plt.show()
+    # # plt.imshow((normal_map-np.min(normal_map))/(np.max(normal_map)-np.min(normal_map)))
+    # plt.imshow(normal_map/2+0.5)
+    # print(np.min(normal_map), " ", np.max(normal_map))
+    # plt.imshow(normal_map/2+0.5)
+    # plt.show()
 
     return normal_map
 
@@ -681,7 +691,8 @@ def visMultiViewsPointCloudInGlobalFrame(rendererNotUsed, alpha, image_pairs_One
                 # scale_applied = 1
                 scale_applied = correctionScaleGT
 
-            normal_map = compute_normals_from_depth(One2MultiImagePairs_DeMoN[image_pair12].depth1*scale_applied*100)
+            # normal_map = compute_normals_from_depth(One2MultiImagePairs_DeMoN[image_pair12].depth1*scale_applied*100)
+            normal_map = compute_normals_from_depth(One2MultiImagePairs_DeMoN[image_pair12].depth1*scale_applied)
             normal_map = np.transpose(normal_map, (2, 0, 1))
             # tmp_PointCloud1 = visualize_prediction(
             tmp_PointCloud1 = organize_data_for_noise_removal_stage1(
@@ -790,6 +801,12 @@ def visMultiViewsPointCloudInGlobalFrame(rendererNotUsed, alpha, image_pairs_One
                     # scale_applied = pred_scale
                     # scale_applied = 1
                     scale_applied = correctionScaleGT
+
+                # normal_map = compute_normals_from_depth(One2MultiImagePairs_DeMoN[image_pair12].depth1*scale_applied*100)
+                normal_map = compute_normals_from_depth(One2MultiImagePairs_DeMoN[image_pair12].depth2*scale_applied)
+                # print("normal_map = ", normal_map)
+                # return
+                normal_map = np.transpose(normal_map, (2, 0, 1))
                 # tmp_PointCloud2 = visualize_prediction(
                 tmp_PointCloud2 = organize_data_for_noise_removal_stage1(
                             inverse_depth=1/One2MultiImagePairs_DeMoN[image_pair12].depth2,### in previous data retrieval part, the predicted inv_depth has been inversed to depth for later access!
@@ -797,6 +814,7 @@ def visMultiViewsPointCloudInGlobalFrame(rendererNotUsed, alpha, image_pairs_One
                             image=input_data['image_pair'][0,0:3] if data_format=='channels_first' else input_data['image_pair'].transpose([0,3,1,2])[0,0:3],
                             R1=GlobalExtrinsics2_4by4[0:3,0:3],
                             t1=GlobalExtrinsics2_4by4[0:3,3],
+                            normals=normal_map,
                             # rotation=rotmat_To_angleaxis(np.dot(GlobalExtrinsics1_4by4[0:3,0:3], GlobalExtrinsics2_4by4[0:3,0:3].T)),
                             # translation=GlobalExtrinsics2_4by4[0:3,3],   # should be changed, this is wrong!
                             scale=scale_applied)
@@ -1983,6 +2001,138 @@ image_pairs_One2Multi, One2MultiImagePairs_DeMoN, One2MultiImagePairs_GT, One2Mu
 
 pointclouds_beforefiltering = {}
 
+
+def PCA(data, correlation = False, sort = True):
+    """ Applies Principal Component Analysis to the data
+    https://stackoverflow.com/questions/38754668/plane-fitting-in-a-3d-point-cloud
+    Parameters
+    ----------
+    data: array
+        The array containing the data. The array must have NxM dimensions, where each
+        of the N rows represents a different individual record and each of the M columns
+        represents a different variable recorded for that individual record.
+            array([
+            [V11, ... , V1m],
+            ...,
+            [Vn1, ... , Vnm]])
+
+    correlation(Optional) : bool
+            Set the type of matrix to be computed (see Notes):
+                If True compute the correlation matrix.
+                If False(Default) compute the covariance matrix.
+
+    sort(Optional) : bool
+            Set the order that the eigenvalues/vectors will have
+                If True(Default) they will be sorted (from higher value to less).
+                If False they won't.
+    Returns
+    -------
+    eigenvalues: (1,M) array
+        The eigenvalues of the corresponding matrix.
+
+    eigenvector: (M,M) array
+        The eigenvectors of the corresponding matrix.
+
+    Notes
+    -----
+    The correlation matrix is a better choice when there are different magnitudes
+    representing the M variables. Use covariance matrix in other cases.
+
+    """
+
+    mean = np.mean(data, axis=0)
+
+    data_adjust = data - mean
+
+    #: the data is transposed due to np.cov/corrcoef syntax
+    if correlation:
+
+        matrix = np.corrcoef(data_adjust.T)
+
+    else:
+        matrix = np.cov(data_adjust.T)
+
+    eigenvalues, eigenvectors = np.linalg.eig(matrix)
+
+    if sort:
+        #: sort eigenvalues and eigenvectors
+        sort = eigenvalues.argsort()[::-1]
+        eigenvalues = eigenvalues[sort]
+        eigenvectors = eigenvectors[:,sort]
+
+    return eigenvalues, eigenvectors
+
+
+def best_fitting_plane(points, equation=False):
+    """ Computes the best fitting plane of the given points
+
+    Parameters
+    ----------
+    points: array
+        The x,y,z coordinates corresponding to the points from which we want
+        to define the best fitting plane. Expected format:
+            array([
+            [x1,y1,z1],
+            ...,
+            [xn,yn,zn]])
+
+    equation(Optional) : bool
+            Set the oputput plane format:
+                If True return the a,b,c,d coefficients of the plane.
+                If False(Default) return 1 Point and 1 Normal vector.
+    Returns
+    -------
+    a, b, c, d : float
+        The coefficients solving the plane equation.
+
+    or
+
+    point, normal: array
+        The plane defined by 1 Point and 1 Normal vector. With format:
+        array([Px,Py,Pz]), array([Nx,Ny,Nz])
+
+    """
+
+    w, v = PCA(points)
+
+    #: the normal of the plane is the last eigenvector
+    normal = v[:,2]
+
+    #: get a point from the plane
+    point = np.mean(points, axis=0)
+
+
+    if equation:
+        a, b, c = normal
+        d = -(np.dot(normal, point))
+        return a, b, c, d
+
+    else:
+        return point, normal
+
+def write_pointcloud_to_PLY():
+    pointcloud_polydata = create_pointcloud_polydata(
+        points=tmpPC['points'],
+        # colors=tmpPC['colors'] if 'colors' in tmpPC else None,
+        colors=tmpPC['colors'],
+        )
+
+    appendFilterModel = vtk.vtkAppendPolyData()
+    cam1_polydata = create_camera_polydata(np.eye(3), [0,0,0], True)
+    cam2_polydata = create_camera_polydata(angleaxis_to_rotation_matrix(rotation[0]), translation[0], True)
+    appendFilterModel.AddInputData(pointcloud_polydata)
+    appendFilterModel.AddInputData(cam1_polydata)
+    appendFilterModel.AddInputData(cam2_polydata)
+    appendFilterModel.Update()
+
+    plywriter = vtk.vtkPLYWriter()
+    plywriter.SetFileName('DeMoN_Sculpture_Example_pointcloud.ply')
+    # plywriter.SetInputData(pointcloud_polydata)
+    plywriter.SetInputData(appendFilterModel.GetOutput())
+    # plywriter.SetFileTypeToASCII()
+    plywriter.SetArrayName('colors')
+    plywriter.Write()
+
 def main():
     global pointclouds_beforefiltering, curIteration, initColmapGTRatio, appendFilterPC, appendFilterModel, alpha, tmpFittingCoef_Colmap_GT, scaleRecordMat, image_pairs, TheiaOrColmapOrGTPoses, DeMoNOrColmapOrGTDepths, sliderMin, sliderMax, interactor, renderer, image_pairs_One2Multi, One2MultiImagePairs_DeMoN, One2MultiImagePairs_GT, One2MultiImagePairs_Colmap, One2MultiImagePairs_correctionGT, One2MultiImagePairs_correctionColmap, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT
 
@@ -1998,32 +2148,182 @@ def main():
 
     print("len(pointclouds_beforefiltering) = ", len(pointclouds_beforefiltering))
 
-    sigma = 0
-    td = 0
-    tp = 0
-    tv = 0
+    ###### loop over point clouds to compute normals and weights
+    patchSize = 7*7
+    for image_pair12 in pointclouds_beforefiltering.keys():
+        print("pointclouds_beforefiltering[image_pair12]['points'].shape = ", pointclouds_beforefiltering[image_pair12]['points'].shape)
+        # pts = pointclouds_beforefiltering[image_pair12]['points']
+        curPC = pointclouds_beforefiltering[image_pair12]['points']
+        curNormals = pointclouds_beforefiltering[image_pair12]['normals']
+        cam_v = np.linalg.inv(One2MultiImagePairs_GT[image_pair12].Extrinsic1_4by4)[0:3,3]
+        print("cam_v = ", cam_v)
+        # distance.cdist(pointclouds_beforefiltering[image_pair12]['points'], pointclouds_beforefiltering[image_pair12]['points']).argmin()
+        # curPC[spatial.KDTree(curPC).query(pts[0])[10]]
+        if True:
+            fitted_normals = []
+            weights_from_fitted_normals = []
+            for ptIdx in range(curPC.shape[0]):
+                queryPt = curPC[ptIdx]
+                dist,indices = spatial.KDTree(curPC).query(queryPt, k=3)
+                # print(dist, " ", indices)
+                p1 = curPC[indices[1],:]
+                p2 = curPC[indices[2],:]
+                fitted_normal = np.cross((p1-queryPt), (p2-queryPt))
+                fitted_normal = fitted_normal/np.linalg.norm(fitted_normal)
+                # pt, fitted_normal = best_fitting_plane(patchPts)
+                # print(pt, " ", fitted_normal, "; query point = ", queryPt)
+                fitted_normals.append(fitted_normal)
 
+                ###### Calculate weights
+                weight_ptIdx = np.dot(fitted_normal, (queryPt-cam_v)/np.linalg.norm(queryPt-cam_v))
+                weights_from_fitted_normals.append(weight_ptIdx)
+            print("np.array(fitted_normals).shape = ", np.array(fitted_normals).shape)
+            print("np.array(weights_from_fitted_normals).shape = ", np.array(weights_from_fitted_normals).shape)
+            pointclouds_beforefiltering[image_pair12]['fitted_normals'] = np.array(fitted_normals)
+            pointclouds_beforefiltering[image_pair12]['weights_from_fitted_normals'] = np.array(weights_from_fitted_normals)
+            pointclouds_beforefiltering[image_pair12]['filtering_flag'] = []    # used for keeping a boolean value indicating if the pt should be kept (1) or filtered (0)!
+
+        if False:
+            fitted_normals = []
+            weights_from_fitted_normals = []
+            for ptIdx in range(curPC.shape[0]):
+                queryPt = curPC[ptIdx]
+                dist,indices = spatial.KDTree(curPC).query(queryPt, k=patchSize)
+                # print(dist, " ", indices)
+                patchPts = curPC[indices,:]
+
+                pt, fitted_normal = best_fitting_plane(patchPts)
+                # print(pt, " ", fitted_normal, "; query point = ", queryPt)
+                fitted_normals.append(fitted_normal)
+
+                ###### Calculate weights
+                weight_ptIdx = np.dot(fitted_normal, (queryPt-cam_v)/np.linalg.norm(queryPt-cam_v))
+                weights_from_fitted_normals.append(weight_ptIdx)
+            print("np.array(fitted_normals).shape = ", np.array(fitted_normals).shape)
+            print("np.array(weights_from_fitted_normals).shape = ", np.array(weights_from_fitted_normals).shape)
+            pointclouds_beforefiltering[image_pair12]['fitted_normals'] = np.array(fitted_normals)
+            pointclouds_beforefiltering[image_pair12]['weights_from_fitted_normals'] = np.array(weights_from_fitted_normals)
+            pointclouds_beforefiltering[image_pair12]['filtering_flag'] = []    # used for keeping a boolean value indicating if the pt should be kept (1) or filtered (0)!
+
+        if False:
+            fitted_normals = []
+            weights_from_fitted_normals = []
+            for ptIdx in range(curPC.shape[0]):
+                queryPt = curPC[ptIdx]
+
+                ###### Calculate weights
+                # print(pointclouds_beforefiltering[image_pair12].keys())
+                fitted_normal = pointclouds_beforefiltering[image_pair12]['normals'][ptIdx,:]
+                # print(pointclouds_beforefiltering[image_pair12]['normals'][ptIdx,:])
+                fitted_normals.append(fitted_normal)
+                weight_ptIdx = np.dot(fitted_normal, (queryPt-cam_v)/np.linalg.norm(queryPt-cam_v))
+                weights_from_fitted_normals.append(weight_ptIdx)
+            # print("np.array(fitted_normals).shape = ", np.array(fitted_normals).shape)
+            print("np.array(weights_from_fitted_normals).shape = ", np.array(weights_from_fitted_normals).shape)
+            pointclouds_beforefiltering[image_pair12]['fitted_normals'] = np.array(fitted_normals)
+            pointclouds_beforefiltering[image_pair12]['weights_from_fitted_normals'] = np.array(weights_from_fitted_normals)
+            pointclouds_beforefiltering[image_pair12]['filtering_flag'] = []    # used for keeping a boolean value indicating if the pt should be kept (1) or filtered (0)!
+        # print(pointclouds_beforefiltering[image_pair12].keys())
+        # return
+
+    # sigma = 0.1 * (np.max(pointclouds_beforefiltering[list(pointclouds_beforefiltering.keys())[0]]['scaled_depth']) - np.min(pointclouds_beforefiltering[list(pointclouds_beforefiltering.keys())[0]]['scaled_depth']))   # σ should be chosen according to the scale of the scene, so we set it to 1% of the depth range (e.g., the length of the bounding box along the z-axis);
+    sigma = 1.25 * 0.1 * (np.max(pointclouds_beforefiltering[list(pointclouds_beforefiltering.keys())[0]]['scaled_depth']) - np.min(pointclouds_beforefiltering[list(pointclouds_beforefiltering.keys())[0]]['scaled_depth']))   # σ should be chosen according to the scale of the scene, so we set it to 1% of the depth range (e.g., the length of the bounding box along the z-axis);
+    td = 0.1 * sigma
+    tp = 0.2
+    tv = 0.075 * len(list(pointclouds_beforefiltering.keys()))
+    print("sigma = ", sigma, ", td = ", td, ", tp = ", tp, ", tv = ", tv)
+    filtered_3D_points_positions = []
+    filtered_3D_points_colors = []
+    ###### loop over points and different views to do the filtering
     for image_pair12_i in pointclouds_beforefiltering.keys():
         print("len(pointclouds_beforefiltering[image_pair12_i]['points']) = ", len(pointclouds_beforefiltering[image_pair12_i]['points']))
+        depth_after_filtering_image_pair12_i = np.zeros([h,w])
+        RGBimg_after_filtering_image_pair12_i = One2MultiImagePairs_GT[image_pair12_i].image1
         for ptIdx in range(len(pointclouds_beforefiltering[image_pair12_i]['points'])):
             d_pt = 0
             w_pt = 0
             v_pt = 0
             s = 0
             s2 = 0
+            cur_xy_coordinate = pointclouds_beforefiltering[image_pair12_i]['coordinates'][ptIdx,:]
+            cur_3D_point_position = pointclouds_beforefiltering[image_pair12_i]['points'][ptIdx,:]
+            cur_3D_point_color = pointclouds_beforefiltering[image_pair12_i]['colors'][ptIdx,:]
+            cur_3D_point_depth = pointclouds_beforefiltering[image_pair12_i]['scaled_depth'][cur_xy_coordinate[1],cur_xy_coordinate[0]]
             for image_pair12_j in pointclouds_beforefiltering.keys():
                 # if image_pair12_i != image_pair12_j:
                 if True:
-
                     cam_vi = np.linalg.inv(One2MultiImagePairs_GT[image_pair12_i].Extrinsic1_4by4)[0:3,3]
                     cam_vj = np.linalg.inv(One2MultiImagePairs_GT[image_pair12_j].Extrinsic1_4by4)[0:3,3]
                     if np.dot(cam_vi, cam_vj) > 0:
                         # print("skipped camera centers = ", cam_vi, "; ", cam_vj)
                         continue
+                    ###### weight and depth interpolations are skipped here because mesh triangle is not involved in our setup
+                    ###### retrieve corresponding depth values in other views and compute the depth diff
+                    # if PoseSource=='Colmap':
+                    #     flow12 = flow_from_depth(tmpScaledDepthMap, One2MultiImagePairs_Colmap[image_pair12].Relative12_4by4[0:3,0:3], One2MultiImagePairs_Colmap[image_pair12].Relative12_4by4[0:3,3], target_K)
+                    if PoseSource=='GT':
+                        RelativeTransformation_4by4 = One2MultiImagePairs_GT[image_pair12_j].Extrinsic1_4by4 * np.linalg.inv(One2MultiImagePairs_GT[image_pair12_i].Extrinsic1_4by4)
+                        flow12 = flow_from_depth(pointclouds_beforefiltering[image_pair12_i]['scaled_depth'], RelativeTransformation_4by4[0:3,0:3], RelativeTransformation_4by4[0:3,3], target_K)
+                    matches12, coords121, coords122, mask12 = flow_to_matches(flow12)
+                    # print("flow12.shape = ", flow12.shape)
+                    # print("coords122.shape = ", coords122.shape)
+                    # # print("coords121 x max = ", np.max(coords121[:,0]), "; coords121 y max = ", np.max(coords121[:,1]))
+                    idx1D = cur_xy_coordinate[0] + cur_xy_coordinate[1]*w
+                    print("coords121[idx1D] = ", coords121[idx1D], ";? (", cur_xy_coordinate[0],", ", cur_xy_coordinate[1], ")")
+                    interpolatedWeight = pointclouds_beforefiltering[image_pair12_j]['weights_from_fitted_normals'][idx1D]
+                    if mask12[idx1D] == True:
+                        d_diff = pointclouds_beforefiltering[image_pair12_j]['scaled_depth'][coords122[idx1D,1], coords122[idx1D,0]] - pointclouds_beforefiltering[image_pair12_i]['scaled_depth'][cur_xy_coordinate[1],cur_xy_coordinate[0]]
+                    else:
+                        continue
+                    if d_diff < -sigma:
+                        continue
+                    if d_diff > sigma:
+                        d_diff = sigma
 
-                    # print("testing")
+                    d_pt = ( w_pt*d_pt + interpolatedWeight*d_diff/sigma ) / (w_pt + interpolatedWeight)
+                    w_pt = w_pt + interpolatedWeight
 
-    # pointclouds_afterfiltering
+                    if d_diff != sigma: #update photoconsistency only for range surfaces close to p
+                        s = s + pointclouds_beforefiltering[image_pair12_j]['colors'][idx1D,:]
+                        s2 = s2 + np.dot(pointclouds_beforefiltering[image_pair12_j]['colors'][idx1D,:], pointclouds_beforefiltering[image_pair12_j]['colors'][idx1D,:])
+                        v_pt = v_pt + 1
+            if v_pt > 0:
+                p_pt = math.sqrt( (s2 - np.dot(s,s)/v_pt) / v_pt ) * (2/(255*math.sqrt(3)))
+                if  d_pt > -td and d_pt < 0 and p_pt < tp and v_pt > tv:
+                    filtered_3D_points_positions.append(cur_3D_point_position)
+                    filtered_3D_points_colors.append(cur_3D_point_color)
+            # else:
+            #     print("skip the 3d point because there are no corresponding points in other views!")
+    pointclouds_afterfiltering = {}
+    pointclouds_afterfiltering['points'] = np.array(filtered_3D_points_positions)
+    print("pointclouds_afterfiltering['points'].shape = ", pointclouds_afterfiltering['points'].shape)
+    pointclouds_afterfiltering['colors'] = np.array(filtered_3D_points_colors)
+
+    ## save the filtered point cloud
+    ###############################################################
+    appendFilterModel = vtk.vtkAppendPolyData()
+    # cam1_polydata = create_camera_polydata(R1, t1, True)
+    # cam2_polydata = create_camera_polydata(R2, t2, True)
+    pointcloud1_polydata = create_pointcloud_polydata(
+    points=pointclouds_afterfiltering['points'],
+    colors=pointclouds_afterfiltering['colors'] if 'colors' in pointclouds_afterfiltering else None,
+    )
+    appendFilterModel.AddInputData(pointcloud1_polydata)
+    # appendFilterModel.AddInputData(pointcloud2_polydata)
+    # appendFilterModel.AddInputData(cam1_polydata)
+    # appendFilterModel.AddInputData(cam2_polydata)
+    appendFilterModel.Update()
+
+    plywriter = vtk.vtkPLYWriter()
+    plywriter.SetFileName(('test_filtered_pointcloud.ply'))
+    # plywriter.SetFileName(('SUN3D_GT_pair_pointcloud_'+inputSUN3D_trainingdata.split('/')[-1][:-3]+'_'+SUN3D_datasetname+'_'+str(predict_scale)+'_'+str(predict_scale21)+'.ply'))
+    # plywriter.SetInputData(pointcloud_polydata)
+    plywriter.SetInputData(appendFilterModel.GetOutput())
+    plywriter.SetFileTypeToASCII()
+    plywriter.SetArrayName('Colors')
+    plywriter.Write()
+    ###############################################################
+
 
     ###### VTK Visualization
     # renwin = vtk.vtkRenderWindow()
