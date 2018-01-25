@@ -156,11 +156,11 @@ print('predict_scale = ', predict_scale)
 result = refine_net.eval(input_data['image1'],result['predict_depth2'])
 
 
-plt.imshow(result['predict_depth0'].squeeze(), cmap='Greys')
-plt.show()
-depth12 = result['predict_depth0'][0]
-print(depth12.shape)
-compute_normals_from_depth(depth12)
+# plt.imshow(result['predict_depth0'].squeeze(), cmap='Greys')
+# plt.show()
+# depth12 = result['predict_depth0'][0]
+# print(depth12.shape)
+# compute_normals_from_depth(depth12)
 
 # depth_img1.show()
 
@@ -186,11 +186,11 @@ print('predict_scale21 = ', predict_scale21)
 result21 = refine_net.eval(input_data21['image1'],result21['predict_depth2'])
 
 
-plt.imshow(result21['predict_depth0'].squeeze(), cmap='Greys')
-plt.show()
-
-depth21 = result21['predict_depth0'][0]
-compute_normals_from_depth(depth21)
+# plt.imshow(result21['predict_depth0'].squeeze(), cmap='Greys')
+# plt.show()
+#
+# depth21 = result21['predict_depth0'][0]
+# compute_normals_from_depth(depth21)
 
 # try to visualize the point cloud
 try:
@@ -229,8 +229,26 @@ try:
 
     # tmpPC = tmpPC2
     ####################################################################
+    import pypcd
+    # also can read from file handles.
+    pc = pypcd.PointCloud.from_path('table_scene_lms400.pcd')
+    # pc.pc_data has the data as a structured array
+    # pc.fields, pc.count, etc have the metadata
+
+    # center the x field
+    pc.pc_data['x'] -= pc.pc_data['x'].mean()
+
+    # save as binary compressed
+    pc.save_pcd('bar.pcd', compression='binary_compressed')
+    print("saving .pcd is successful!")
+
     import pcl
     import numpy as np
+    cloud = pcl.PointCloud()
+    pointcloud = np.array(tmpPC['points'], dtype = np.float32)
+    print("pointcloud.shape = ", pointcloud.shape)
+    cloud.from_array(pointcloud)
+    pcl.save(cloud, "cloud.pcd", format = 'pcd')
 
     p = pcl.PointCloud()
     # p.from_file("table_scene_lms400.pcd")
