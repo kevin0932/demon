@@ -26,13 +26,14 @@ See the [project website](https://lmb.informatik.uni-freiburg.de/people/ummenhof
 
 Building and using requires the following libraries and programs
 
-    tensorflow 1.0.0
-    cmake 3.5.1
+    tensorflow 1.4.0
+    cmake 3.7.1
     python 3.5
-    cuda 8.0.44 (required for gpu support)
+    cuda 8.0.61 (required for gpu support)
     VTK 7.1 with python3 interface (required for visualizing point clouds)
 
 The versions match the configuration we have tested on an ubuntu 16.04 system.
+DeMoN can work with other versions of the aforementioned dependencies, e.g. tensorflow 1.3, but this is not well tested.
 
 The binary package from [vtk.org](http://www.vtk.org) does not come with a python3 interface.
 To enable python3 support VTK needs to be built from source.
@@ -45,7 +46,7 @@ The network also depends on our [lmbspecialops](https://github.com/lmb-freiburg/
 ## Build instructions
 
 The following describes how to install tensorflow and demon into a new virtualenv and run the inference example.
-We will use ```pew``` (```pip install pew```) to manage a new virtualenv named ```demon_venv``` in the following:
+We will use ```pew``` (```pip3 install pew```) to manage a new virtualenv named ```demon_venv``` in the following:
 
 ```bash
 # create virtualenv
@@ -56,10 +57,10 @@ The following commands all run inside the virtualenv:
 
 ```bash
 # install python module dependencies
-pip install tensorflow-gpu # or 'tensorflow' without gpu support
-pip install pillow # for reading images
-pip install matplotlib # required for visualizing depth maps
-pip install Cython # required for visualizing point clouds
+pip3 install tensorflow-gpu # or 'tensorflow' without gpu support
+pip3 install pillow # for reading images
+pip3 install matplotlib # required for visualizing depth maps
+pip3 install Cython # required for visualizing point clouds
 ```
 
 ```bash
