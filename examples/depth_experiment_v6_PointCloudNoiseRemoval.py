@@ -2565,15 +2565,46 @@ def main():
             print("depthsize_weights.shape = ", depthsize_weights.shape)
 
 
+    ###### organize a collection of data for later view comparison
+    numViews = len(list(pointclouds_beforefiltering.keys()))
+    K2s = np.zeros((3,3,numViews))
+    R2s = np.zeros((3,3,numViews))
+    t2s = np.zeros((3,numViews))
+    scaled_depth2s = np.zeros((h,w,numViews))
+    weights2s = np.zeros((h,w,numViews))
+    colors2s = np.zeros((h,w,3,numViews))
+    cnt = 0
+    for image_pair12_i in pointclouds_beforefiltering.keys():
+        K2s[:,:,cnt] = target_K
+        R2s[:,:,cnt] = One2MultiImagePairs_GT[image_pair12_i].Extrinsic1_4by4[0:3,0:3]
+        t2s[:,cnt] = One2MultiImagePairs_GT[image_pair12_i].Extrinsic1_4by4[0:3,3]
+        scaled_depth2s[:,:,cnt] = pointclouds_beforefiltering[image_pair12_i]['scaled_depth']
+        weights2s[:,:,cnt] = pointclouds_beforefiltering[image_pair12_i]['depthsize_weights']
+        colors2s[:,:,:,cnt] = One2MultiImagePairs_GT[image_pair12_i].image1
+        cnt +=1
+    if cnt!=numViews:
+        print("Error: prepare all view data is wrong!")
+        return
+    print("prepare all view data is done!")
+
     # # sigma = 0.1 * (np.max(pointclouds_beforefiltering[list(pointclouds_beforefiltering.keys())[0]]['scaled_depth']) - np.min(pointclouds_beforefiltering[list(pointclouds_beforefiltering.keys())[0]]['scaled_depth']))   # σ should be chosen according to the scale of the scene, so we set it to 1% of the depth range (e.g., the length of the bounding box along the z-axis);
     # sigma = 2.5 * 0.1 * (np.max(pointclouds_beforefiltering[list(pointclouds_beforefiltering.keys())[0]]['scaled_depth']) - np.min(pointclouds_beforefiltering[list(pointclouds_beforefiltering.keys())[0]]['scaled_depth']))   # σ should be chosen according to the scale of the scene, so we set it to 1% of the depth range (e.g., the length of the bounding box along the z-axis);
     # td = 0.25*sigma   # 0.1 * sigma
     # print(pointclouds_beforefiltering.keys())
     # filtered_3D_points_positions = []
     # filtered_3D_points_colors = []
-    # ###### loop over points and different views to do the filtering
+    # # ###### loop over points and different views to do the filtering
     # for image_pair12_i in pointclouds_beforefiltering.keys():
     #     print("len(pointclouds_beforefiltering[image_pair12_i]['points']) = ", len(pointclouds_beforefiltering[image_pair12_i]['points']))
+    #     K1 = target_K
+    #     R1 = One2MultiImagePairs_GT[image_pair12_i].Extrinsic1_4by4[0:3,0:3]
+    #     t1 = One2MultiImagePairs_GT[image_pair12_i].Extrinsic1_4by4[0:3,3]
+    #     points_from_view1_in_global_frame = pointclouds_beforefiltering[image_pair12_i]['points']
+    #     weights1 = pointclouds_beforefiltering[image_pair12_i]['weights_from_fitted_normals']
+    #     colors1 = pointclouds_beforefiltering[image_pair12_i]['colors']
+    #
+    #     mask_i = igl_pointcloud_filtering_in_multiviews( K1, R1, t1, points_from_view1_in_global_frame, weights1, colors1, K2s, R2s, t2s, scaled_depth2s, weights2s, colors2s, borderx=0, bordery=0, sigma, tp)
+
     #     depth_after_filtering_image_pair12_i = np.zeros([h,w])
     #     RGBimg_after_filtering_image_pair12_i = One2MultiImagePairs_GT[image_pair12_i].image1
     #     for ptIdx in range(len(pointclouds_beforefiltering[image_pair12_i]['points'])):
@@ -2696,7 +2727,6 @@ def main():
     # pointclouds_afterfiltering['points'] = np.array(filtered_3D_points_positions)
     # print("pointclouds_afterfiltering['points'].shape = ", pointclouds_afterfiltering['points'].shape)
     # pointclouds_afterfiltering['colors'] = np.array(filtered_3D_points_colors)
-
 
 
     # ## save the filtered point cloud
