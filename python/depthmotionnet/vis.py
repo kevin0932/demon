@@ -123,6 +123,7 @@ def organize_data_for_noise_removal_stage1( inverse_depth, intrinsics=None, norm
         t1 = np.zeros((3,))
 
     if not normals is None:
+        # n = normals.squeeze()
         n = normals.squeeze()
     else:
         n = None
@@ -135,8 +136,10 @@ def organize_data_for_noise_removal_stage1( inverse_depth, intrinsics=None, norm
     pointcloud = compute_point_cloud_from_depthmap_scaled(depth, K, R1, t1, n, img, scale)
     # print("pointcloud['points'].shape = ", pointcloud['points'].shape)
     # print("pointcloud['colors'].shape = ", pointcloud['colors'].shape)
-    # if normals!=None:
-    #     print("pointcloud['normals'].shape = ", pointcloud['normals'].shape)
+    if not normals is None:
+        print("pointcloud['normals'].shape = ", pointcloud['normals'].shape)
+
+    pointcloud['scaled_depth'] = depth*scale
 
     return pointcloud
 

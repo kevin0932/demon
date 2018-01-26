@@ -366,14 +366,14 @@ def read_relative_poses_theia_output(path, path_img_id_map):
 
 
 # # # reading theia intermediate output relative poses from textfile
-# #TheiaRtfilepath = '/home/kevin/JohannesCode/theia_trial_demon/intermediate_results_southbuilding_01012018/RelativePoses_after_step7_global_position_estimation.txt'
-# TheiaRtfilepath = '/home/kevin/JohannesCode/theia_trial_demon/intermediate_results_southbuilding_01012018/RelativePoses_after_step9_BA.txt'
-# TheiaIDNamefilepath = '/home/kevin/JohannesCode/theia_trial_demon/intermediate_results_southbuilding_01012018/viewid_imagename_pairs_file.txt'
-# TheiaRelativePosesGT = read_relative_poses_theia_output(TheiaRtfilepath,TheiaIDNamefilepath)
-# # # reading theia intermediate output global poses from textfile
-# #TheiaGlobalPosesfilepath = '/home/kevin/JohannesCode/theia_trial_demon/intermediate_results_southbuilding_01012018/after_step7_global_position_estimation.txt'
-# TheiaGlobalPosesfilepath = '/home/kevin/JohannesCode/theia_trial_demon/intermediate_results_southbuilding_01012018/after_step9_BA.txt'
-# TheiaGlobalPosesGT = read_global_poses_theia_output(TheiaGlobalPosesfilepath,TheiaIDNamefilepath)
+#TheiaRtfilepath = '/home/kevin/JohannesCode/theia_trial_demon/intermediate_results_southbuilding_01012018/RelativePoses_after_step7_global_position_estimation.txt'
+TheiaRtfilepath = '/home/kevin/JohannesCode/theia_trial_demon/intermediate_results_southbuilding_01012018/RelativePoses_after_step9_BA.txt'
+TheiaIDNamefilepath = '/home/kevin/JohannesCode/theia_trial_demon/intermediate_results_southbuilding_01012018/viewid_imagename_pairs_file.txt'
+TheiaRelativePosesGT = read_relative_poses_theia_output(TheiaRtfilepath,TheiaIDNamefilepath)
+# # reading theia intermediate output global poses from textfile
+#TheiaGlobalPosesfilepath = '/home/kevin/JohannesCode/theia_trial_demon/intermediate_results_southbuilding_01012018/after_step7_global_position_estimation.txt'
+TheiaGlobalPosesfilepath = '/home/kevin/JohannesCode/theia_trial_demon/intermediate_results_southbuilding_01012018/after_step9_BA.txt'
+TheiaGlobalPosesGT = read_global_poses_theia_output(TheiaGlobalPosesfilepath,TheiaIDNamefilepath)
 
 # # # reading theia intermediate output relative poses from textfile
 # TheiaRtfilepath = '/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/sun3d_train_0.1m_to_0.2m/hotel_beijing.beijing_hotel_2/demon_prediction/images_demon/TheiaReconstructionFromImage/intermediate_results/RelativePoses_after_step9_BA.txt'
@@ -383,13 +383,13 @@ def read_relative_poses_theia_output(path, path_img_id_map):
 # TheiaGlobalPosesfilepath = '/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/sun3d_train_0.1m_to_0.2m/hotel_beijing.beijing_hotel_2/demon_prediction/images_demon/TheiaReconstructionFromImage/intermediate_results/after_step9_BA.txt'
 # TheiaGlobalPosesGT = read_global_poses_theia_output(TheiaGlobalPosesfilepath,TheiaIDNamefilepath)
 
-# # reading theia intermediate output relative poses from textfile
-TheiaRtfilepath = '/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/sun3d_train_0.1m_to_0.2m/hotel_beijing.beijing_hotel_2/demon_prediction/images_demon/TheiaReconstructionFromImage/intermediate_results/RelativePoses_after_step9_BA.txt'
-TheiaIDNamefilepath = '/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/sun3d_train_0.1m_to_0.2m/hotel_beijing.beijing_hotel_2/demon_prediction/images_demon/TheiaReconstructionFromImage/intermediate_results/viewid_imagename_pairs_file.txt'
-TheiaRelativePosesGT = read_relative_poses_theia_output(TheiaRtfilepath,TheiaIDNamefilepath)
-# # reading theia intermediate output global poses from textfile
-TheiaGlobalPosesfilepath = '/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/sun3d_train_0.1m_to_0.2m/hotel_beijing.beijing_hotel_2/demon_prediction/images_demon/TheiaReconstructionFromImage/intermediate_results/after_step9_BA.txt'
-TheiaGlobalPosesGT = read_global_poses_theia_output(TheiaGlobalPosesfilepath,TheiaIDNamefilepath)
+# # # reading theia intermediate output relative poses from textfile
+# TheiaRtfilepath = '/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/sun3d_train_0.1m_to_0.2m/hotel_beijing.beijing_hotel_2/demon_prediction/images_demon/TheiaReconstructionFromImage/intermediate_results/RelativePoses_after_step9_BA.txt'
+# TheiaIDNamefilepath = '/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/sun3d_train_0.1m_to_0.2m/hotel_beijing.beijing_hotel_2/demon_prediction/images_demon/TheiaReconstructionFromImage/intermediate_results/viewid_imagename_pairs_file.txt'
+# TheiaRelativePosesGT = read_relative_poses_theia_output(TheiaRtfilepath,TheiaIDNamefilepath)
+# # # reading theia intermediate output global poses from textfile
+# TheiaGlobalPosesfilepath = '/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/sun3d_train_0.1m_to_0.2m/hotel_beijing.beijing_hotel_2/demon_prediction/images_demon/TheiaReconstructionFromImage/intermediate_results/after_step9_BA.txt'
+# TheiaGlobalPosesGT = read_global_poses_theia_output(TheiaGlobalPosesfilepath,TheiaIDNamefilepath)
 
 # # weights_dir = '/home/ummenhof/projects/demon/weights'
 # weights_dir = '/home/kevin/anaconda_tensorflow_demon_ws/demon/weights'
@@ -431,19 +431,19 @@ TheiaGlobalPosesGT = read_global_poses_theia_output(TheiaGlobalPosesfilepath,The
 # recondir = "/home/kevin/ThesisDATA/CVG_Datasets_3Dsymmetric/barcelona_Dataset/dense/"
 # recondir = "/home/kevin/ThesisDATA/CVG_Datasets_3Dsymmetric/redmond_Dataset/dense/"
 
-outdir = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction"
-# infile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/View128ColmapFilter_demon_sun3d_train_hotel_beijing~beijing_hotel_2.h5"
-# ExhaustivePairInfile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/demon_sun3d_train_hotel_beijing~beijing_hotel_2.h5"
-#infile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/demon_sun3d_train_hotel_beijing~beijing_hotel_2.h5"
-infile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/kevin_southbuilding_demon.h5"
-ExhaustivePairInfile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/kevin_southbuilding_demon.h5"
-recondir = '/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/images_demon/dense/'
+# outdir = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction"
+# # infile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/View128ColmapFilter_demon_sun3d_train_hotel_beijing~beijing_hotel_2.h5"
+# # ExhaustivePairInfile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/demon_sun3d_train_hotel_beijing~beijing_hotel_2.h5"
+# # infile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/demon_sun3d_train_hotel_beijing~beijing_hotel_2.h5"
+# infile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/kevin_southbuilding_demon.h5"
+# ExhaustivePairInfile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/kevin_southbuilding_demon.h5"
+# recondir = '/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/images_demon/dense/'
 
-# outdir = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_mit_w85_lounge1~wg_lounge1_1/demon_prediction/images_demon/dense/1"
-# # infile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_mit_w85_lounge1~wg_lounge1_1/demon_prediction/images_demon/dense/1/kevin_exhaustive_demon.h5"
+outdir = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_mit_w85_lounge1~wg_lounge1_1/demon_prediction/images_demon/dense/1"
+infile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_mit_w85_lounge1~wg_lounge1_1/demon_prediction/images_demon/dense/1/kevin_exhaustive_demon.h5"
 # infile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_mit_w85_lounge1~wg_lounge1_1/demon_prediction/demon_sun3d_train_mit_w85_lounge1~wg_lounge1_1.h5"
-# ExhaustivePairInfile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_mit_w85_lounge1~wg_lounge1_1/demon_prediction/images_demon/dense/1/kevin_exhaustive_demon.h5"
-# recondir = '/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_mit_w85_lounge1~wg_lounge1_1/demon_prediction/images_demon/dense/1'
+ExhaustivePairInfile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_mit_w85_lounge1~wg_lounge1_1/demon_prediction/images_demon/dense/1/kevin_exhaustive_demon.h5"
+recondir = '/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_mit_w85_lounge1~wg_lounge1_1/demon_prediction/images_demon/dense/1'
 
 
 cameras = colmap.read_cameras_txt(os.path.join(recondir,'sparse','cameras.txt'))
@@ -860,11 +860,11 @@ def visOne2MultiPointCloudInGlobalFrame(rendererNotUsed, alpha, image_pairs_One2
 # TheiaOrColmapOrGTPoses='Theia'
 TheiaOrColmapOrGTPoses='GT'
 # DeMoNOrColmapOrGTDepths='GT'
-DeMoNOrColmapOrGTDepths='Colmap'
-# DeMoNOrColmapOrGTDepths='DeMoN'
+# DeMoNOrColmapOrGTDepths='Colmap'
+DeMoNOrColmapOrGTDepths='DeMoN'
 
-# tarImageFileName = 'mit_w85_lounge1~wg_lounge1_1-0000055_baseline_2_v1.JPG'
-tarImageFileName = 'hotel_beijing~beijing_hotel_2-0000103_baseline_1_v0.JPG'
+tarImageFileName = 'mit_w85_lounge1~wg_lounge1_1-0000055_baseline_2_v1.JPG'
+# tarImageFileName = 'hotel_beijing~beijing_hotel_2-0000103_baseline_1_v0.JPG'
 
 renderer = vtk.vtkRenderer()
 renderer.SetBackground(0, 0, 0)

@@ -6,13 +6,13 @@ from libc.math cimport isfinite
 
 
 @cython.boundscheck(False)
-cdef _compute_visible_points_mask( 
-        np.ndarray[np.float32_t, ndim=2] depth, 
-        np.ndarray[np.float32_t, ndim=2] K1, 
+cdef _compute_visible_points_mask(
+        np.ndarray[np.float32_t, ndim=2] depth,
+        np.ndarray[np.float32_t, ndim=2] K1,
         np.ndarray[np.float32_t, ndim=2] R1,
         np.ndarray[np.float32_t, ndim=1] t1,
         np.ndarray[np.float32_t, ndim=2] P2,
-        int width2, 
+        int width2,
         int height2,
         int borderx,
         int bordery):
@@ -27,6 +27,7 @@ cdef _compute_visible_points_mask(
     cdef np.ndarray[np.float32_t,ndim=2] RT = R1.transpose()
 
     cdef np.ndarray[np.uint8_t,ndim=2] mask = np.zeros((depth.shape[0],depth.shape[1]), dtype=np.uint8)
+    cdef np.ndarray[np.uint8_t,ndim=3] matched_pixels = np.zeros((depth.shape[0],depth.shape[1], 2), dtype=np.uint8)
 
     for y in range(depth.shape[0]):
         for x in range(depth.shape[1]):
@@ -54,8 +55,12 @@ cdef _compute_visible_points_mask(
                     point_proj[1] /= point_proj[2]
                     if point_proj[0] > borderx and point_proj[1] > bordery and point_proj[0] < width2-borderx and point_proj[1] < height2-bordery:
                         mask[y,x] = 1
-                
-    return mask
+                        matched_pixels[y,x,0] = int(point_proj[0])
+                        matched_pixels[y,x,1] = int(point_proj[1])
+                else:
+                    matched_pixels[y,x,0] = np.nan
+                    matched_pixels[y,x,1] = np.nan
+    return mask, matched_pixels
 
 
 
@@ -77,19 +82,19 @@ def compute_visible_points_mask( view1, view2, borderx=0, bordery=0 ):
     Returns a mask of valid points
     """
     assert view1.depth_metric == 'camera_z', "Depth metric must be 'camera_z'"
-    
+
     P2 = np.empty((3,4), dtype=np.float32)
     P2[:,0:3] = view2.R
     P2[:,3:4] = view2.t.reshape((3,1))
     P2 = view2.K.dot(P2)
 
     return _compute_visible_points_mask(
-            view1.depth, 
-            view1.K.astype(np.float32), 
-            view1.R.astype(np.float32), 
-            view1.t.astype(np.float32), 
-            P2.astype(np.float32), 
-            view2.depth.shape[1], 
+            view1.depth,
+            view1.K.astype(np.float32),
+            view1.R.astype(np.float32),
+            view1.t.astype(np.float32),
+            P2.astype(np.float32),
+            view2.depth.shape[1],
             view2.depth.shape[0],
             borderx,
             bordery)
@@ -98,10 +103,10 @@ def compute_visible_points_mask( view1, view2, borderx=0, bordery=0 ):
 
 
 @cython.boundscheck(False)
-cdef _compute_depth_ratios( 
-        np.ndarray[np.float32_t, ndim=2] depth1, 
-        np.ndarray[np.float32_t, ndim=2] depth2, 
-        np.ndarray[np.float32_t, ndim=2] K1, 
+cdef _compute_depth_ratios(
+        np.ndarray[np.float32_t, ndim=2] depth1,
+        np.ndarray[np.float32_t, ndim=2] depth2,
+        np.ndarray[np.float32_t, ndim=2] K1,
         np.ndarray[np.float32_t, ndim=2] R1,
         np.ndarray[np.float32_t, ndim=1] t1,
         np.ndarray[np.float32_t, ndim=2] P2 ):
@@ -148,14 +153,14 @@ cdef _compute_depth_ratios(
                         if d2 > 0.0 and isfinite(d2):
                             s = point_proj[2]/d2
                             result[y,x] = s
-                
+
     return result
-    
+
 
 
 
 def compute_depth_ratios( view1, view2 ):
-    """Projects each point defined in view1 to view2 and computes the ratio of 
+    """Projects each point defined in view1 to view2 and computes the ratio of
     the depth value of the projected point and the stored depth value in view2.
 
 
@@ -169,26 +174,26 @@ def compute_depth_ratios( view1, view2 ):
     """
     assert view1.depth_metric == 'camera_z', "Depth metric must be 'camera_z'"
     assert view2.depth_metric == 'camera_z', "Depth metric must be 'camera_z'"
-    
+
     P2 = np.empty((3,4), dtype=np.float32)
     P2[:,0:3] = view2.R
     P2[:,3:4] = view2.t.reshape((3,1))
     P2 = view2.K.dot(P2)
 
     return _compute_depth_ratios(
-            view1.depth, 
+            view1.depth,
             view2.depth,
-            view1.K.astype(np.float32), 
-            view1.R.astype(np.float32), 
-            view1.t.astype(np.float32), 
+            view1.K.astype(np.float32),
+            view1.R.astype(np.float32),
+            view1.t.astype(np.float32),
             P2.astype(np.float32) )
 
 
 
 @cython.boundscheck(False)
-cdef _compute_flow( 
-        np.ndarray[np.float32_t, ndim=2] depth1, 
-        np.ndarray[np.float32_t, ndim=2] K1, 
+cdef _compute_flow(
+        np.ndarray[np.float32_t, ndim=2] depth1,
+        np.ndarray[np.float32_t, ndim=2] K1,
         np.ndarray[np.float32_t, ndim=2] R1,
         np.ndarray[np.float32_t, ndim=1] t1,
         np.ndarray[np.float32_t, ndim=2] P2 ):
@@ -229,6 +234,5 @@ cdef _compute_flow(
                 point_proj[1] /= point_proj[2]
                 result[0,y,x] = point_proj[0]-px
                 result[1,y,x] = point_proj[1]-py
-                
+
     return result
-    

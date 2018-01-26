@@ -431,19 +431,19 @@ TheiaGlobalPosesGT = read_global_poses_theia_output(TheiaGlobalPosesfilepath,The
 # recondir = "/home/kevin/ThesisDATA/CVG_Datasets_3Dsymmetric/barcelona_Dataset/dense/"
 # recondir = "/home/kevin/ThesisDATA/CVG_Datasets_3Dsymmetric/redmond_Dataset/dense/"
 
-# outdir = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction"
-# # infile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/View128ColmapFilter_demon_sun3d_train_hotel_beijing~beijing_hotel_2.h5"
-# # ExhaustivePairInfile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/demon_sun3d_train_hotel_beijing~beijing_hotel_2.h5"
-# #infile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/demon_sun3d_train_hotel_beijing~beijing_hotel_2.h5"
-# infile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/kevin_southbuilding_demon.h5"
-# ExhaustivePairInfile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/kevin_southbuilding_demon.h5"
-# recondir = '/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/images_demon/dense/'
+outdir = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction"
+# infile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/View128ColmapFilter_demon_sun3d_train_hotel_beijing~beijing_hotel_2.h5"
+# ExhaustivePairInfile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/demon_sun3d_train_hotel_beijing~beijing_hotel_2.h5"
+infile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/demon_sun3d_train_hotel_beijing~beijing_hotel_2.h5"
+#infile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/kevin_southbuilding_demon.h5"
+ExhaustivePairInfile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/kevin_southbuilding_demon.h5"
+recondir = '/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/images_demon/dense/'
 
-outdir = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_mit_w85_lounge1~wg_lounge1_1/demon_prediction/images_demon/dense/1"
+# outdir = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_mit_w85_lounge1~wg_lounge1_1/demon_prediction/images_demon/dense/1"
 # infile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_mit_w85_lounge1~wg_lounge1_1/demon_prediction/images_demon/dense/1/kevin_exhaustive_demon.h5"
-infile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_mit_w85_lounge1~wg_lounge1_1/demon_prediction/demon_sun3d_train_mit_w85_lounge1~wg_lounge1_1.h5"
-ExhaustivePairInfile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_mit_w85_lounge1~wg_lounge1_1/demon_prediction/images_demon/dense/1/kevin_exhaustive_demon.h5"
-recondir = '/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_mit_w85_lounge1~wg_lounge1_1/demon_prediction/images_demon/dense/1'
+# # infile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_mit_w85_lounge1~wg_lounge1_1/demon_prediction/demon_sun3d_train_mit_w85_lounge1~wg_lounge1_1.h5"
+# ExhaustivePairInfile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_mit_w85_lounge1~wg_lounge1_1/demon_prediction/images_demon/dense/1/kevin_exhaustive_demon.h5"
+# recondir = '/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_mit_w85_lounge1~wg_lounge1_1/demon_prediction/images_demon/dense/1'
 
 
 cameras = colmap.read_cameras_txt(os.path.join(recondir,'sparse','cameras.txt'))
@@ -920,8 +920,8 @@ TheiaOrColmapOrGTPoses='GT'
 # DeMoNOrColmapOrGTDepths='Colmap'
 DeMoNOrColmapOrGTDepths='DeMoN'
 
-tarImageFileName = 'mit_w85_lounge1~wg_lounge1_1-0000055_baseline_2_v1.JPG'
-# tarImageFileName = 'hotel_beijing~beijing_hotel_2-0000103_baseline_1_v0.JPG'
+# tarImageFileName = 'mit_w85_lounge1~wg_lounge1_1-0000055_baseline_2_v1.JPG'
+tarImageFileName = 'hotel_beijing~beijing_hotel_2-0000103_baseline_1_v0.JPG'
 
 renderer = vtk.vtkRenderer()
 renderer.SetBackground(0, 0, 0)
@@ -1696,13 +1696,14 @@ def checkDepthConsistencyPixelwise_One2Multi(image_pairs_One2Multi, One2MultiIma
     # plt.show()
 
 
-def flow_from_depth(depth, R, T, K):
+def flow_from_real_depth(depth, R, T, K):
     # K = np.eye(3)
     # K[0, 0] = K[1, 1] = F
     # K[0, 2] = depth.shape[1] / 2
     # K[1, 2] = depth.shape[0] / 2
     y, x = np.mgrid[0:depth.shape[0], 0:depth.shape[1]]
-    z = 1 / depth[:]
+    # z = 1 / depth[:]
+    z = depth[:]
     coords1 = np.column_stack((x.ravel(), y.ravel(), np.ones_like(x.ravel())))
     coords2 = np.dot(coords1, np.linalg.inv(K).T)
     coords2[:,0] *= z.ravel()
@@ -1812,9 +1813,9 @@ def checkDepthConsistencyPixelwise_MultiViews(image_pairs_One2Multi, One2MultiIm
 
         ## retrieve corresponding depth values in other views
         if PoseSource=='Colmap':
-            flow12 = flow_from_depth(tmpScaledDepthMap, One2MultiImagePairs_Colmap[image_pair12].Relative12_4by4[0:3,0:3], One2MultiImagePairs_Colmap[image_pair12].Relative12_4by4[0:3,3], target_K)
+            flow12 = flow_from_real_depth(tmpScaledDepthMap, One2MultiImagePairs_Colmap[image_pair12].Relative12_4by4[0:3,0:3], One2MultiImagePairs_Colmap[image_pair12].Relative12_4by4[0:3,3], target_K)
         if PoseSource=='GT':
-            flow12 = flow_from_depth(tmpScaledDepthMap, One2MultiImagePairs_GT[image_pair12].Relative12_4by4[0:3,0:3], One2MultiImagePairs_GT[image_pair12].Relative12_4by4[0:3,3], target_K)
+            flow12 = flow_from_real_depth(tmpScaledDepthMap, One2MultiImagePairs_GT[image_pair12].Relative12_4by4[0:3,0:3], One2MultiImagePairs_GT[image_pair12].Relative12_4by4[0:3,3], target_K)
         matches12, coords121, coords122, mask12 = flow_to_matches(flow12)
         print("flow12.shape = ", flow12.shape)
         print("coords122.shape = ", coords122.shape)
