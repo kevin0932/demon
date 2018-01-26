@@ -2323,7 +2323,7 @@ def main():
     #         d_pt = 0
     #         w_pt = 0
     #         v_pt = 0
-    #         s = 0
+    #         s = np.zeros((3))
     #         s2 = 0
     #         cur_xy_coordinate = pointclouds_beforefiltering[image_pair12_i]['coordinates'][ptIdx,:]
     #         cur_3D_point_position = pointclouds_beforefiltering[image_pair12_i]['points'][ptIdx,:]
@@ -2439,88 +2439,265 @@ def main():
     # print("pointclouds_afterfiltering['points'].shape = ", pointclouds_afterfiltering['points'].shape)
     # pointclouds_afterfiltering['colors'] = np.array(filtered_3D_points_colors)
 
-    ###### loop over points and different views to do the filtering
-    appendFilterModel = vtk.vtkAppendPolyData()
-    for image_pair12_i in pointclouds_beforefiltering.keys():
-        print("len(pointclouds_beforefiltering[image_pair12_i]['points']) = ", len(pointclouds_beforefiltering[image_pair12_i]['points']))
-        depth_after_averaging_image_pair12_i = np.empty([h,w])
-        depth_after_averaging_image_pair12_i[:] = np.nan
-        RGBimg_after_filtering_image_pair12_i = One2MultiImagePairs_GT[image_pair12_i].image1
-        matched_depth_view_j_recorder = pointclouds_beforefiltering[image_pair12_i]['scaled_depth']
-        itj = 0
-        for image_pair12_j in pointclouds_beforefiltering.keys():
-            if True:
-                cam_vi = np.linalg.inv(One2MultiImagePairs_GT[image_pair12_i].Extrinsic1_4by4)[0:3,3]
-                cam_vj = np.linalg.inv(One2MultiImagePairs_GT[image_pair12_j].Extrinsic1_4by4)[0:3,3]
-                # if np.dot(cam_vi, cam_vj) > 0:
-                if np.dot(cam_vi, cam_vj) < 0:
-                    print("skipped camera centers = ", cam_vi, "; ", cam_vj)
-                    continue
-                ###### weight and depth interpolations are skipped here because mesh triangle is not involved in our setup
-                ###### retrieve corresponding depth values in other views and compute the depth diff
-                ###### method 1 to retrieving corresponding depth values by vectorization --- faster
-                start_t1 = time.time()
-                if TheiaOrColmapOrGTPoses=='GT':
-                    RelativeTransformation_4by4 = np.dot(One2MultiImagePairs_GT[image_pair12_j].Extrinsic1_4by4, np.linalg.inv(One2MultiImagePairs_GT[image_pair12_i].Extrinsic1_4by4))
-                    flow12 = flow_from_real_depth(pointclouds_beforefiltering[image_pair12_i]['scaled_depth'], RelativeTransformation_4by4[0:3,0:3], RelativeTransformation_4by4[0:3,3], target_K)
-                    # flow12 = flow_from_real_depth(One2MultiImagePairs_DeMoN[image_pair12_i].depth1, RelativeTransformation_4by4[0:3,0:3], RelativeTransformation_4by4[0:3,3], target_K)
-                matches12, coords121, coords122, mask12 = flow_to_matches(flow12)
-                tmp_matched_depth_view_j = np.empty([h,w])
-                tmp_matched_depth_view_j[:] = np.nan
-                for tmpCnt in range(len(mask12)):
-                    if mask12[tmpCnt]==True:
-                        tmp_matched_depth_view_j[coords121[tmpCnt,1], coords121[tmpCnt,0]] = pointclouds_beforefiltering[image_pair12_j]['scaled_depth'][coords122[tmpCnt,1], coords122[tmpCnt,0]]
-                end_t1 = time.time()
+    # ###### loop over points and different views to do the filtering
+    # appendFilterModel = vtk.vtkAppendPolyData()
+    # for image_pair12_i in pointclouds_beforefiltering.keys():
+    #     print("len(pointclouds_beforefiltering[image_pair12_i]['points']) = ", len(pointclouds_beforefiltering[image_pair12_i]['points']))
+    #     depth_after_averaging_image_pair12_i = np.empty([h,w])
+    #     depth_after_averaging_image_pair12_i[:] = np.nan
+    #     RGBimg_after_filtering_image_pair12_i = One2MultiImagePairs_GT[image_pair12_i].image1
+    #     matched_depth_view_j_recorder = pointclouds_beforefiltering[image_pair12_i]['scaled_depth']
+    #     itj = 0
+    #     for image_pair12_j in pointclouds_beforefiltering.keys():
+    #         if True:
+    #             cam_vi = np.linalg.inv(One2MultiImagePairs_GT[image_pair12_i].Extrinsic1_4by4)[0:3,3]
+    #             cam_vj = np.linalg.inv(One2MultiImagePairs_GT[image_pair12_j].Extrinsic1_4by4)[0:3,3]
+    #             # if np.dot(cam_vi, cam_vj) > 0:
+    #             if np.dot(cam_vi, cam_vj) < 0:
+    #                 print("skipped camera centers = ", cam_vi, "; ", cam_vj)
+    #                 continue
+    #             ###### weight and depth interpolations are skipped here because mesh triangle is not involved in our setup
+    #             ###### retrieve corresponding depth values in other views and compute the depth diff
+    #             ###### method 1 to retrieving corresponding depth values by vectorization --- faster
+    #             start_t1 = time.time()
+    #             if TheiaOrColmapOrGTPoses=='GT':
+    #                 RelativeTransformation_4by4 = np.dot(One2MultiImagePairs_GT[image_pair12_j].Extrinsic1_4by4, np.linalg.inv(One2MultiImagePairs_GT[image_pair12_i].Extrinsic1_4by4))
+    #                 flow12 = flow_from_real_depth(pointclouds_beforefiltering[image_pair12_i]['scaled_depth'], RelativeTransformation_4by4[0:3,0:3], RelativeTransformation_4by4[0:3,3], target_K)
+    #                 # flow12 = flow_from_real_depth(One2MultiImagePairs_DeMoN[image_pair12_i].depth1, RelativeTransformation_4by4[0:3,0:3], RelativeTransformation_4by4[0:3,3], target_K)
+    #             matches12, coords121, coords122, mask12 = flow_to_matches(flow12)
+    #             tmp_matched_depth_view_j = np.empty([h,w])
+    #             tmp_matched_depth_view_j[:] = np.nan
+    #             for tmpCnt in range(len(mask12)):
+    #                 if mask12[tmpCnt]==True:
+    #                     tmp_matched_depth_view_j[coords121[tmpCnt,1], coords121[tmpCnt,0]] = pointclouds_beforefiltering[image_pair12_j]['scaled_depth'][coords122[tmpCnt,1], coords122[tmpCnt,0]]
+    #             end_t1 = time.time()
+    #
+    #             ###### method 2 to retrieving corresponding depth values by reading from HDF5 and Cython code --- consumes about 4 times the time as the method 1
+    #             # start_t2 = time.time()
+    #             # tmp_view_i = retrieve_GT_view_from_HDF5(image_pair12_i.split('---')[0])
+    #             # tmp_view_j = retrieve_GT_view_from_HDF5(image_pair12_j.split('---')[0])
+    #             # tmp_mask_ij, tmp_matched_pixels_ij = compute_visible_points_mask( tmp_view_i, tmp_view_j )
+    #             # print("sum(tmp_mask_ij.ravel()==mask12) = ", sum(tmp_mask_ij.ravel()==mask12))
+    #             # print("np.reshape(tmp_mask_ij,[tmp_mask_ij.shape[0]*tmp_mask_ij.shape[1]])==mask12) = ", sum(tmp_mask_ij.ravel()==mask12))
+    #             # print("tmp_matched_pixels_ij.shape = ", tmp_matched_pixels_ij.shape)
+    #             # tmp_matched_depth_view_j = np.empty([h,w])
+    #             # tmp_matched_depth_view_j[:] = np.nan
+    #             # for row in range(h):
+    #             #     for col in range(w):
+    #             #         if tmp_mask_ij[row, col]==True:
+    #             #             tmp_matched_depth_view_j[row, col] = pointclouds_beforefiltering[image_pair12_j]['scaled_depth'][tmp_matched_pixels_ij[row,col,1], tmp_matched_pixels_ij[row,col,0]]
+    #             # end_t2 = time.time()
+    #             # print("m1 consumes ", (end_t1-start_t1), " sec; while m2 consumes ", (end_t2-start_t2), " sec!")
+    #
+    #             # if itj==0:
+    #             #     matched_depth_view_j_recorder = tmp_matched_depth_view_j
+    #             # else:
+    #             #     matched_depth_view_j_recorder = np.dstack((matched_depth_view_j_recorder, tmp_matched_depth_view_j))
+    #             matched_depth_view_j_recorder = np.dstack((matched_depth_view_j_recorder, tmp_matched_depth_view_j))
+    #
+    #             itj += 1
+    #     # depth_after_averaging_image_pair12_i = np.nanmedian(matched_depth_view_j_recorder, axis=2)
+    #     depth_after_averaging_image_pair12_i = np.nanmean(matched_depth_view_j_recorder, axis=2)
+    #     print("depth_after_averaging_image_pair12_i.shape = ", depth_after_averaging_image_pair12_i.shape)
+    #
+    #     # ### DEBUG: for comparison, use the value without averaging or taking medians
+    #     # depth_after_averaging_image_pair12_i = pointclouds_beforefiltering[image_pair12_i]['scaled_depth']
+    #
+    #     input_data = prepare_input_data(One2MultiImagePairs_GT[image_pair12_i].image1, One2MultiImagePairs_GT[image_pair12_i].image2, data_format)
+    #     # tmp_PC = visualize_prediction(
+    #     tmp_PC = organize_data_for_noise_removal_stage1(
+    #                 inverse_depth=1/depth_after_averaging_image_pair12_i,
+    #                 intrinsics = np.array([0.89115971, 1.18821287, 0.5, 0.5]), # sun3d intrinsics
+    #                 image=input_data['image_pair'][0,0:3] if data_format=='channels_first' else input_data['image_pair'].transpose([0,3,1,2])[0,0:3],
+    #                 R1=One2MultiImagePairs_GT[image_pair12_i].Extrinsic1_4by4[0:3,0:3],
+    #                 t1=One2MultiImagePairs_GT[image_pair12_i].Extrinsic1_4by4[0:3,3],
+    #                 # rotation=rotmat_To_angleaxis(np.dot(GlobalExtrinsics2_4by4[0:3,0:3], GlobalExtrinsics1_4by4[0:3,0:3].T)),
+    #                 # translation=GlobalExtrinsics2_4by4[0:3,3],   # should be changed, this is wrong!
+    #                 scale=1)
+    #     pointcloud1_polydata = create_pointcloud_polydata(
+    #         points=tmp_PC['points'],
+    #         colors=tmp_PC['colors'] if 'colors' in tmp_PC else None,
+    #         )
+    #     appendFilterModel.AddInputData(pointcloud1_polydata)
+    #     cam1_polydata = create_camera_polydata(One2MultiImagePairs_GT[image_pair12_i].Extrinsic1_4by4[0:3,0:3], One2MultiImagePairs_GT[image_pair12_i].Extrinsic1_4by4[0:3,3], True)
+    #     appendFilterModel.AddInputData(cam1_polydata)
 
-                ###### method 2 to retrieving corresponding depth values by reading from HDF5 and Cython code --- consumes about 4 times the time as the method 1
-                # start_t2 = time.time()
-                # tmp_view_i = retrieve_GT_view_from_HDF5(image_pair12_i.split('---')[0])
-                # tmp_view_j = retrieve_GT_view_from_HDF5(image_pair12_j.split('---')[0])
-                # tmp_mask_ij, tmp_matched_pixels_ij = compute_visible_points_mask( tmp_view_i, tmp_view_j )
-                # print("sum(tmp_mask_ij.ravel()==mask12) = ", sum(tmp_mask_ij.ravel()==mask12))
-                # print("np.reshape(tmp_mask_ij,[tmp_mask_ij.shape[0]*tmp_mask_ij.shape[1]])==mask12) = ", sum(tmp_mask_ij.ravel()==mask12))
-                # print("tmp_matched_pixels_ij.shape = ", tmp_matched_pixels_ij.shape)
-                # tmp_matched_depth_view_j = np.empty([h,w])
-                # tmp_matched_depth_view_j[:] = np.nan
-                # for row in range(h):
-                #     for col in range(w):
-                #         if tmp_mask_ij[row, col]==True:
-                #             tmp_matched_depth_view_j[row, col] = pointclouds_beforefiltering[image_pair12_j]['scaled_depth'][tmp_matched_pixels_ij[row,col,1], tmp_matched_pixels_ij[row,col,0]]
-                # end_t2 = time.time()
-                # print("m1 consumes ", (end_t1-start_t1), " sec; while m2 consumes ", (end_t2-start_t2), " sec!")
 
-                # if itj==0:
-                #     matched_depth_view_j_recorder = tmp_matched_depth_view_j
-                # else:
-                #     matched_depth_view_j_recorder = np.dstack((matched_depth_view_j_recorder, tmp_matched_depth_view_j))
-                matched_depth_view_j_recorder = np.dstack((matched_depth_view_j_recorder, tmp_matched_depth_view_j))
 
-                itj += 1
-        # depth_after_averaging_image_pair12_i = np.nanmedian(matched_depth_view_j_recorder, axis=2)
-        depth_after_averaging_image_pair12_i = np.nanmean(matched_depth_view_j_recorder, axis=2)
-        print("depth_after_averaging_image_pair12_i.shape = ", depth_after_averaging_image_pair12_i.shape)
 
-        # ### DEBUG: for comparison, use the value without averaging or taking medians
-        # depth_after_averaging_image_pair12_i = pointclouds_beforefiltering[image_pair12_i]['scaled_depth']
+    ###### involve cython implementation
+    patchSize = 7*7
+    for image_pair12 in pointclouds_beforefiltering.keys():
+        print("pointclouds_beforefiltering[image_pair12]['points'].shape = ", pointclouds_beforefiltering[image_pair12]['points'].shape)
+        # pts = pointclouds_beforefiltering[image_pair12]['points']
+        curPC = pointclouds_beforefiltering[image_pair12]['points']
+        ## fit normals by calling matlab function
+        pointclouds_beforefiltering[image_pair12]['normals'] = fit_normals_from_pointcloud_numpyarr_by_matlab(curPC, 66.0)
+        curNormals = pointclouds_beforefiltering[image_pair12]['normals']
+        cam_v = np.linalg.inv(One2MultiImagePairs_GT[image_pair12].Extrinsic1_4by4)[0:3,3]
+        print("cam_v = ", cam_v)
+        # distance.cdist(pointclouds_beforefiltering[image_pair12]['points'], pointclouds_beforefiltering[image_pair12]['points']).argmin()
+        # curPC[spatial.KDTree(curPC).query(pts[0])[10]]
+        curCoords = pointclouds_beforefiltering[image_pair12]['coordinates']
+        depthsize_weights = np.zeros((h,w))
+        if True:
+            fitted_normals = []
+            weights_from_fitted_normals = []
+            for ptIdx in range(curPC.shape[0]):
+                queryPt = curPC[ptIdx,:]
+                fitted_normal = curNormals[ptIdx,:]
+                fitted_normal = fitted_normal/np.linalg.norm(fitted_normal)
+                # pt, fitted_normal = best_fitting_plane(patchPts)
+                # print(pt, " ", fitted_normal, "; query point = ", queryPt)
+                fitted_normals.append(fitted_normal)
 
-        input_data = prepare_input_data(One2MultiImagePairs_GT[image_pair12_i].image1, One2MultiImagePairs_GT[image_pair12_i].image2, data_format)
-        # tmp_PC = visualize_prediction(
-        tmp_PC = organize_data_for_noise_removal_stage1(
-                    inverse_depth=1/depth_after_averaging_image_pair12_i,
-                    intrinsics = np.array([0.89115971, 1.18821287, 0.5, 0.5]), # sun3d intrinsics
-                    image=input_data['image_pair'][0,0:3] if data_format=='channels_first' else input_data['image_pair'].transpose([0,3,1,2])[0,0:3],
-                    R1=One2MultiImagePairs_GT[image_pair12_i].Extrinsic1_4by4[0:3,0:3],
-                    t1=One2MultiImagePairs_GT[image_pair12_i].Extrinsic1_4by4[0:3,3],
-                    # rotation=rotmat_To_angleaxis(np.dot(GlobalExtrinsics2_4by4[0:3,0:3], GlobalExtrinsics1_4by4[0:3,0:3].T)),
-                    # translation=GlobalExtrinsics2_4by4[0:3,3],   # should be changed, this is wrong!
-                    scale=1)
-        pointcloud1_polydata = create_pointcloud_polydata(
-            points=tmp_PC['points'],
-            colors=tmp_PC['colors'] if 'colors' in tmp_PC else None,
-            )
-        appendFilterModel.AddInputData(pointcloud1_polydata)
-        cam1_polydata = create_camera_polydata(One2MultiImagePairs_GT[image_pair12_i].Extrinsic1_4by4[0:3,0:3], One2MultiImagePairs_GT[image_pair12_i].Extrinsic1_4by4[0:3,3], True)
-        appendFilterModel.AddInputData(cam1_polydata)
+                ###### Calculate weights
+                weight_ptIdx = np.dot(fitted_normal, (queryPt-cam_v)/np.linalg.norm(queryPt-cam_v))
+                weights_from_fitted_normals.append(weight_ptIdx)
+                depthsize_weights[curCoords[ptIdx,1],curCoords[ptIdx,0]] = weight_ptIdx
+            print("np.array(fitted_normals).shape = ", np.array(fitted_normals).shape)
+            print("np.array(weights_from_fitted_normals).shape = ", np.array(weights_from_fitted_normals).shape)
+            pointclouds_beforefiltering[image_pair12]['fitted_normals'] = np.array(fitted_normals)
+            pointclouds_beforefiltering[image_pair12]['weights_from_fitted_normals'] = np.array(weights_from_fitted_normals)
+            pointclouds_beforefiltering[image_pair12]['filtering_flag'] = []    # used for keeping a boolean value indicating if the pt should be kept (1) or filtered (0)!
+            pointclouds_beforefiltering[image_pair12]['depthsize_weights'] = depthsize_weights
+            print("depthsize_weights = ", depthsize_weights)
+            print("depthsize_weights.shape = ", depthsize_weights.shape)
+
+
+    # # sigma = 0.1 * (np.max(pointclouds_beforefiltering[list(pointclouds_beforefiltering.keys())[0]]['scaled_depth']) - np.min(pointclouds_beforefiltering[list(pointclouds_beforefiltering.keys())[0]]['scaled_depth']))   # σ should be chosen according to the scale of the scene, so we set it to 1% of the depth range (e.g., the length of the bounding box along the z-axis);
+    # sigma = 2.5 * 0.1 * (np.max(pointclouds_beforefiltering[list(pointclouds_beforefiltering.keys())[0]]['scaled_depth']) - np.min(pointclouds_beforefiltering[list(pointclouds_beforefiltering.keys())[0]]['scaled_depth']))   # σ should be chosen according to the scale of the scene, so we set it to 1% of the depth range (e.g., the length of the bounding box along the z-axis);
+    # td = 0.25*sigma   # 0.1 * sigma
+    # print(pointclouds_beforefiltering.keys())
+    # filtered_3D_points_positions = []
+    # filtered_3D_points_colors = []
+    # ###### loop over points and different views to do the filtering
+    # for image_pair12_i in pointclouds_beforefiltering.keys():
+    #     print("len(pointclouds_beforefiltering[image_pair12_i]['points']) = ", len(pointclouds_beforefiltering[image_pair12_i]['points']))
+    #     depth_after_filtering_image_pair12_i = np.zeros([h,w])
+    #     RGBimg_after_filtering_image_pair12_i = One2MultiImagePairs_GT[image_pair12_i].image1
+    #     for ptIdx in range(len(pointclouds_beforefiltering[image_pair12_i]['points'])):
+    #         # print("loop over 3D points")
+    #         d_pt = 0
+    #         w_pt = 0
+    #         v_pt = 0
+    #         s = np.zeros((3))
+    #         s2 = 0
+    #         cur_xy_coordinate = pointclouds_beforefiltering[image_pair12_i]['coordinates'][ptIdx,:]
+    #         cur_3D_point_position = pointclouds_beforefiltering[image_pair12_i]['points'][ptIdx,:]
+    #         cur_3D_point_color = pointclouds_beforefiltering[image_pair12_i]['colors'][ptIdx,:]
+    #         cur_3D_point_depth = pointclouds_beforefiltering[image_pair12_i]['scaled_depth'][cur_xy_coordinate[1],cur_xy_coordinate[0]]
+    #         for image_pair12_j in pointclouds_beforefiltering.keys():
+    #             # if image_pair12_i == image_pair12_j:
+    #             #     print(image_pair12_i, " vs ", image_pair12_j)
+    #             # # if image_pair12_i != image_pair12_j:
+    #             if True:
+    #                 cam_vi = np.linalg.inv(One2MultiImagePairs_GT[image_pair12_i].Extrinsic1_4by4)[0:3,3]
+    #                 cam_vj = np.linalg.inv(One2MultiImagePairs_GT[image_pair12_j].Extrinsic1_4by4)[0:3,3]
+    #                 # if np.dot(cam_vi, cam_vj) > 0:
+    #                 if np.dot(cam_vi, cam_vj) < 0:
+    #                     print("skipped camera centers = ", cam_vi, "; ", cam_vj)
+    #                     continue
+    #                 ###### weight and depth interpolations are skipped here because mesh triangle is not involved in our setup
+    #                 ###### retrieve corresponding depth values in other views and compute the depth diff
+    #                 # if TheiaOrColmapOrGTPoses=='Colmap':
+    #                 #     flow12 = flow_from_real_depth(tmpScaledDepthMap, One2MultiImagePairs_Colmap[image_pair12].Relative12_4by4[0:3,0:3], One2MultiImagePairs_Colmap[image_pair12].Relative12_4by4[0:3,3], target_K)
+    #                 if TheiaOrColmapOrGTPoses=='GT':
+    #                     RelativeTransformation_4by4 = np.dot(One2MultiImagePairs_GT[image_pair12_j].Extrinsic1_4by4, np.linalg.inv(One2MultiImagePairs_GT[image_pair12_i].Extrinsic1_4by4))
+    #                     flow12 = flow_from_real_depth(pointclouds_beforefiltering[image_pair12_i]['scaled_depth'], RelativeTransformation_4by4[0:3,0:3], RelativeTransformation_4by4[0:3,3], target_K)
+    #                     # flow12 = flow_from_real_depth(One2MultiImagePairs_DeMoN[image_pair12_i].depth1, RelativeTransformation_4by4[0:3,0:3], RelativeTransformation_4by4[0:3,3], target_K)
+    #                 matches12, coords121, coords122, mask12 = flow_to_matches(flow12)
+    #
+    #                 # # image_pair12_i.split('---')[0]
+    #                 # tmp_view_i = retrieve_GT_view_from_HDF5(image_pair12_i.split('---')[0])
+    #                 # tmp_view_j = retrieve_GT_view_from_HDF5(image_pair12_j.split('---')[0])
+    #                 # tmp_mask_ij = compute_visible_points_mask( tmp_view_i, tmp_view_j )
+    #                 # print("sum(tmp_mask_ij.ravel()==mask12) = ", sum(tmp_mask_ij.ravel()==mask12))
+    #                 # return
+    #
+    #                 # ### debug: Check if identical views give correction flow matches
+    #                 # if TheiaOrColmapOrGTPoses=='GT':
+    #                 #     RelativeTransformation_4by4 = np.dot(One2MultiImagePairs_GT[image_pair12_j].Extrinsic1_4by4, np.linalg.inv(One2MultiImagePairs_GT[image_pair12_i].Extrinsic1_4by4))
+    #                 #     # flow12 = flow_from_real_depth(pointclouds_beforefiltering[image_pair12_i]['scaled_depth'], RelativeTransformation_4by4[0:3,0:3], RelativeTransformation_4by4[0:3,3], target_K)
+    #                 #     print("One2MultiImagePairs_GT[image_pair12_j].Extrinsic1_4by4 = ", One2MultiImagePairs_GT[image_pair12_i].Extrinsic1_4by4)
+    #                 #     print("One2MultiImagePairs_GT[image_pair12_i].Extrinsic1_4by4 = ", One2MultiImagePairs_GT[image_pair12_i].Extrinsic1_4by4)
+    #                 #     print("RelativeTransformation_4by4 = ", RelativeTransformation_4by4)
+    #                 #     RelativeRotation_3by3 = np.dot(One2MultiImagePairs_GT[image_pair12_j].Extrinsic1_4by4[0:3,0:3], np.linalg.inv((One2MultiImagePairs_GT[image_pair12_i].Extrinsic1_4by4[0:3,0:3])))
+    #                 #     # RelativeRotation_3by3 = np.eye(3)
+    #                 #     RelativeTranslation_vec = - np.dot( RelativeRotation_3by3, np.dot( One2MultiImagePairs_GT[image_pair12_i].Extrinsic1_4by4[0:3,0:3], (np.linalg.inv(One2MultiImagePairs_GT[image_pair12_j].Extrinsic1_4by4)[0:3,3] - np.linalg.inv(One2MultiImagePairs_GT[image_pair12_i].Extrinsic1_4by4)[0:3,3]) ) )
+    #                 #     print("RelativeRotation_3by3 = ", RelativeRotation_3by3)
+    #                 #     print("RelativeTranslation_vec = ", RelativeTranslation_vec)
+    #                 #     flow12 = flow_from_real_depth(pointclouds_beforefiltering[image_pair12_i]['scaled_depth'], RelativeRotation_3by3, RelativeTranslation_vec, target_K)
+    #                 #     # flow12 = flow_from_real_depth(One2MultiImagePairs_DeMoN[image_pair12_i].depth1, RelativeRotation_3by3, RelativeTranslation_vec, target_K)
+    #                 # matches12, coords121, coords122, mask12 = flow_to_matches(flow12)
+    #
+    #                 # print("coords122 = ", coords122)
+    #                 # print("flow12.shape = ", flow12.shape)
+    #                 # print("coords122.shape = ", coords122.shape)
+    #                 # # print("coords121 x max = ", np.max(coords121[:,0]), "; coords121 y max = ", np.max(coords121[:,1]))
+    #                 idx1D = cur_xy_coordinate[0] + cur_xy_coordinate[1]*w
+    #                 # print("coords121[idx1D] = ", coords121[idx1D], ";? (", cur_xy_coordinate[0],", ", cur_xy_coordinate[1], ")")
+    #                 interpolatedWeight = pointclouds_beforefiltering[image_pair12_j]['weights_from_fitted_normals'][idx1D]
+    #                 # print("mask12[idx1D] = ", mask12[idx1D])
+    #                 if sum(mask12)==0:
+    #                     print("flow match is not correct!")
+    #                     return
+    #                 if mask12[idx1D] == True:
+    #                     d_diff = pointclouds_beforefiltering[image_pair12_j]['scaled_depth'][coords122[idx1D,1], coords122[idx1D,0]] - pointclouds_beforefiltering[image_pair12_i]['scaled_depth'][cur_xy_coordinate[1],cur_xy_coordinate[0]]
+    #                     # ## find corresponding 3D position by looking up the pixel coordinate [coords122[idx1D,1], coords122[idx1D,0]] in the 2nd view image_pair12_j, and [cur_xy_coordinate[1],cur_xy_coordinate[0]] in the first reference view image_pair12_i
+    #                     # tar_j = 0
+    #                     # tar_i = 0
+    #                     # for tmp_j in range(pointclouds_beforefiltering[image_pair12_j]['coordinates'].shape[0]):
+    #                     #     if pointclouds_beforefiltering[image_pair12_j]['coordinates'][tmp_j,0] == coords122[idx1D,0] and pointclouds_beforefiltering[image_pair12_j]['coordinates'][tmp_j,1] == coords122[idx1D,1]:
+    #                     #         tar_j = tmp_j
+    #                     #     # else:
+    #                     #     #     print("warning: tar_j not exists!")
+    #                     # for tmp_i in range(pointclouds_beforefiltering[image_pair12_i]['coordinates'].shape[0]):
+    #                     #     if pointclouds_beforefiltering[image_pair12_i]['coordinates'][tmp_i,0] == cur_xy_coordinate[0] and pointclouds_beforefiltering[image_pair12_i]['coordinates'][tmp_i,1] == cur_xy_coordinate[1]:
+    #                     #         tar_i = tmp_i
+    #                     #     # else:
+    #                     #     #     print("warning: tar_i not exists!")
+    #                     # d_diff = pointclouds_beforefiltering[image_pair12_j]['points'][tar_j, 2] - pointclouds_beforefiltering[image_pair12_i]['points'][tar_i, 2]
+    #                     # print("find corresponding depth in another view!")
+    #                 else:
+    #                     continue
+    #                 if d_diff < -sigma:
+    #                     # print("skipped: d_diff < -sigma")
+    #                     continue
+    #                 if d_diff > sigma:
+    #                     # print("clipped: d_diff > sigma")
+    #                     d_diff = sigma
+    #
+    #                 # print("find corresponding depth in another view!")
+    #                 d_pt = ( w_pt*d_pt + interpolatedWeight*d_diff/sigma ) / (w_pt + interpolatedWeight)
+    #                 w_pt = w_pt + interpolatedWeight
+    #
+    #                 if d_diff != sigma: #update photoconsistency only for range surfaces close to p
+    #                     s = s + pointclouds_beforefiltering[image_pair12_j]['colors'][idx1D,:]
+    #                     s2 = s2 + np.dot(pointclouds_beforefiltering[image_pair12_j]['colors'][idx1D,:], pointclouds_beforefiltering[image_pair12_j]['colors'][idx1D,:])
+    #                     v_pt = v_pt + 1
+    #         tmpVal = (s2 - np.dot(s,s)/v_pt)
+    #         print("v_pt = ", v_pt, "; tmpVal = ", tmpVal, "; d_pt = ", d_pt, "; td = ", td, "; (2/(255*math.sqrt(3))) = ", div_const)
+    #         if v_pt > 0 and tmpVal >= 0:
+    #             # print("s = ", s)
+    #             # print("s.shape = ", s.shape)
+    #             # print("s2 = ", s2)
+    #             # print("v_pt = ", v_pt)
+    #             # print("(s2 - np.dot(s,s)/v_pt) = ", (s2 - np.dot(s,s)/v_pt))
+    #             # p_pt = math.sqrt( (s2 - np.dot(s,s)/v_pt) / v_pt ) * (2/(255*math.sqrt(3)))
+    #             p_pt = math.sqrt( tmpVal / v_pt ) * div_const
+    #             if  d_pt > -td and d_pt < 0 and p_pt < tp and v_pt > tv:
+    #                 filtered_3D_points_positions.append(cur_3D_point_position)
+    #                 filtered_3D_points_colors.append(cur_3D_point_color)
+    #                 print(len(filtered_3D_points_positions))
+    #         # else:
+    #         #     print("skip the 3d point because there are no corresponding points in other views!")
+    # pointclouds_afterfiltering = {}
+    # pointclouds_afterfiltering['points'] = np.array(filtered_3D_points_positions)
+    # print("pointclouds_afterfiltering['points'].shape = ", pointclouds_afterfiltering['points'].shape)
+    # pointclouds_afterfiltering['colors'] = np.array(filtered_3D_points_colors)
+
+
 
     # ## save the filtered point cloud
     # ###############################################################
