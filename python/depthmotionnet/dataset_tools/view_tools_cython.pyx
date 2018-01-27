@@ -352,7 +352,6 @@ cdef _igl_pointcloud_filtering_in_multiviews(
                 point_proj_i[0] /= point_proj_i[2]
                 point_proj_i[1] /= point_proj_i[2]
                 if point_proj_i[0] > borderx and point_proj_i[1] > bordery and point_proj_i[0] < width2-borderx and point_proj_i[1] < height2-bordery:
-                    mask[ptIdx] = 1
                     matched_pixel[0] = int(point_proj_i[0])
                     matched_pixel[1] = int(point_proj_i[1])
 
