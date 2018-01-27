@@ -248,25 +248,25 @@ cdef _igl_pointcloud_filtering_in_multiviews(
         np.ndarray[np.float32_t, ndim=1] t1,
         np.ndarray[np.float32_t, ndim=2] points_from_view1_in_global_frame, # [numPts,3]
         np.ndarray[np.float32_t, ndim=1] weights1,  # [numPts]
-        np.ndarray[np.float32_t, ndim=2] colors1, # here color corresponding to points [numPts,3]
+        #np.ndarray[np.float32_t, ndim=2] colors1, # here color corresponding to points [numPts,3]
         #np.ndarray[np.float32_t, ndim=2] scaled_depth1, # [h,w]
 
         np.ndarray[np.float32_t, ndim=3] K2s,   # [3,3,numViews]
         np.ndarray[np.float32_t, ndim=3] R2s,   # [3,3,numViews]
         np.ndarray[np.float32_t, ndim=2] t2s,   # [3,numViews]
-        np.ndarray[np.float32_t, ndim=3] scaled_depth2s,  # [h,w,3,numViews]
-        np.ndarray[np.float32_t, ndim=2] weights2s,   # [h,w,numViews]
+        np.ndarray[np.float32_t, ndim=3] scaled_depth2s,  # [h,w,numViews]
+        np.ndarray[np.float32_t, ndim=3] weights2s,   # [h,w,numViews]
         np.ndarray[np.float32_t, ndim=4] colors2s,  # here color image collections [h,w,3,numViews]
-        int width2,
-        int height2,
-        int borderx,
-        int bordery,
-        sigma = 0.01,
-        tp = 0.2):
+        np.float32_t sigma = 0.01,
+        np.float32_t tp = 0.2,
+        int borderx = 0,
+        int bordery = 0):
 
     cdef np.float32_t point3d_j[3]
     cdef np.float32_t point4d_i[4]
-    point4d[3] = 1.0
+    cdef np.float32_t point4d_j[4]
+    point4d_i[3] = 1.0
+    point4d_j[3] = 1.0
     cdef np.float32_t point_proj_i[3]
     cdef int x, y
     cdef np.float32_t px, py
@@ -274,21 +274,27 @@ cdef _igl_pointcloud_filtering_in_multiviews(
     cdef np.float32_t matched_zj_3d_pt_in_view2, zi_3d_pt_in_view2, d_diff
     cdef np.ndarray[np.float32_t,ndim=2] RT = R1.transpose()
 
+    cdef int width2 = scaled_depth2s.shape[1]
+    cdef int height2 = scaled_depth2s.shape[0]
+
     cdef np.ndarray[np.uint8_t,ndim=1] mask = np.zeros((points_from_view1_in_global_frame.shape[0]), dtype=np.uint8)
     cdef np.ndarray[np.uint8_t,ndim=1] matched_pixel = np.zeros((2), dtype=np.uint8)
+    cdef np.ndarray[np.float32_t,ndim=2] P2 = np.zeros((3,4), dtype=np.float32)
 
     cdef np.float32_t td = 0.25*sigma
     cdef np.float32_t tv = 0.075 * scaled_depth2s.shape[2]
     cdef np.float32_t div_const = (2/(255*sqrt(3)))
-    cdef np.float32_t d_pt = 0
-    cdef np.float32_t w_pt = 0
-    cdef np.float32_t interpolated_w = 0
+    cdef np.float32_t d_pt
+    cdef np.float32_t w_pt
+    cdef np.float32_t interpolated_w
     cdef int v_pt = 0
-    cdef np.ndarray[np.float32_t,ndim=1] s = np.zeros((3), dtype=np.float32_t)
-    cdef np.float32_t s2 = 0
+    cdef np.ndarray[np.float32_t,ndim=1] s = np.zeros((3), dtype=np.float32)
+    cdef np.float32_t s2
 
-    cdef np.ndarray[np.float32_t,ndim=1] cam_vi = np.zeros((3), dtype=np.float32_t)
-    cdef np.ndarray[np.float32_t,ndim=1] cam_vj = np.zeros((3), dtype=np.float32_t)
+    #cdef np.ndarray[np.float32_t,ndim=1] cam_vi = np.zeros((3), dtype=np.float32_t)
+    #cdef np.ndarray[np.float32_t,ndim=1] cam_vj = np.zeros((3), dtype=np.float32_t)
+    cdef np.float32_t cam_vi[3]
+    cdef np.float32_t cam_vj[3]
 
 
     for ptIdx in range(points_from_view1_in_global_frame.shape[0]):
@@ -300,14 +306,14 @@ cdef _igl_pointcloud_filtering_in_multiviews(
         s[2] = 0
         s2 = 0
 
-        cur_3D_point_position = points_from_view1_in_global_frame[ptIdx,:]
-        cur_3D_point_color[0] = colors1[ptIdx,0]
-        cur_3D_point_color[1] = colors1[ptIdx,1]
-        cur_3D_point_color[2] = colors1[ptIdx,2]
+        #cur_3D_point_position = points_from_view1_in_global_frame[ptIdx,:]
+        #cur_3D_point_color[0] = colors1[ptIdx,0]
+        #cur_3D_point_color[1] = colors1[ptIdx,1]
+        #cur_3D_point_color[2] = colors1[ptIdx,2]
 
-        cam_vi[0] = - R1[0,0]*t[0] - R1[1,0]*t[1] - R1[2,0]*t[2]
-        cam_vi[1] = - R1[0,1]*t[0] - R1[1,1]*t[1] - R1[2,1]*t[2]
-        cam_vi[2] = - R1[0,2]*t[0] - R1[1,2]*t[1] - R1[2,2]*t[2]
+        cam_vi[0] = - R1[0,0]*t1[0] - R1[1,0]*t1[1] - R1[2,0]*t1[2]
+        cam_vi[1] = - R1[0,1]*t1[0] - R1[1,1]*t1[1] - R1[2,1]*t1[2]
+        cam_vi[2] = - R1[0,2]*t1[0] - R1[1,2]*t1[1] - R1[2,2]*t1[2]
         cam_vj[0] = 0
         cam_vj[1] = 0
         cam_vj[2] = 0
@@ -379,19 +385,20 @@ cdef _igl_pointcloud_filtering_in_multiviews(
                             s[2] = s[2] + colors2s[matched_pixel[1],matched_pixel[0],2,vid]
                             s2 = s2 + s[0]*s[0] + s[1]*s[1] + s[2]*s[2]
                             v_pt = v_pt + 1
-
-        tmpVal = (s2 - (s[0]*s[0]+s[1]*s[1]+s[2]*s[2]))/v_pt)
-        if v_pt > 0 and tmpVal >= 0:
-            p_pt = sqrt( tmpVal / v_pt ) * div_const
-            if  d_pt > -td and d_pt < 0 and p_pt < tp and v_pt > tv:
-                mask[ptIdx] = 1
+        if v_pt > 0:
+            tmpVal = (s2 - (s[0]*s[0]+s[1]*s[1]+s[2]*s[2])/v_pt)
+            #tmpVal = 0
+            if tmpVal >= 0:
+                p_pt = sqrt( tmpVal / v_pt ) * div_const
+                if  d_pt > -td and d_pt < 0 and p_pt < tp and v_pt > tv:
+                    mask[ptIdx] = 1
 
     return mask
 
 
-def igl_pointcloud_filtering_in_multiviews( K1, R1, t1, points_from_view1_in_global_frame, weights1, colors1, # scaled_depth1,
-              K2s, R2s, t2s, scaled_depth2s, weights2s, colors2s,
-              borderx=0, bordery=0, sigma, tp ):
+def igl_pointcloud_filtering_in_multiviews( K1, R1, t1, points_from_view1_in_global_frame, weights1, # colors1, # scaled_depth1,
+              K2s, R2s, t2s, scaled_depth2s, weights2s, colors2s, sigma, tp,
+              borderx=0, bordery=0 ):
 
     assert points_from_view1_in_global_frame.shape[1] == 3, "point cloud 1 does not have 3 channels"
     assert scaled_depth2s.shape[0] == 192, "wrong height for depth 2s"
@@ -405,16 +412,14 @@ def igl_pointcloud_filtering_in_multiviews( K1, R1, t1, points_from_view1_in_glo
             t1.astype(np.float32),
             points_from_view1_in_global_frame.astype(np.float32),
             weights1.astype(np.float32),
-            colors1.astype(np.float32),
+            #colors1.astype(np.float32),
             #scaled_depth1.astype(np.float32),
             K2s.astype(np.float32),
             R2s.astype(np.float32),
             t2s.astype(np.float32),
-            points_from_view1_in_global_frame.astype(np.float32),
             scaled_depth2s.astype(np.float32),
             weights2s.astype(np.float32),
             colors2s.astype(np.float32),
-            scaled_depth2s.shape[1],
-            scaled_depth2s.shape[0],
+            sigma, tp,
             borderx,
-            bordery, sigma, tp)
+            bordery)

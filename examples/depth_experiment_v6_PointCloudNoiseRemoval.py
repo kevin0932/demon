@@ -2589,12 +2589,13 @@ def main():
 
     # sigma = 0.1 * (np.max(pointclouds_beforefiltering[list(pointclouds_beforefiltering.keys())[0]]['scaled_depth']) - np.min(pointclouds_beforefiltering[list(pointclouds_beforefiltering.keys())[0]]['scaled_depth']))   # σ should be chosen according to the scale of the scene, so we set it to 1% of the depth range (e.g., the length of the bounding box along the z-axis);
     sigma = 2.5 * 0.1 * (np.max(pointclouds_beforefiltering[list(pointclouds_beforefiltering.keys())[0]]['scaled_depth']) - np.min(pointclouds_beforefiltering[list(pointclouds_beforefiltering.keys())[0]]['scaled_depth']))   # σ should be chosen according to the scale of the scene, so we set it to 1% of the depth range (e.g., the length of the bounding box along the z-axis);
-    td = 0.25*sigma   # 0.1 * sigma
+    tp = 0.2
     print(pointclouds_beforefiltering.keys())
     # filtered_3D_points_positions = []
     # filtered_3D_points_colors = []
     appendFilterModel = vtk.vtkAppendPolyData()
     # ###### loop over points and different views to do the filtering
+    fid = 0
     for image_pair12_i in pointclouds_beforefiltering.keys():
         print("len(pointclouds_beforefiltering[image_pair12_i]['points']) = ", len(pointclouds_beforefiltering[image_pair12_i]['points']))
         tmpt = time.time()
@@ -2605,18 +2606,21 @@ def main():
         weights1 = pointclouds_beforefiltering[image_pair12_i]['weights_from_fitted_normals']
         colors1 = pointclouds_beforefiltering[image_pair12_i]['colors']
 
-        mask_i = igl_pointcloud_filtering_in_multiviews( K1, R1, t1, points_from_view1_in_global_frame, weights1, colors1, K2s, R2s, t2s, scaled_depth2s, weights2s, colors2s, 0, 0, sigma, tp)
-
-        print("time for processing one point cloud is ", tmpt, " sec")
-
+        mask_i = igl_pointcloud_filtering_in_multiviews( K1, R1, t1, points_from_view1_in_global_frame, weights1, K2s, R2s, t2s, scaled_depth2s, weights2s, colors2s, sigma, tp, 0, 0)
+        mask_i = mask_i.astype(np.bool_)
+        print("time for processing one point cloud is ", (time.time()-tmpt), " sec")
+        print("sum(mask_i) = ", sum(mask_i))
+        np.savetxt("file_"+str(fid)+"_mask.txt", mask_i)
+        print("pointclouds_beforefiltering[image_pair12_i]['points'][mask_i,:].shape = ", pointclouds_beforefiltering[image_pair12_i]['points'][mask_i,:].shape)
+        fid += 1
         pointcloud1_polydata = create_pointcloud_polydata(
-                points=pointclouds_afterfiltering['points'][mask_i,:],
-                colors=pointclouds_afterfiltering['colors'][mask_i,:] if 'colors' in pointclouds_afterfiltering else None,
+                points=pointclouds_beforefiltering[image_pair12_i]['points'][mask_i,:],
+                colors=pointclouds_beforefiltering[image_pair12_i]['colors'][mask_i,:] if 'colors' in pointclouds_beforefiltering[image_pair12_i] else None,
                 )
-        cam1_polydata = create_camera_polydata(R1, t1, True)
+        #cam1_polydata = create_camera_polydata(R1, t1, True)
 
         appendFilterModel.AddInputData(pointcloud1_polydata)
-        appendFilterModel.AddInputData(cam1_polydata)
+        #appendFilterModel.AddInputData(cam1_polydata)
 
     # ## save the filtered point cloud
     # ###############################################################
