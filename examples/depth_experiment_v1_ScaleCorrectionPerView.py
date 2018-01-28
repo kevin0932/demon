@@ -571,9 +571,8 @@ def computeCorrectionScale(DeMoNPredictionInvDepth, GTDepth, DeMoNDepthThreshold
     correctionScale = np.exp(np.mean( (np.log(view1GTDepth) - np.log(DeMoNDepth)) ))
     return correctionScale
 
-# if True:
+
 def visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, PoseSource='Theia', DepthSource='DeMoN', initBool=False):
-#def visPointCloudInGlobalFrame(NULLrenderer, alpha, infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, initBool=False):
     data = h5py.File(infile)
     dataExhaustivePairs = h5py.File(ExhaustivePairInfile)
 
@@ -599,7 +598,6 @@ def visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, da
     appendFilterPC = vtk.vtkAppendPolyData()
     appendFilterModel = vtk.vtkAppendPolyData()
 
-# def visPointCloudInGlobalFrame(data, dataExhaustivePairs, data_format, renderer, appendFilterPC, appendFilterModel):
     image_pairs = set()
     it = 0
 
@@ -742,6 +740,13 @@ def visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, da
         print("transScaleTheia = ", transScaleTheia, "; transScaleColmap = ", transScaleColmap, "; transScaleGT = ", transScaleGT, "; demon scale = ", data[image_pair12]['scale'].value, "; correctionScaleGT = ", correctionScaleGT, "; correctionScaleColmap = ", correctionScaleColmap)
         pred_scale = data[image_pair12]['scale'].value
 
+        ##### add other characteristics for later inlier investigation
+        pred_rotation12 = data[image_pair12]['rotation'].value
+        pred_translation12 = data[image_pair12]['translation'].value
+        absOrientationErrorInDeg = np.rad2deg(np.arccos((np.trace(r_ab) - 1) / 2))
+        absOrientationError = np.arccos((np.trace(r_ab) - 1) / 2)
+        view_overlap_ratio = compute_view_overlap( view1GT, view2GT )
+
         # GTbaselineLength_v2 = np.linalg.norm(view2GT.t-view1GT.t)
         GTbaselineLength = np.linalg.norm(-np.dot(view2GT.R.T, view2GT.t)+np.dot(view1GT.R.T, view1GT.t))
         # print(GTbaselineLength, " ", GTbaselineLength_v2)
@@ -749,9 +754,9 @@ def visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, da
         #     print("Error in baseline calculation!")
         #     return
         if computePoint2LineDist(np.array([correctionScaleGT,transScaleGT]))>0.010:
-            outlierfile.write('{0} {1} {2} {3} {4} {5} {6} {7}\n'.format(image_pair12, GTbaselineLength, pred_scale, transScaleTheia, transScaleColmap, transScaleGT, correctionScaleGT, correctionScaleColmap))
+            outlierfile.write('{0} {1} {2} {3} {4} {5} {6} {7}\n'.format(image_pair12, absOrientationErrorInDeg, absOrientationError, view_overlap_ratio, GTbaselineLength, pred_scale, transScaleTheia, transScaleColmap, transScaleGT, correctionScaleGT, correctionScaleColmap))
             continue
-        inlierfile.write('{0} {1} {2} {3} {4} {5} {6} {7}\n'.format(image_pair12, GTbaselineLength, pred_scale, transScaleTheia, transScaleColmap, transScaleGT, correctionScaleGT, correctionScaleColmap))
+        inlierfile.write('{0} {1} {2} {3} {4} {5} {6} {7}\n'.format(image_pair12, absOrientationErrorInDeg, absOrientationError, view_overlap_ratio, GTbaselineLength, pred_scale, transScaleTheia, transScaleColmap, transScaleGT, correctionScaleGT, correctionScaleColmap))
 
         if it==0:
             scaleRecordMat = np.array([pred_scale, transScaleTheia, transScaleColmap, transScaleGT, correctionScaleGT, correctionScaleColmap])

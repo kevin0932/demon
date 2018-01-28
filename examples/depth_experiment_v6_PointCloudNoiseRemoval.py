@@ -2188,6 +2188,26 @@ def retrieve_GT_view_from_HDF5(image_name1):
 
     return view1GT
 
+def plot_hist_with_data(x, bins=None):
+    # the histogram of the data
+    x = x[~np.isnan(x)]
+    if not bins is None:
+        predefinedBins = bins
+    else:
+        predefinedBins = [-100, -50, -25, -15, -10, -5, -3, -2, -1, -0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75, 1, 2, 3, 5, 10, 15, 25, 50, 100]
+    #n, bins, patches = plt.hist(x, predefinedBins, normed=1, facecolor='g', alpha=0.75)
+    n, bins, patches = plt.hist(x, predefinedBins)
+    print("predefinedBins = ", predefinedBins)
+    print("n = ", n)
+    # #n, bins, patches = plt.hist(x, 500)
+    # plt.xlabel('d_pt value')
+    # plt.ylabel('Probability')
+    # plt.title('Histogram of d_pt')
+    # plt.text(-0.25, .01, 'mu={0}, sigma={1}'.format(np.nanmean(x), np.nanstd(x)))
+    # #plt.axis([40, 160, 0, 0.03])
+    # plt.grid(True)
+    # plt.show()
+
 def main():
     global pointclouds_beforefiltering, curIteration, initColmapGTRatio, appendFilterPC, appendFilterModel, alpha, tmpFittingCoef_Colmap_GT, scaleRecordMat, image_pairs, TheiaOrColmapOrGTPoses, DeMoNOrColmapOrGTDepths, sliderMin, sliderMax, interactor, renderer, image_pairs_One2Multi, One2MultiImagePairs_DeMoN, One2MultiImagePairs_GT, One2MultiImagePairs_Colmap, One2MultiImagePairs_correctionGT, One2MultiImagePairs_correctionColmap, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, TheiaOrColmapOrGTPoses
 
@@ -2552,7 +2572,9 @@ def main():
                 fitted_normals.append(fitted_normal)
 
                 ###### Calculate weights
-                weight_ptIdx = np.dot(fitted_normal, (queryPt-cam_v)/np.linalg.norm(queryPt-cam_v))
+                # weight_ptIdx = np.dot(fitted_normal, (queryPt-cam_v)/np.linalg.norm(queryPt-cam_v))
+                # what if uniform weights are given so that we treat every point equally in filtering?
+                weight_ptIdx = 1
                 weights_from_fitted_normals.append(weight_ptIdx)
                 depthsize_weights[curCoords[ptIdx,1],curCoords[ptIdx,0]] = weight_ptIdx
             print("np.array(fitted_normals).shape = ", np.array(fitted_normals).shape)
@@ -2587,9 +2609,15 @@ def main():
         return
     print("prepare all view data is done!")
 
-    # sigma = 0.1 * (np.max(pointclouds_beforefiltering[list(pointclouds_beforefiltering.keys())[0]]['scaled_depth']) - np.min(pointclouds_beforefiltering[list(pointclouds_beforefiltering.keys())[0]]['scaled_depth']))   # σ should be chosen according to the scale of the scene, so we set it to 1% of the depth range (e.g., the length of the bounding box along the z-axis);
-    sigma = 2.5 * 0.1 * (np.max(pointclouds_beforefiltering[list(pointclouds_beforefiltering.keys())[0]]['scaled_depth']) - np.min(pointclouds_beforefiltering[list(pointclouds_beforefiltering.keys())[0]]['scaled_depth']))   # σ should be chosen according to the scale of the scene, so we set it to 1% of the depth range (e.g., the length of the bounding box along the z-axis);
-    tp = 0.2
+    sigma = 0.1 * (np.max(pointclouds_beforefiltering[list(pointclouds_beforefiltering.keys())[0]]['scaled_depth']) - np.min(pointclouds_beforefiltering[list(pointclouds_beforefiltering.keys())[0]]['scaled_depth']))   # σ should be chosen according to the scale of the scene, so we set it to 1% of the depth range (e.g., the length of the bounding box along the z-axis);
+    print("sigma 1 = ", sigma)
+    BBx = (np.max(pointclouds_beforefiltering[list(pointclouds_beforefiltering.keys())[0]]['points'][:,0]) - np.min(pointclouds_beforefiltering[list(pointclouds_beforefiltering.keys())[0]]['points'][:,0]))
+    BBy = (np.max(pointclouds_beforefiltering[list(pointclouds_beforefiltering.keys())[0]]['points'][:,1]) - np.min(pointclouds_beforefiltering[list(pointclouds_beforefiltering.keys())[0]]['points'][:,1]))
+    BBz = (np.max(pointclouds_beforefiltering[list(pointclouds_beforefiltering.keys())[0]]['points'][:,2]) - np.min(pointclouds_beforefiltering[list(pointclouds_beforefiltering.keys())[0]]['points'][:,2]))
+    # sigma = 4 * 0.1 * math.sqrt( BBx*BBx + BBy*BBy + BBz*BBz )
+    sigma = 1.25
+    print("sigma 2 = ", sigma)
+    tp = 1       #   0.5   # 2.0   # 0.2
     print(pointclouds_beforefiltering.keys())
     # filtered_3D_points_positions = []
     # filtered_3D_points_colors = []
@@ -2606,11 +2634,25 @@ def main():
         weights1 = pointclouds_beforefiltering[image_pair12_i]['weights_from_fitted_normals']
         colors1 = pointclouds_beforefiltering[image_pair12_i]['colors']
 
-        mask_i = igl_pointcloud_filtering_in_multiviews( K1, R1, t1, points_from_view1_in_global_frame, weights1, K2s, R2s, t2s, scaled_depth2s, weights2s, colors2s, sigma, tp, 0, 0)
+        mask_i, d_pt_record, p_pt_record = igl_pointcloud_filtering_in_multiviews( K1, R1, t1, points_from_view1_in_global_frame, weights1, K2s, R2s, t2s, scaled_depth2s, weights2s, colors2s, sigma, tp, 0, 0)
         mask_i = mask_i.astype(np.bool_)
         print("time for processing one point cloud is ", (time.time()-tmpt), " sec")
         print("sum(mask_i) = ", sum(mask_i))
         np.savetxt("file_"+str(fid)+"_mask.txt", mask_i)
+        np.savetxt("file_"+str(fid)+"_d_pt_record.txt", d_pt_record)
+        np.savetxt("file_"+str(fid)+"p_pt_record.txt", p_pt_record)
+        print("p_pt_record~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+        plot_hist_with_data(p_pt_record, np.linspace(0,10,21))
+        print("d_pt_record~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+        plot_hist_with_data(d_pt_record)
+        tmp = d_pt_record[d_pt_record<=-0.75]
+        tmp = tmp[tmp>=-1]
+        print("tmp.shape = ", tmp.shape)
+        bins = np.linspace(-1,-0.75,26)
+        hist = plt.hist(tmp, bins)
+        print("bins = ", bins)
+        print("hist = ", hist)
+        print("d_pt_record.shape = ", d_pt_record.shape)
         print("pointclouds_beforefiltering[image_pair12_i]['points'][mask_i,:].shape = ", pointclouds_beforefiltering[image_pair12_i]['points'][mask_i,:].shape)
         fid += 1
         pointcloud1_polydata = create_pointcloud_polydata(
