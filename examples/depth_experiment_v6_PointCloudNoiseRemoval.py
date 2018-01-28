@@ -2617,7 +2617,7 @@ def main():
     # sigma = 4 * 0.1 * math.sqrt( BBx*BBx + BBy*BBy + BBz*BBz )
     sigma = 1.25
     print("sigma 2 = ", sigma)
-    tp = 1       #   0.5   # 2.0   # 0.2
+    tp = 2       #   0.5   # 2.0   # 0.2
     print(pointclouds_beforefiltering.keys())
     # filtered_3D_points_positions = []
     # filtered_3D_points_colors = []

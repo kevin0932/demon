@@ -1,9 +1,9 @@
+from __future__ import print_function
 import numpy as np
 cimport numpy as np
 cimport cython
 from libc.math cimport isfinite
 from libc.math cimport sqrt
-
 
 
 @cython.boundscheck(False)
@@ -28,7 +28,7 @@ cdef _compute_visible_points_mask(
     cdef np.ndarray[np.float32_t,ndim=2] RT = R1.transpose()
 
     cdef np.ndarray[np.uint8_t,ndim=2] mask = np.zeros((depth.shape[0],depth.shape[1]), dtype=np.uint8)
-    cdef np.ndarray[np.uint8_t,ndim=3] matched_pixels = np.zeros((depth.shape[0],depth.shape[1], 2), dtype=np.uint8)
+    #cdef np.ndarray[np.uint8_t,ndim=3] matched_pixels = np.zeros((depth.shape[0],depth.shape[1], 2), dtype=np.uint8)
 
     for y in range(depth.shape[0]):
         for x in range(depth.shape[1]):
@@ -56,12 +56,12 @@ cdef _compute_visible_points_mask(
                     point_proj[1] /= point_proj[2]
                     if point_proj[0] > borderx and point_proj[1] > bordery and point_proj[0] < width2-borderx and point_proj[1] < height2-bordery:
                         mask[y,x] = 1
-                        matched_pixels[y,x,0] = int(point_proj[0])
-                        matched_pixels[y,x,1] = int(point_proj[1])
-                else:
-                    matched_pixels[y,x,0] = np.nan
-                    matched_pixels[y,x,1] = np.nan
-    return mask, matched_pixels
+                        #matched_pixels[y,x,0] = int(point_proj[0])
+                        #matched_pixels[y,x,1] = int(point_proj[1])
+                #else:
+                    #matched_pixels[y,x,0] = np.nan
+                    #matched_pixels[y,x,1] = np.nan
+    return mask     #, matched_pixels
 
 
 
@@ -278,10 +278,19 @@ cdef _igl_pointcloud_filtering_in_multiviews(
     cdef int height2 = scaled_depth2s.shape[0]
 
     cdef np.ndarray[np.uint8_t,ndim=1] mask = np.zeros((points_from_view1_in_global_frame.shape[0]), dtype=np.uint8)
+    cdef int numPts = points_from_view1_in_global_frame.shape[0]
+    #cdef int numViews = scaled_depth2s.shape[2]
+    #cdef int record_length = numPts*numViews
+    #cdef np.ndarray[np.float32_t,ndim=1] d_pt_record = np.zeros((record_length), dtype=np.float32)
+    cdef np.ndarray[np.float32_t,ndim=1] d_pt_record = np.zeros((numPts), dtype=np.float32)
+    cdef np.ndarray[np.float32_t,ndim=1] p_pt_record = np.zeros((numPts), dtype=np.float32)
+    #cdef np.float32_t d_pt_record[record_length]
+    d_pt_record[:] = np.nan
+    p_pt_record[:] = np.nan
     cdef np.ndarray[np.uint8_t,ndim=1] matched_pixel = np.zeros((2), dtype=np.uint8)
     cdef np.ndarray[np.float32_t,ndim=2] P2 = np.zeros((3,4), dtype=np.float32)
 
-    cdef np.float32_t td = 0.25*sigma
+    cdef np.float32_t td = 0.99   #  0.8*sigma       # 0.25*sigma
     cdef np.float32_t tv = 0.075 * scaled_depth2s.shape[2]
     cdef np.float32_t div_const = (2/(255*sqrt(3)))
     cdef np.float32_t d_pt
@@ -296,6 +305,8 @@ cdef _igl_pointcloud_filtering_in_multiviews(
     cdef np.float32_t cam_vi[3]
     cdef np.float32_t cam_vj[3]
 
+    #print('hello world')
+    print('sigma = ', sigma, '; td = ', td, '; tv = ', tv, '; tp = ', tp)
 
     for ptIdx in range(points_from_view1_in_global_frame.shape[0]):
         d_pt = 0
@@ -370,12 +381,17 @@ cdef _igl_pointcloud_filtering_in_multiviews(
                         matched_zj_3d_pt_in_view2 = point4d_j[2]
                         d_diff = matched_zj_3d_pt_in_view2 - zi_3d_pt_in_view2
 
+                        #if d_diff < -sigma:
+                        #    continue
                         if d_diff < -sigma:
-                            continue
+                            d_diff = -sigma
                         if d_diff > sigma:
                             d_diff = sigma
 
+                        if (w_pt + interpolated_w) == 0:
+                            continue
                         d_pt = ( w_pt*d_pt + interpolated_w*d_diff/sigma ) / (w_pt + interpolated_w)
+                        #d_pt_record[vid+ptIdx*scaled_depth2s.shape[2]] = d_pt
                         w_pt = w_pt + interpolated_w
 
                         if d_diff != sigma: #update photoconsistency only for range surfaces close to p
@@ -384,15 +400,19 @@ cdef _igl_pointcloud_filtering_in_multiviews(
                             s[2] = s[2] + colors2s[matched_pixel[1],matched_pixel[0],2,vid]
                             s2 = s2 + s[0]*s[0] + s[1]*s[1] + s[2]*s[2]
                             v_pt = v_pt + 1
+        d_pt_record[ptIdx] = d_pt
         if v_pt > 0:
             tmpVal = (s2 - (s[0]*s[0]+s[1]*s[1]+s[2]*s[2])/v_pt)
             #tmpVal = 0
             if tmpVal >= 0:
                 p_pt = sqrt( tmpVal / v_pt ) * div_const
+                p_pt_record[ptIdx] = p_pt
                 if  d_pt > -td and d_pt < 0 and p_pt < tp and v_pt > tv:
+                #if  d_pt > -td and d_pt < td and p_pt < tp and v_pt > tv:
+                #if  p_pt < tp and v_pt > tv:  ### Filtering only by photometric consistency
                     mask[ptIdx] = 1
 
-    return mask
+    return mask, d_pt_record, p_pt_record
 
 
 def igl_pointcloud_filtering_in_multiviews( K1, R1, t1, points_from_view1_in_global_frame, weights1, # colors1, # scaled_depth1,
