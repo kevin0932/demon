@@ -2572,9 +2572,9 @@ def main():
                 fitted_normals.append(fitted_normal)
 
                 ###### Calculate weights
-                # weight_ptIdx = np.dot(fitted_normal, (queryPt-cam_v)/np.linalg.norm(queryPt-cam_v))
-                # what if uniform weights are given so that we treat every point equally in filtering?
-                weight_ptIdx = 1
+                weight_ptIdx = np.dot(fitted_normal, (queryPt-cam_v)/np.linalg.norm(queryPt-cam_v))
+                # # what if uniform weights are given so that we treat every point equally in filtering?
+                # weight_ptIdx = 1
                 weights_from_fitted_normals.append(weight_ptIdx)
                 depthsize_weights[curCoords[ptIdx,1],curCoords[ptIdx,0]] = weight_ptIdx
             print("np.array(fitted_normals).shape = ", np.array(fitted_normals).shape)
@@ -2615,9 +2615,9 @@ def main():
     BBy = (np.max(pointclouds_beforefiltering[list(pointclouds_beforefiltering.keys())[0]]['points'][:,1]) - np.min(pointclouds_beforefiltering[list(pointclouds_beforefiltering.keys())[0]]['points'][:,1]))
     BBz = (np.max(pointclouds_beforefiltering[list(pointclouds_beforefiltering.keys())[0]]['points'][:,2]) - np.min(pointclouds_beforefiltering[list(pointclouds_beforefiltering.keys())[0]]['points'][:,2]))
     # sigma = 4 * 0.1 * math.sqrt( BBx*BBx + BBy*BBy + BBz*BBz )
-    sigma = 1.25
+    sigma = 1.0
     print("sigma 2 = ", sigma)
-    tp = 2       #   0.5   # 2.0   # 0.2
+    tp = 200       #   0.5   # 2.0   # 0.2
     print(pointclouds_beforefiltering.keys())
     # filtered_3D_points_positions = []
     # filtered_3D_points_colors = []
@@ -2634,8 +2634,9 @@ def main():
         weights1 = pointclouds_beforefiltering[image_pair12_i]['weights_from_fitted_normals']
         colors1 = pointclouds_beforefiltering[image_pair12_i]['colors']
 
-        mask_i, d_pt_record, p_pt_record = igl_pointcloud_filtering_in_multiviews( K1, R1, t1, points_from_view1_in_global_frame, weights1, K2s, R2s, t2s, scaled_depth2s, weights2s, colors2s, sigma, tp, 0, 0)
+        mask_i, d_pt_record, p_pt_record, avg_pt_in_global = igl_pointcloud_filtering_in_multiviews( K1, R1, t1, points_from_view1_in_global_frame, weights1, K2s, R2s, t2s, scaled_depth2s, weights2s, colors2s, sigma, tp, 0, 0)
         mask_i = mask_i.astype(np.bool_)
+        print("avg_pt_in_global.shape = ", avg_pt_in_global.shape)
         print("time for processing one point cloud is ", (time.time()-tmpt), " sec")
         print("sum(mask_i) = ", sum(mask_i))
         np.savetxt("file_"+str(fid)+"_mask.txt", mask_i)
@@ -2645,10 +2646,10 @@ def main():
         plot_hist_with_data(p_pt_record, np.linspace(0,10,21))
         print("d_pt_record~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
         plot_hist_with_data(d_pt_record)
-        tmp = d_pt_record[d_pt_record<=-0.75]
-        tmp = tmp[tmp>=-1]
+        tmp = d_pt_record[d_pt_record<=0.5]
+        tmp = tmp[tmp>=-0.5]
         print("tmp.shape = ", tmp.shape)
-        bins = np.linspace(-1,-0.75,26)
+        bins = np.linspace(-0.5,0.5,11)
         hist = plt.hist(tmp, bins)
         print("bins = ", bins)
         print("hist = ", hist)
@@ -2656,7 +2657,8 @@ def main():
         print("pointclouds_beforefiltering[image_pair12_i]['points'][mask_i,:].shape = ", pointclouds_beforefiltering[image_pair12_i]['points'][mask_i,:].shape)
         fid += 1
         pointcloud1_polydata = create_pointcloud_polydata(
-                points=pointclouds_beforefiltering[image_pair12_i]['points'][mask_i,:],
+                # points=pointclouds_beforefiltering[image_pair12_i]['points'][mask_i,:],
+                points=avg_pt_in_global[mask_i,:],    # use average z-value in cam1 space
                 colors=pointclouds_beforefiltering[image_pair12_i]['colors'][mask_i,:] if 'colors' in pointclouds_beforefiltering[image_pair12_i] else None,
                 )
         #cam1_polydata = create_camera_polydata(R1, t1, True)

@@ -279,18 +279,26 @@ cdef _igl_pointcloud_filtering_in_multiviews(
 
     cdef np.ndarray[np.uint8_t,ndim=1] mask = np.zeros((points_from_view1_in_global_frame.shape[0]), dtype=np.uint8)
     cdef int numPts = points_from_view1_in_global_frame.shape[0]
-    #cdef int numViews = scaled_depth2s.shape[2]
+    cdef int numViews = scaled_depth2s.shape[2]
     #cdef int record_length = numPts*numViews
     #cdef np.ndarray[np.float32_t,ndim=1] d_pt_record = np.zeros((record_length), dtype=np.float32)
     cdef np.ndarray[np.float32_t,ndim=1] d_pt_record = np.zeros((numPts), dtype=np.float32)
     cdef np.ndarray[np.float32_t,ndim=1] p_pt_record = np.zeros((numPts), dtype=np.float32)
+    cdef np.ndarray[np.float32_t,ndim=2] avg_pt_in_global = np.zeros((numPts,3), dtype=np.float32)
+    cdef np.ndarray[np.float32_t,ndim=1] matched_xj_record = np.zeros((numViews), dtype=np.float32)
+    cdef np.ndarray[np.float32_t,ndim=1] matched_yj_record = np.zeros((numViews), dtype=np.float32)
+    cdef np.ndarray[np.float32_t,ndim=1] matched_zj_record = np.zeros((numViews), dtype=np.float32)
+    cdef np.ndarray[np.float32_t,ndim=1] tmp_xyz_i_cam1 = np.zeros((3), dtype=np.float32)
+    tmp_xyz_i_cam1[:] = np.nan
     #cdef np.float32_t d_pt_record[record_length]
     d_pt_record[:] = np.nan
     p_pt_record[:] = np.nan
+    avg_pt_in_global[:,:] = np.nan
+    matched_zj_record[:] = np.nan
     cdef np.ndarray[np.uint8_t,ndim=1] matched_pixel = np.zeros((2), dtype=np.uint8)
     cdef np.ndarray[np.float32_t,ndim=2] P2 = np.zeros((3,4), dtype=np.float32)
 
-    cdef np.float32_t td = 0.99   #  0.8*sigma       # 0.25*sigma
+    cdef np.float32_t td = 0.05 #  0.1  #  0.25   #  0.8*sigma       # 0.25*sigma
     cdef np.float32_t tv = 0.075 * scaled_depth2s.shape[2]
     cdef np.float32_t div_const = (2/(255*sqrt(3)))
     cdef np.float32_t d_pt
@@ -299,6 +307,9 @@ cdef _igl_pointcloud_filtering_in_multiviews(
     cdef int v_pt = 0
     cdef np.ndarray[np.float32_t,ndim=1] s = np.zeros((3), dtype=np.float32)
     cdef np.float32_t s2
+
+    cdef np.float32_t zi_3d_pt_in_view1
+    cdef np.float32_t zj_3d_pt_in_view1
 
     #cdef np.ndarray[np.float32_t,ndim=1] cam_vi = np.zeros((3), dtype=np.float32_t)
     #cdef np.ndarray[np.float32_t,ndim=1] cam_vj = np.zeros((3), dtype=np.float32_t)
@@ -329,6 +340,9 @@ cdef _igl_pointcloud_filtering_in_multiviews(
         cam_vj[1] = 0
         cam_vj[2] = 0
 
+        matched_xj_record[:] = np.nan
+        matched_yj_record[:] = np.nan
+        matched_zj_record[:] = np.nan
         for vid in range(scaled_depth2s.shape[2]):
             P2[0,0] = K2s[0,0,vid]*R2s[0,0,vid] + K2s[0,1,vid]*R2s[1,0,vid] + K2s[0,2,vid]*R2s[2,0,vid]
             P2[0,1] = K2s[0,0,vid]*R2s[0,1,vid] + K2s[0,1,vid]*R2s[1,1,vid] + K2s[0,2,vid]*R2s[2,1,vid]
@@ -377,9 +391,27 @@ cdef _igl_pointcloud_filtering_in_multiviews(
                         point3d_j[1] = matched_dj_in_view2*(py - K2s[1,2,vid])/K2s[1,1,vid]
                         point3d_j[2] = matched_dj_in_view2
 
-                        zi_3d_pt_in_view2 = R2s[2,0,vid]*point4d_i[0] + R2s[2,1,vid]*point4d_i[1] + R2s[2,2,vid]*point4d_i[2] + t2s[2,vid]*point4d_i[3]
-                        matched_zj_3d_pt_in_view2 = point4d_j[2]
-                        d_diff = matched_zj_3d_pt_in_view2 - zi_3d_pt_in_view2
+                        ### convert matched point in cam2 space to global frame by cam2 extrinsics
+                        point3d_j[0] -= t2s[0,vid]
+                        point3d_j[1] -= t2s[1,vid]
+                        point3d_j[2] -= t2s[2,vid]
+                        point4d_j[0] = R2s[0,0,vid]*point3d_j[0] + R2s[1,0,vid]*point3d_j[1] + R2s[2,0,vid]*point3d_j[2]
+                        point4d_j[1] = R2s[0,1,vid]*point3d_j[0] + R2s[1,1,vid]*point3d_j[1] + R2s[2,1,vid]*point3d_j[2]
+                        point4d_j[2] = R2s[0,2,vid]*point3d_j[0] + R2s[1,2,vid]*point3d_j[1] + R2s[2,2,vid]*point3d_j[2]
+
+                        ### use the z-diff in cam2 space
+                        #zi_3d_pt_in_view2 = R2s[2,0,vid]*point4d_i[0] + R2s[2,1,vid]*point4d_i[1] + R2s[2,2,vid]*point4d_i[2] + t2s[2,vid]*point4d_i[3]
+                        #matched_zj_3d_pt_in_view2 = matched_dj_in_view2
+                        #d_diff = matched_zj_3d_pt_in_view2 - zi_3d_pt_in_view2
+
+                        ### use the z-diff in cam1 space
+                        zj_3d_pt_in_view1 = R1[2,0]*point4d_j[0] + R1[2,1]*point4d_j[1] + R1[2,2]*point4d_j[2] + t1[2]*point4d_j[3]
+                        zi_3d_pt_in_view1 = R1[2,0]*point4d_i[0] + R1[2,1]*point4d_i[1] + R1[2,2]*point4d_i[2] + t1[2]*point4d_i[3]
+                        #zi_3d_pt_in_view1 = point4d_i[2]
+                        matched_xj_record[vid] = R1[0,0]*point4d_j[0] + R1[0,1]*point4d_j[1] + R1[0,2]*point4d_j[2] + t1[0]*point4d_j[3]
+                        matched_yj_record[vid] = R1[1,0]*point4d_j[0] + R1[1,1]*point4d_j[1] + R1[1,2]*point4d_j[2] + t1[1]*point4d_j[3]
+                        matched_zj_record[vid] = zj_3d_pt_in_view1
+                        d_diff = zj_3d_pt_in_view1 - zi_3d_pt_in_view1
 
                         #if d_diff < -sigma:
                         #    continue
@@ -401,18 +433,34 @@ cdef _igl_pointcloud_filtering_in_multiviews(
                             s2 = s2 + s[0]*s[0] + s[1]*s[1] + s[2]*s[2]
                             v_pt = v_pt + 1
         d_pt_record[ptIdx] = d_pt
+        ###
+        #tmp_xyz_i_cam1[0] = R1[0,0]*point4d_i[0] + R1[0,1]*point4d_i[1] + R1[0,2]*point4d_i[2] + t1[0]*point4d_i[3]  # use original X from the reference view 1
+        #tmp_xyz_i_cam1[1] = R1[1,0]*point4d_i[0] + R1[1,1]*point4d_i[1] + R1[1,2]*point4d_i[2] + t1[1]*point4d_i[3]  # use original Y from the reference view 1
+        #tmp_xyz_i_cam1[0] = np.nanmean(matched_xj_record) # also average X
+        #tmp_xyz_i_cam1[1] = np.nanmean(matched_yj_record) # also average Y
+        #tmp_xyz_i_cam1[2] = np.nanmean(matched_zj_record) # average Z
+        tmp_xyz_i_cam1[0] = np.nanmedian(matched_xj_record) # also median X
+        tmp_xyz_i_cam1[1] = np.nanmedian(matched_yj_record) # also median Y
+        tmp_xyz_i_cam1[2] = np.nanmedian(matched_zj_record) # median Z
+        tmp_xyz_i_cam1[0] -= t1[0]
+        tmp_xyz_i_cam1[1] -= t1[1]
+        tmp_xyz_i_cam1[2] -= t1[2]
+        avg_pt_in_global[ptIdx,0] = R1[0,0]*tmp_xyz_i_cam1[0] + R1[1,0]*tmp_xyz_i_cam1[1] + R1[2,0]*tmp_xyz_i_cam1[2]
+        avg_pt_in_global[ptIdx,1] = R1[0,1]*tmp_xyz_i_cam1[0] + R1[1,1]*tmp_xyz_i_cam1[1] + R1[2,1]*tmp_xyz_i_cam1[2]
+        avg_pt_in_global[ptIdx,2] = R1[0,2]*tmp_xyz_i_cam1[0] + R1[1,2]*tmp_xyz_i_cam1[1] + R1[2,2]*tmp_xyz_i_cam1[2]
+
         if v_pt > 0:
             tmpVal = (s2 - (s[0]*s[0]+s[1]*s[1]+s[2]*s[2])/v_pt)
             #tmpVal = 0
             if tmpVal >= 0:
                 p_pt = sqrt( tmpVal / v_pt ) * div_const
                 p_pt_record[ptIdx] = p_pt
-                if  d_pt > -td and d_pt < 0 and p_pt < tp and v_pt > tv:
-                #if  d_pt > -td and d_pt < td and p_pt < tp and v_pt > tv:
+                #if  d_pt > -td and d_pt < 0 and p_pt < tp and v_pt > tv:
+                if  d_pt > -td and d_pt < td and p_pt < tp and v_pt > tv:
                 #if  p_pt < tp and v_pt > tv:  ### Filtering only by photometric consistency
                     mask[ptIdx] = 1
 
-    return mask, d_pt_record, p_pt_record
+    return mask, d_pt_record, p_pt_record, avg_pt_in_global
 
 
 def igl_pointcloud_filtering_in_multiviews( K1, R1, t1, points_from_view1_in_global_frame, weights1, # colors1, # scaled_depth1,
