@@ -1,17 +1,17 @@
 #
 #  DeMoN - Depth Motion Network
 #  Copyright (C) 2017  Benjamin Ummenhofer, Huizhong Zhou
-#  
+#
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation, either version 3 of the License, or
 #  (at your option) any later version.
-#  
+#
 #  This program is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
-#  
+#
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
@@ -24,17 +24,26 @@ from .webp import webp_encode_array, webp_encode_image
 from .view import View
 
 
-def read_webp_image(h5_dataset):
+def read_webp_image(h5_dataset, lmuFreiburgFormat=True):
     """Reads a dataset that stores an image compressed as webp
-    
+
     h5_dataset : hdf5 dataset object
 
     Returns the image as PIL Image
     """
-    data = h5_dataset[:].tobytes()
-    img_bytesio = BytesIO(data)
-    pil_img = Image.open(img_bytesio,'r')
-    return pil_img
+    if lmuFreiburgFormat:
+        data = h5_dataset[:].tobytes()
+        img_bytesio = BytesIO(data)
+        pil_img = Image.open(img_bytesio,'r')
+        return pil_img
+    else:
+        data = h5_dataset[:]
+        # print(data.shape)
+        data = np.transpose(data, (2, 1, 0))
+        # print(data.shape)
+        pil_img = Image.fromarray(data.astype('uint8'), 'RGB')
+        # pil_img.show()
+        return pil_img
 
 
 def write_webp_image(h5_group, image, dsname="image"):
@@ -56,22 +65,36 @@ def write_webp_image(h5_group, image, dsname="image"):
 
 
 
-def read_lz4half_depth(h5_dataset):
+def read_lz4half_depth(h5_dataset, lmuFreiburgFormat=True):
     """Reads a dataset that stores a depth map in lz4 compressed float16 format
-    
+
     h5_dataset : hdf5 dataset object
 
     Returns the depth map as numpy array with float32
     """
-    extents = h5_dataset.attrs['extents']
-    num_pixel = extents[0]*extents[1]
-    expected_size = 2*num_pixel
-    data = h5_dataset[:].tobytes()
-    depth_raw_data = lz4_uncompress(data,int(expected_size))
-    depth = np.fromstring(depth_raw_data,dtype=np.float16)
-    depth = depth.astype(np.float32)
-    depth = depth.reshape((extents[0],extents[1]))
-    return depth
+    if lmuFreiburgFormat:
+        extents = h5_dataset.attrs['extents']
+        num_pixel = extents[0]*extents[1]
+        expected_size = 2*num_pixel
+        data = h5_dataset[:].tobytes()
+        depth_raw_data = lz4_uncompress(data,int(expected_size))
+        depth = np.fromstring(depth_raw_data,dtype=np.float16)
+        depth = depth.astype(np.float32)
+        depth = depth.reshape((extents[0],extents[1]))
+        return depth
+    else:
+        data = h5_dataset[:]
+        # print(data.shape)
+        data = np.transpose(data, (1, 0))
+        # print(data.shape)
+        # print(data.dtype)
+        # print(type(data))
+        # print(data)
+        depth = data.astype(np.float32)
+        # print(sum(data==depth))
+        # print(depth.dtype)
+        # print(depth)
+        return depth
 
 
 def write_lz4half_depth(h5_group, depth, depth_metric, dsname="depth"):
@@ -98,26 +121,42 @@ def write_lz4half_depth(h5_group, depth, depth_metric, dsname="depth"):
     ds.attrs['depth_metric'] = np.string_(depth_metric)
 
 
-def read_camera_params(h5_dataset):
+def read_camera_params(h5_dataset, lmuFreiburgFormat=True):
     """Reads a dataset that stores camera params in float64
-    
+
     h5_dataset : hdf5 dataset object
 
     Returns K,R,t as numpy array with float64
     """
-    fx = h5_dataset[0]
-    fy = h5_dataset[1]
-    skew = h5_dataset[2]
-    cx = h5_dataset[3]
-    cy = h5_dataset[4]
-    K = np.array([[fx, skew, cx],
-                 [0, fy, cy],
-                 [0, 0, 1]], dtype=np.float64)
-    R = np.array([[h5_dataset[5], h5_dataset[8], h5_dataset[11]], 
-                  [h5_dataset[6], h5_dataset[9], h5_dataset[12]], 
-                  [h5_dataset[7], h5_dataset[10], h5_dataset[13]]], dtype=np.float64)
-    t = np.array([h5_dataset[14], h5_dataset[15], h5_dataset[16]], dtype=np.float64)   
-    return K,R,t
+    if lmuFreiburgFormat:
+        fx = h5_dataset[0]
+        fy = h5_dataset[1]
+        skew = h5_dataset[2]
+        cx = h5_dataset[3]
+        cy = h5_dataset[4]
+        K = np.array([[fx, skew, cx],
+                     [0, fy, cy],
+                     [0, 0, 1]], dtype=np.float64)
+        R = np.array([[h5_dataset[5], h5_dataset[8], h5_dataset[11]],
+                      [h5_dataset[6], h5_dataset[9], h5_dataset[12]],
+                      [h5_dataset[7], h5_dataset[10], h5_dataset[13]]], dtype=np.float64)
+        t = np.array([h5_dataset[14], h5_dataset[15], h5_dataset[16]], dtype=np.float64)
+        return K,R,t
+    else:
+        fx = h5_dataset[0]
+        fy = h5_dataset[1]
+        skew = h5_dataset[2]
+        cx = h5_dataset[3]
+        cy = h5_dataset[4]
+        K = np.array([[fx, skew, cx],
+                     [0, fy, cy],
+                     [0, 0, 1]], dtype=np.float64)
+        R = np.array([[h5_dataset[5], h5_dataset[8], h5_dataset[11]],
+                      [h5_dataset[6], h5_dataset[9], h5_dataset[12]],
+                      [h5_dataset[7], h5_dataset[10], h5_dataset[13]]], dtype=np.float64)
+        t = np.array([h5_dataset[14], h5_dataset[15], h5_dataset[16]], dtype=np.float64)
+        return K,R,t
+
 
 
 def write_camera_params(h5_group, K, R, t, dsname="camera"):
@@ -128,26 +167,33 @@ def write_camera_params(h5_group, K, R, t, dsname="camera"):
 
     K, R, t: numpy array with float64
     """
-    data = np.array([K[0,0], K[1,1], K[0,1], K[0,2], K[1,2], 
-                    R[0,0], R[1,0], R[2,0], R[0,1], R[1,1], R[2,1], R[0,2], R[1,2], R[2,2], 
+    data = np.array([K[0,0], K[1,1], K[0,1], K[0,2], K[1,2],
+                    R[0,0], R[1,0], R[2,0], R[0,1], R[1,1], R[2,1], R[0,2], R[1,2], R[2,2],
                     t[0], t[1], t[2]], dtype=np.float64)
     ds = h5_group.create_dataset(dsname, data=data)
     ds.attrs['format'] = "pinhole".encode('ascii')
 
 
-def read_view(h5_group):
+def read_view(h5_group, lmuFreiburgFormat=True):
     """Reads the view group and returns it as a View tuple
-    
+
     h5_group: hdf5 group
         The group for reading the view
 
     Returns the View tuple
     """
-    img = read_webp_image(h5_group['image'])
-    depth = read_lz4half_depth(h5_group['depth'])
-    depth_metric = h5_group['depth'].attrs['depth_metric'].decode('ascii')
-    K_arr,R_arr,t_arr = read_camera_params(h5_group['camera'])
-    return View(image=img, depth=depth, depth_metric=depth_metric, K=K_arr, R=R_arr, t=t_arr)
+    if lmuFreiburgFormat:
+        img = read_webp_image(h5_group['image'])
+        depth = read_lz4half_depth(h5_group['depth'])
+        depth_metric = h5_group['depth'].attrs['depth_metric'].decode('ascii')
+        K_arr,R_arr,t_arr = read_camera_params(h5_group['camera'])
+        return View(image=img, depth=depth, depth_metric=depth_metric, K=K_arr, R=R_arr, t=t_arr)
+    else:
+        img = read_webp_image(h5_group['image'], lmuFreiburgFormat=False)
+        depth = read_lz4half_depth(h5_group['depth'], lmuFreiburgFormat=False)
+        depth_metric = 'camera_z'
+        K_arr,R_arr,t_arr = read_camera_params(h5_group['camera'], lmuFreiburgFormat=False)
+        return View(image=img, depth=depth, depth_metric=depth_metric, K=K_arr, R=R_arr, t=t_arr)
 
 
 def write_view(h5_group, view):
@@ -158,7 +204,7 @@ def write_view(h5_group, view):
 
     view: View namedtuple
         The tuple storing the view
-    
+
     """
     for ds in ('image', 'depth', 'camera'):
         if ds in h5_group:
@@ -167,5 +213,3 @@ def write_view(h5_group, view):
     write_webp_image(h5_group, view.image)
     write_lz4half_depth(h5_group, view.depth, view.depth_metric)
     write_camera_params(h5_group, view.K, view.R, view.t)
-
-

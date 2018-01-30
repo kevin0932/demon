@@ -1,4 +1,4 @@
-function [K, frameCount, frameImage, frameDepth] = SUN3Dreader(sequenceName, frameIDs)
+function [K, frameCount, frameImage, frameDepth, frameExtrinsic] = SUN3Dreader(sequenceName, frameIDs)
 
     if ~exist('sequenceName','var')
         % load demo sequence        
@@ -23,7 +23,15 @@ function [K, frameCount, frameImage, frameDepth] = SUN3Dreader(sequenceName, fra
     
     % read the latest version of extrinsic parameters for cameras
     extrinsicsC2W = permute(reshape(readValuesFromTxt(fullfile(SUN3Dpath,sequenceName,'extrinsics',extrinsicsFiles(end).name)),4,3,[]),[2 1 3]);
-
+    % get the World-to-Camera Extrinsics
+%     size(extrinsicsC2W)
+    extrinsicsW2C = extrinsicsC2W;
+    for idx = 1:size(extrinsicsC2W,3)
+        tmpT = [extrinsicsC2W(:,:,idx); 0 0 0 1];
+        extrinsicsW2C_4by4 = inv(tmpT);
+        extrinsicsW2C(:,:,idx) = extrinsicsW2C_4by4(1:3,:);
+    end
+    
     % read time stamp
     imageFrameID = zeros(1,length(imageFiles));
     imageTimestamp = zeros(1,length(imageFiles));
@@ -65,6 +73,7 @@ function [K, frameCount, frameImage, frameDepth] = SUN3Dreader(sequenceName, fra
         cnt = cnt+1;
         frameImage(:,:,:,cnt) = image;
         frameDepth(:,:,cnt) = depth;
+        frameExtrinsic(:,:,cnt) = extrinsicsW2C(:,:,frameID);
         
         
         XYZcamera = depth2XYZcamera(K, depth);
@@ -86,47 +95,48 @@ function [K, frameCount, frameImage, frameDepth] = SUN3Dreader(sequenceName, fra
         
         if frameID==frameIDs(1); clf; end
         
-        subplot(1,2,1); 
-        hold off;
-        imshow(image);
-        title(sprintf('Image and Annotation for Frame %d',frameID));
-        
-        % draw the annotation if the frame is a keyframe
-        keyframeID = find(ismember(cellstr(annotation.fileList), imageFiles(frameID).name));
-        if ~isempty(keyframeID)
-            if ~isempty(annotation.frames{keyframeID})
-                hold on
-                LineWidth = 4;
-                for polygonID = 1:length(annotation.frames{keyframeID}.polygon)
-                    
-                    X = annotation.frames{keyframeID}.polygon{polygonID}.x;
-                    Y = annotation.frames{keyframeID}.polygon{polygonID}.y;
-                    objectID = annotation.frames{keyframeID}.polygon{polygonID}.object;
-                    
-                    color = ObjectColor(objectID);
-                    
-                    plot([X X(1)],[Y Y(1)], 'LineWidth', LineWidth, 'Color', [0 0 0]);
-                    hold on;
-                    
-                    plot([X X(1)],[Y Y(1)], 'LineWidth', LineWidth/2, 'Color', color);
-                    hold on;
-                    
-                    xx = mean(X);
-                    yy = mean(Y);
-                    ht=text(xx,yy, annotation.objects{objectID+1}.name, 'horizontalAlignment', 'center', 'verticalAlignment', 'bottom');
-                    set(ht, 'color', color, 'fontsize', 10);
-                    
-                end
-                
-            end
-        end
-        
-        % plot in world coordinate
-        subplot(1,2,2) 
-        visualizePointCloud(XYZworld,RGB,100); hold on; 
-        title(sprintf('World Coordinate using Frame 1-%d',frameID));
-        
-        disp('check the point cloud, and press any key to continue.'); pause; 
+%         subplot(1,2,1); 
+%         hold off;
+%         imshow(image);
+%         title(sprintf('Image and Annotation for Frame %d',frameID));
+%         
+%         % draw the annotation if the frame is a keyframe
+%         keyframeID = find(ismember(cellstr(annotation.fileList), imageFiles(frameID).name));
+%         if ~isempty(keyframeID)
+%             if ~isempty(annotation.frames{keyframeID})
+%                 hold on
+%                 LineWidth = 4;
+%                 for polygonID = 1:length(annotation.frames{keyframeID}.polygon)
+%                     
+%                     X = annotation.frames{keyframeID}.polygon{polygonID}.x;
+%                     Y = annotation.frames{keyframeID}.polygon{polygonID}.y;
+%                     objectID = annotation.frames{keyframeID}.polygon{polygonID}.object;
+%                     
+%                     color = ObjectColor(objectID);
+%                     
+%                     plot([X X(1)],[Y Y(1)], 'LineWidth', LineWidth, 'Color', [0 0 0]);
+%                     hold on;
+%                     
+%                     plot([X X(1)],[Y Y(1)], 'LineWidth', LineWidth/2, 'Color', color);
+%                     hold on;
+%                     
+%                     xx = mean(X);
+%                     yy = mean(Y);
+%                     ht=text(xx,yy, annotation.objects{objectID+1}.name, 'horizontalAlignment', 'center', 'verticalAlignment', 'bottom');
+%                     set(ht, 'color', color, 'fontsize', 10);
+%                     
+%                 end
+%                 
+%             end
+%         end
+%         
+%         % plot in world coordinate
+%         subplot(1,2,2) 
+%         visualizePointCloud(XYZworld,RGB,100); hold on; 
+%         title(sprintf('World Coordinate using Frame 1-%d',frameID));
+%         
+%         disp('check the point cloud, and press any key to continue.'); pause; 
+    close all
     end
     
 end
@@ -297,7 +307,7 @@ function data = loadjson(fname,varargin)
 %            date: 2011/09/09
 %         Nedialko Krouchev: http://www.mathworks.com/matlabcentral/fileexchange/25713
 %            date: 2009/11/02
-%         François Glineur: http://www.mathworks.com/matlabcentral/fileexchange/23393
+%         Franï¿½ois Glineur: http://www.mathworks.com/matlabcentral/fileexchange/23393
 %            date: 2009/03/22
 %         Joel Feenstra:
 %         http://www.mathworks.com/matlabcentral/fileexchange/20565

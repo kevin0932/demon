@@ -38,9 +38,7 @@ def read_relative_poses_text(path='/home/kevin/anaconda_tensorflow_demon_ws/demo
                 scaleDATA.append(np.array([scaleDeMoN, scaleTheia, scaleColmap, scaleGT, correctionScaleGT, correctionScaleColmap, absOrientationErrorInDeg, absOrientationError, view_overlap_ratio, GTbaselineLength]))
     return np.array(scaleDATA)
 
-# scaleArray = read_relative_poses_text('/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_mit_w85_lounge1~wg_lounge1_1/demon_prediction/images_demon/dense/1/scale_record_DeMoN_Theia_Colmap_GT_correctionGT_correctionColmap.txt')
-# scaleArray = read_relative_poses_text('/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/hotel_beijing~beijing_hotel_2/scale_record_DeMoN_Theia_Colmap_GT_correctionGT_correctionColmap_fullrecord.txt')
-scaleArray = read_relative_poses_text('/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/hotel_umd~maryland_hotel3/scale_record_DeMoN_Theia_Colmap_GT_correctionGT_correctionColmap_fullrecord.txt')
+scaleArray = read_relative_poses_text('/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_mit_w85_lounge1~wg_lounge1_1/demon_prediction/images_demon/dense/1/scale_record_DeMoN_Theia_Colmap_GT_correctionGT_correctionColmap.txt')
 print("scaleArray.shape = ", scaleArray.shape)
 print(np.isfinite(scaleArray))
 print(np.any(np.isnan(scaleArray)))
