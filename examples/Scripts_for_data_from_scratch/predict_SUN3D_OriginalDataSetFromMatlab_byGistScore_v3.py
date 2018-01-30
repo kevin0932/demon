@@ -90,8 +90,8 @@ def compute_view_overlap( view1, view2 ):
 
 weights_dir = '/home/kevin/anaconda_tensorflow_demon_ws/demon/weights'
 
-outdir = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/mit_w85_lounge1~wg_gym_2/demon_prediction"
-outfile = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/mit_w85_lounge1~wg_gym_2/demon_prediction/demon_mit_w85_lounge1~wg_gym_2.h5"
+outdir = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/harvard_c4~hv_c4_1/demon_prediction"
+outfile = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/harvard_c4~hv_c4_1/demon_prediction/demon_harvard_c4~hv_c4_1.h5"
 
 
 outimagedir_small = os.path.join(outdir,'images_demon_small')
@@ -114,7 +114,7 @@ os.makedirs(os.path.join(outdir,'vizdepthmap'), exist_ok=True)
 # # h5_group_v1 = data[SUN3D_datasetname+'/frames/t0/v0']
 # # h5_group_v2 = data[SUN3D_datasetname+'/frames/t0/v1']
 inputSUN3D_trainFilePaths = []
-inputSUN3D_trainFilePaths.append('/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/mit_w85_lounge1~wg_gym_2/GT_mit_w85_lounge1~wg_gym_2.h5')
+inputSUN3D_trainFilePaths.append('/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/harvard_c4~hv_c4_1/GT_harvard_c4~hv_c4_1.h5')
 
 # knn = 15 # 5
 # max_angle = 90*math.pi/180  # 60*math.pi/180
@@ -147,7 +147,7 @@ if True:
         print("processing ", inputSUN3D_trainingdata)
         data = h5py.File(inputSUN3D_trainingdata)
         for h5key in data.keys():
-            if h5key.split('-')[0] == 'mit_w85_lounge1~wg_gym_2':
+            if h5key.split('-')[0] == 'harvard_c4~hv_c4_1':
                 image_name = h5key
                 print(h5key, " ====> ", image_name)
                 h5_group_tmp = data[h5key]

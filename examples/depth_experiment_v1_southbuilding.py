@@ -475,7 +475,8 @@ TheiaGlobalPosesGT = read_global_poses_theia_output(TheiaGlobalPosesfilepath,The
 # recondir = "/home/kevin/ThesisDATA/CVG_Datasets_3Dsymmetric/redmond_Dataset/dense/"
 
 outdir = "/home/kevin/JohannesCode/ws1/demon_prediction/freiburgSettingBak"
-infile = "/home/kevin/JohannesCode/ws1/demon_prediction/freiburgSettingBak/View128ColmapFilter_fuse_southbuilding_demon.h5"
+# infile = "/home/kevin/JohannesCode/ws1/demon_prediction/freiburgSettingBak/View128ColmapFilter_fuse_southbuilding_demon.h5"
+infile = "/home/kevin/JohannesCode/ws1/demon_prediction/freiburgSettingBak/kevin_southbuilding_predictions_06012018.h5"
 ExhaustivePairInfile = "/home/kevin/JohannesCode/ws1/demon_prediction/freiburgSettingBak/kevin_southbuilding_predictions_06012018.h5"
 recondir = '/home/kevin/JohannesCode/ws1/dense/0/'
 
@@ -752,10 +753,6 @@ def visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, da
         # if GTbaselineLength != GTbaselineLength_v2:
         #     print("Error in baseline calculation!")
         #     return
-        if computePoint2LineDist(np.array([correctionScaleColmap,transScaleColmap]))>0.010:
-            outlierfile.write('{0} {1} {2} {3} {4} {5}\n'.format(image_pair12, GTbaselineLength, pred_scale, transScaleTheia, transScaleColmap, correctionScaleColmap))
-            continue
-        inlierfile.write('{0} {1} {2} {3} {4} {5}\n'.format(image_pair12, GTbaselineLength, pred_scale, transScaleTheia, transScaleColmap, correctionScaleColmap))
 
         if it==0:
             scaleRecordMat = np.array([pred_scale, transScaleTheia, transScaleColmap, correctionScaleColmap])
@@ -763,6 +760,11 @@ def visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, da
         else:
             scaleRecordMat = np.vstack((scaleRecordMat, np.array([pred_scale, transScaleTheia, transScaleColmap, correctionScaleColmap])))
         print("scaleRecordMat.shape = ", scaleRecordMat.shape)
+
+        if computePoint2LineDist(np.array([correctionScaleColmap,transScaleColmap]))>0.010:
+            outlierfile.write('{0} {1} {2} {3} {4} {5}\n'.format(image_pair12, GTbaselineLength, pred_scale, transScaleTheia, transScaleColmap, correctionScaleColmap))
+            continue
+        inlierfile.write('{0} {1} {2} {3} {4} {5}\n'.format(image_pair12, GTbaselineLength, pred_scale, transScaleTheia, transScaleColmap, correctionScaleColmap))
 
 
         if PoseSource=='Theia':

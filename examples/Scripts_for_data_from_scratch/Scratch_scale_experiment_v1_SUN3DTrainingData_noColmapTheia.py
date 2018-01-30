@@ -464,18 +464,18 @@ TheiaGlobalPosesGT = read_global_poses_theia_output(TheiaGlobalPosesfilepath,The
 # ExhaustivePairInfile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/demon_sun3d_train_hotel_beijing~beijing_hotel_2.h5"
 # recondir = '/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/images_demon/dense/'
 
-# outdir = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/hotel_beijing~beijing_hotel_2"
-# infile = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/hotel_beijing~beijing_hotel_2/demon_prediction/demon_hotel_beijing~beijing_hotel_2.h5"
-# GTfile = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/hotel_beijing~beijing_hotel_2/GT_hotel_beijing~beijing_hotel_2.h5"
+outdir = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/hotel_beijing~beijing_hotel_2"
+infile = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/hotel_beijing~beijing_hotel_2/demon_prediction/demon_hotel_beijing~beijing_hotel_2.h5"
+GTfile = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/hotel_beijing~beijing_hotel_2/GT_hotel_beijing~beijing_hotel_2.h5"
 # outdir = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/hotel_umd~maryland_hotel3"
 # infile = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/hotel_umd~maryland_hotel3/demon_prediction/demon_hotel_umd~maryland_hotel3.h5"
 # GTfile = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/hotel_umd~maryland_hotel3/GT_hotel_umd~maryland_hotel3.h5"
 # outdir = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/mit_w85k1~living_room_night"
 # infile = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/mit_w85k1~living_room_night/demon_prediction/demon_mit_w85k1~living_room_night.h5"
 # GTfile = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/mit_w85k1~living_room_night/GT_mit_w85k1~living_room_night.h5"
-outdir = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/mit_w85_lounge1~wg_gym_2"
-infile = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/mit_w85_lounge1~wg_gym_2/demon_prediction/demon_mit_w85_lounge1~wg_gym_2.h5"
-GTfile = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/mit_w85_lounge1~wg_gym_2/GT_mit_w85_lounge1~wg_gym_2.h5"
+# outdir = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/mit_w85_lounge1~wg_gym_2"
+# infile = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/mit_w85_lounge1~wg_gym_2/demon_prediction/demon_mit_w85_lounge1~wg_gym_2.h5"
+# GTfile = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/mit_w85_lounge1~wg_gym_2/GT_mit_w85_lounge1~wg_gym_2.h5"
 # outdir = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/mit_32_123~classroom_32123_nov_2_2012_scan1_erika"
 # infile = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/mit_32_123~classroom_32123_nov_2_2012_scan1_erika/demon_prediction/demon_mit_32_123~classroom_32123_nov_2_2012_scan1_erika.h5"
 # GTfile = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/mit_32_123~classroom_32123_nov_2_2012_scan1_erika/GT_mit_32_123~classroom_32123_nov_2_2012_scan1_erika.h5"
@@ -881,7 +881,7 @@ def visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, da
                 appendFilterModel.AddInputData(cam2_polydata)
 
         it +=1
-        # if it>=20:
+        # if it>=60:
         #     break
 
     if PointCloudVisBool == True:
