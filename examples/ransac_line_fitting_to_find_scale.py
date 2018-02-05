@@ -79,7 +79,8 @@ def computeCorrectionScale(DeMoNPredictionInvDepth, GTDepth, DeMoNDepthThreshold
 # scaleArray = read_relative_poses_text('/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_mit_w85_lounge1~wg_lounge1_1/demon_prediction/images_demon/dense/1/scale_record_DeMoN_Theia_Colmap_GT_correctionGT_correctionColmap.txt')
 # scaleArray = read_relative_poses_text('/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/hotel_beijing~beijing_hotel_2/scale_record_DeMoN_Theia_Colmap_GT_correctionGT_correctionColmap_fullrecord.txt')
 # scaleArray = read_relative_poses_text('/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/hotel_umd~maryland_hotel3/scale_record_DeMoN_Theia_Colmap_GT_correctionGT_correctionColmap_fullrecord.txt')
-scaleArray = read_relative_poses_text('/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/hotel_beijing~beijing_hotel_2/scale_record_DeMoN_Theia_Colmap_GT_correctionGT_correctionColmap_fullrecord.txt')
+# scaleArray = read_relative_poses_text('/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/hotel_beijing~beijing_hotel_2/scale_record_DeMoN_Theia_Colmap_GT_correctionGT_correctionColmap_fullrecord.txt')
+scaleArray = read_relative_poses_text('/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/hotel_beijing~beijing_hotel_2/demon_prediction_knn15_overlap040_Gist088/scale_record_DeMoN_Theia_Colmap_GT_correctionGT_correctionColmap_fullrecord.txt')
 
 print("scaleArray.shape = ", scaleArray.shape)
 print(np.isfinite(scaleArray))
@@ -104,7 +105,7 @@ scaleCompared = scaleArray[:,3:5]
 
 inlierFlags = []
 for i in range(scaleCompared.shape[0]):
-    if computePoint2LineDist(scaleCompared[i,:]) < 0.025:
+    if computePoint2LineDist(scaleCompared[i,:]) < 0.015:
         inlierFlags.append(True)
     else:
         inlierFlags.append(False)

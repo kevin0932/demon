@@ -464,9 +464,9 @@ TheiaGlobalPosesGT = read_global_poses_theia_output(TheiaGlobalPosesfilepath,The
 # ExhaustivePairInfile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/demon_sun3d_train_hotel_beijing~beijing_hotel_2.h5"
 # recondir = '/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/images_demon/dense/'
 
-outdir = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/hotel_beijing~beijing_hotel_2"
-infile = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/hotel_beijing~beijing_hotel_2/demon_prediction/demon_hotel_beijing~beijing_hotel_2.h5"
-GTfile = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/hotel_beijing~beijing_hotel_2/GT_hotel_beijing~beijing_hotel_2.h5"
+# outdir = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/hotel_beijing~beijing_hotel_2"
+# infile = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/hotel_beijing~beijing_hotel_2/demon_prediction/demon_hotel_beijing~beijing_hotel_2.h5"
+# GTfile = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/hotel_beijing~beijing_hotel_2/GT_hotel_beijing~beijing_hotel_2.h5"
 # outdir = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/hotel_umd~maryland_hotel3"
 # infile = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/hotel_umd~maryland_hotel3/demon_prediction/demon_hotel_umd~maryland_hotel3.h5"
 # GTfile = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/hotel_umd~maryland_hotel3/GT_hotel_umd~maryland_hotel3.h5"
@@ -479,6 +479,18 @@ GTfile = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/hotel_beijing~beijing_hotel_
 # outdir = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/mit_32_123~classroom_32123_nov_2_2012_scan1_erika"
 # infile = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/mit_32_123~classroom_32123_nov_2_2012_scan1_erika/demon_prediction/demon_mit_32_123~classroom_32123_nov_2_2012_scan1_erika.h5"
 # GTfile = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/mit_32_123~classroom_32123_nov_2_2012_scan1_erika/GT_mit_32_123~classroom_32123_nov_2_2012_scan1_erika.h5"
+# outdir = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/harvard_conf_big~hv_conf_big_1/demon_prediction_Gist066_kNNOneThird"
+# infile = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/harvard_conf_big~hv_conf_big_1/demon_prediction_Gist066_kNNOneThird/demon_Gist066_harvard_conf_big~hv_conf_big_1.h5"
+# GTfile = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/harvard_conf_big~hv_conf_big_1/GT_harvard_conf_big~hv_conf_big_1.h5"
+
+# outdir = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/mit_32_pool~pool_1/demon_prediction_Gist066"
+# infile = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/mit_32_pool~pool_1/demon_prediction_Gist066/demon_Gist066_mit_32_pool~pool_1.h5"
+# GTfile = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/mit_32_pool~pool_1/GT_mit_32_pool~pool_1.h5"
+
+outdir = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/hotel_beijing~beijing_hotel_2/demon_prediction_knn30_Gist066"
+infile = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/hotel_beijing~beijing_hotel_2/demon_prediction_knn30_Gist066/demon_knn30_Gist066_hotel_beijing~beijing_hotel_2.h5"
+GTfile = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/hotel_beijing~beijing_hotel_2/GT_hotel_beijing~beijing_hotel_2.h5"
+
 ExhaustivePairInfile = ''
 cameras = ''
 images = ''
@@ -675,12 +687,16 @@ def visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, da
         GTExtrinsics1_4by4 = np.eye(4)
         K1GT, GTExtrinsics1_4by4[0:3,0:3], GTExtrinsics1_4by4[0:3,3] = read_camera_params(dataGT1[image_name1[:-4]]['camera'], lmuFreiburgFormat=False)
         tmp_view1 = read_view(dataGT1[image_name1[:-4]], lmuFreiburgFormat=False)
+        # K1GT, GTExtrinsics1_4by4[0:3,0:3], GTExtrinsics1_4by4[0:3,3] = read_camera_params(dataGT1[image_name1]['camera'], lmuFreiburgFormat=False)
+        # tmp_view1 = read_view(dataGT1[image_name1], lmuFreiburgFormat=False)
         view1GT = adjust_intrinsics(tmp_view1, target_K, w, h,)
 
         dataGT2 = h5py.File(GTfile)
         GTExtrinsics2_4by4 = np.eye(4)
         K2GT, GTExtrinsics2_4by4[0:3,0:3], GTExtrinsics2_4by4[0:3,3] = read_camera_params(dataGT2[image_name2[:-4]]['camera'], lmuFreiburgFormat=False)
         tmp_view2 = read_view(dataGT2[image_name2[:-4]], lmuFreiburgFormat=False)
+        # K2GT, GTExtrinsics2_4by4[0:3,0:3], GTExtrinsics2_4by4[0:3,3] = read_camera_params(dataGT2[image_name2]['camera'], lmuFreiburgFormat=False)
+        # tmp_view2 = read_view(dataGT2[image_name2], lmuFreiburgFormat=False)
         view2GT = adjust_intrinsics(tmp_view2, target_K, w, h,)
 
         ##### compute scales and scale correction with GroundTruth/Colmap Depth
@@ -887,7 +903,7 @@ def visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, da
     if PointCloudVisBool == True:
         appendFilterPC.Update()
     inlierfile.close()
-    print("inlier matches num = ", inlierCnt, " out of total pair num = ", it)
+    print("inlier matches num = ", inlierCnt, " out of total pair num = ", scaleRecordMat.shape[0])
     outlierfile.close()
     rawscalefile.close()
 

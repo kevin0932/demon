@@ -761,7 +761,7 @@ def visPointCloudInGlobalFrame(renderer, alpha, infile, ExhaustivePairInfile, da
             scaleRecordMat = np.vstack((scaleRecordMat, np.array([pred_scale, transScaleTheia, transScaleColmap, correctionScaleColmap])))
         print("scaleRecordMat.shape = ", scaleRecordMat.shape)
 
-        if computePoint2LineDist(np.array([correctionScaleColmap,transScaleColmap]))>0.010:
+        if computePoint2LineDist(np.array([correctionScaleColmap,transScaleColmap]))>0.020:
             outlierfile.write('{0} {1} {2} {3} {4} {5}\n'.format(image_pair12, GTbaselineLength, pred_scale, transScaleTheia, transScaleColmap, correctionScaleColmap))
             continue
         inlierfile.write('{0} {1} {2} {3} {4} {5}\n'.format(image_pair12, GTbaselineLength, pred_scale, transScaleTheia, transScaleColmap, correctionScaleColmap))

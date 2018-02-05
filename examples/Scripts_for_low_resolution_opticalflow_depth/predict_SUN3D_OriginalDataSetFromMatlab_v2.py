@@ -13,7 +13,6 @@ import os
 import cv2
 
 from skimage.measure import compare_ssim as ssim #structural_similarity as ssim
-import gist
 
 
 def prepare_input_data(img1, img2, data_format):
@@ -90,8 +89,8 @@ def compute_view_overlap( view1, view2 ):
 
 weights_dir = '/home/kevin/anaconda_tensorflow_demon_ws/demon/weights'
 
-outdir = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/hotel_beijing~beijing_hotel_2/demon_prediction_knn30_Gist066"
-outfile = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/hotel_beijing~beijing_hotel_2/demon_prediction_knn30_Gist066/demon_knn30_Gist066_hotel_beijing~beijing_hotel_2.h5"
+outdir = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/hotel_umd~maryland_hotel3/demon_prediction"
+outfile = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/hotel_umd~maryland_hotel3/demon_prediction/demon_hotel_umd~maryland_hotel3.h5"
 
 
 outimagedir_small = os.path.join(outdir,'images_demon_small')
@@ -114,14 +113,14 @@ os.makedirs(os.path.join(outdir,'vizdepthmap'), exist_ok=True)
 # # h5_group_v1 = data[SUN3D_datasetname+'/frames/t0/v0']
 # # h5_group_v2 = data[SUN3D_datasetname+'/frames/t0/v1']
 inputSUN3D_trainFilePaths = []
-inputSUN3D_trainFilePaths.append('/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/hotel_beijing~beijing_hotel_2/GT_hotel_beijing~beijing_hotel_2.h5')
+inputSUN3D_trainFilePaths.append('/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/hotel_umd~maryland_hotel3/hotel_umd~maryland_hotel3.h5')
 
 # knn = 15 # 5
 # max_angle = 90*math.pi/180  # 60*math.pi/180
 # min_overlap_ratio = 0.4     # 0.5
-knn = 30    # 5
+knn = 5
 max_angle = 60*math.pi/180  # 60*math.pi/180
-min_overlap_ratio = 0.4     # 0.5
+min_overlap_ratio = 0.5     # 0.5
 w = 256
 h = 192
 normalized_intrinsics = np.array([0.89115971, 1.18821287, 0.5, 0.5],np.float32)
@@ -131,12 +130,6 @@ target_K[1,1] = h*normalized_intrinsics[1]
 target_K[0,2] = w*normalized_intrinsics[2]
 target_K[1,2] = h*normalized_intrinsics[3]
 
-def computePairGistDistance(image1, image2):
-    GistDescriptor1 = gist.extract(np.array(image1))
-    GistDescriptor2 = gist.extract(np.array(image2))
-    # print("gist descriptor = ", GistDescriptor)
-    # print("gist descriptor.shape = ", GistDescriptor.shape)
-    return np.linalg.norm(GistDescriptor1-GistDescriptor2)
 
 if True:
     views = []
@@ -147,25 +140,19 @@ if True:
         print("processing ", inputSUN3D_trainingdata)
         data = h5py.File(inputSUN3D_trainingdata)
         for h5key in data.keys():
-            if h5key.split('-')[0] == 'hotel_beijing~beijing_hotel_2':
+            if h5key.split('-')[0] == 'hotel_umd~maryland_hotel3':
                 image_name = h5key
                 print(h5key, " ====> ", image_name)
                 h5_group_tmp = data[h5key]
                 tmp_view = read_view(h5_group_tmp, lmuFreiburgFormat=False)
                 new_v = adjust_intrinsics(tmp_view, target_K, w, h,)
                 # print("type(new_v) = ", type(new_v))
-                # GistDescriptor = gist.extract(np.array(new_v.image))
-                # print("gist descriptor = ", GistDescriptor)
-                # print("gist descriptor.shape = ", GistDescriptor.shape)
                 if not new_v is None:
                     dupFlag = False
                     for prevIdx in range(len(views)):
                         opencvImage1 = cv2.cvtColor(np.array(views[prevIdx].image), cv2.COLOR_RGB2BGR)
                         opencvImage2 = cv2.cvtColor(np.array(new_v.image), cv2.COLOR_RGB2BGR)
                         pair_ssim_val = ssim(opencvImage1,opencvImage2, multichannel=True)
-                        # new_v.image.show()
-                        # views[prevIdx].image.show()
-                        # print("pair_ssim_val = ", pair_ssim_val)
                         if pair_ssim_val ==1:
                             # print("one duplicated image pair is detected and the new_v will be skipped!")
                             dupFlag = True
@@ -184,24 +171,14 @@ if True:
                         cnt += 1
 
                     dupFlag = False
-                # if cnt >= 10:
+                # if cnt >= 2:
                 #     break
 
     distances = compute_view_distances(views)
 
     pairs_to_compute = set()
-    allpairsRecord = set()
-    gistScore_allNeighbours_record = []
-    gistScore_goodNeighbours_record = []
-
 
     for idx, view in enumerate(views):
-        # for idx2, view2 in enumerate(views):
-        #     if not (idx, idx2) in allpairsRecord:
-        #         gistScore_allNeighbours = computePairGistDistance(views[idx].image, views[idx2].image)
-        #         gistScore_allNeighbours_record.append(gistScore_allNeighbours)
-        #         allpairsRecord.add((idx, idx2))
-
         print(idx, len(views), end=' ')
         view_dists = distances[idx]
 
@@ -216,26 +193,12 @@ if True:
                     if overlap > min_overlap_ratio:
                         good_neighbours.append(neighbour_idx)
 
-                # good_neighbours.append(neighbour_idx)
-
-
         print(len(good_neighbours))
         for neighbour_idx in good_neighbours:
             pairs_to_compute.add((idx, neighbour_idx))
-            gistScore_goodNeighbours = computePairGistDistance(views[idx].image, views[neighbour_idx].image)
-            gistScore_goodNeighbours_record.append(gistScore_goodNeighbours)
-            # if gistScore_goodNeighbours <= 0.66 :
-            #     pairs_to_compute.add((idx, neighbour_idx))
             pass
 
-    print(len(allpairsRecord))
-    print(len(pairs_to_compute))
-    gistScore_allNeighbours_record = np.array(gistScore_allNeighbours_record)
-    gistScore_goodNeighbours_record = np.array(gistScore_goodNeighbours_record)
-    print((gistScore_allNeighbours_record.shape))
-    print(np.nanmean(gistScore_allNeighbours_record)," ",np.nanmedian(gistScore_allNeighbours_record)," ",np.nanstd(gistScore_allNeighbours_record))
-    print((gistScore_goodNeighbours_record.shape))
-    print(np.nanmean(gistScore_goodNeighbours_record)," ",np.nanmedian(gistScore_goodNeighbours_record)," ",np.nanstd(gistScore_goodNeighbours_record))
+    len(pairs_to_compute)
 
 if True:
     if tf.test.is_gpu_available(True):
@@ -259,19 +222,11 @@ if True:
     saver.restore(session,os.path.join(weights_dir,'demon_original'))
 
     out = h5py.File(outfile)
-    pair_ssim_values = []
+
     for i, pair in enumerate(pairs_to_compute):
         print(i, len(pairs_to_compute))
         view1 = views[pair[0]]
         view2 = views[pair[1]]
-
-        ### also show the SSIM score
-        opencvImage1 = cv2.cvtColor(np.array(view1.image), cv2.COLOR_RGB2BGR)
-        opencvImage2 = cv2.cvtColor(np.array(view2.image), cv2.COLOR_RGB2BGR)
-        pair_ssim_val = ssim(opencvImage1,opencvImage2, multichannel=True)
-        pair_ssim_values.append(pair_ssim_val)
-        print("pair_ssim_val = ", pair_ssim_val)
-
         input_data = prepare_input_data(view1.image, view2.image, data_format)
 
         # run the network
@@ -305,16 +260,12 @@ if True:
         # plt.imshow(result['predict_depth0'].squeeze(), cmap='Greys')
         # plt.imshow(result['predict_depth0'].squeeze(), cmap=cmap)
 
-        # view1.image.show()
-        # view2.image.show()
         # vis2 = cv2.cvtColor(result['predict_depth0'].squeeze(), cv2.COLOR_GRAY2BGR)
         # #Displayed the image
         # cv2.imshow("WindowNameHere", vis2)
         # cv2.waitKey(0)
 
     out.close()
-
-    np.savetxt(os.path.join(outdir,'pair_ssim_values.txt'), np.array(pair_ssim_values))
 
 if False:
 # if True:

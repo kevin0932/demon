@@ -90,8 +90,8 @@ def compute_view_overlap( view1, view2 ):
 
 weights_dir = '/home/kevin/anaconda_tensorflow_demon_ws/demon/weights'
 
-outdir = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/hotel_beijing~beijing_hotel_2/demon_prediction_knn30_Gist066"
-outfile = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/hotel_beijing~beijing_hotel_2/demon_prediction_knn30_Gist066/demon_knn30_Gist066_hotel_beijing~beijing_hotel_2.h5"
+outdir = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/mit_32_pingpong~pingpong_1/demon_prediction_Gist066"
+outfile = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/mit_32_pingpong~pingpong_1/demon_prediction_Gist066/demon_Gist066_mit_32_pingpong~pingpong_1.h5"
 
 
 outimagedir_small = os.path.join(outdir,'images_demon_small')
@@ -114,7 +114,7 @@ os.makedirs(os.path.join(outdir,'vizdepthmap'), exist_ok=True)
 # # h5_group_v1 = data[SUN3D_datasetname+'/frames/t0/v0']
 # # h5_group_v2 = data[SUN3D_datasetname+'/frames/t0/v1']
 inputSUN3D_trainFilePaths = []
-inputSUN3D_trainFilePaths.append('/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/hotel_beijing~beijing_hotel_2/GT_hotel_beijing~beijing_hotel_2.h5')
+inputSUN3D_trainFilePaths.append('/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/mit_32_pingpong~pingpong_1/GT_mit_32_pingpong~pingpong_1.h5')
 
 # knn = 15 # 5
 # max_angle = 90*math.pi/180  # 60*math.pi/180
@@ -147,7 +147,7 @@ if True:
         print("processing ", inputSUN3D_trainingdata)
         data = h5py.File(inputSUN3D_trainingdata)
         for h5key in data.keys():
-            if h5key.split('-')[0] == 'hotel_beijing~beijing_hotel_2':
+            if h5key.split('-')[0] == 'mit_32_pingpong~pingpong_1':
                 image_name = h5key
                 print(h5key, " ====> ", image_name)
                 h5_group_tmp = data[h5key]
@@ -194,7 +194,7 @@ if True:
     gistScore_allNeighbours_record = []
     gistScore_goodNeighbours_record = []
 
-
+    knn = len(views)
     for idx, view in enumerate(views):
         # for idx2, view2 in enumerate(views):
         #     if not (idx, idx2) in allpairsRecord:
@@ -210,22 +210,22 @@ if True:
         good_neighbours = []
         for _, neighbour_idx in neighbours:
             if not (idx, neighbour_idx) in pairs_to_compute:
-                neighbour_view = views[neighbour_idx]
-                if compute_view_angle(view, neighbour_view) < max_angle:
-                    overlap = compute_view_overlap(view, neighbour_view)
-                    if overlap > min_overlap_ratio:
-                        good_neighbours.append(neighbour_idx)
+                # neighbour_view = views[neighbour_idx]
+                # if compute_view_angle(view, neighbour_view) < max_angle:
+                #     overlap = compute_view_overlap(view, neighbour_view)
+                #     if overlap > min_overlap_ratio:
+                #         good_neighbours.append(neighbour_idx)
 
-                # good_neighbours.append(neighbour_idx)
+                good_neighbours.append(neighbour_idx)
 
 
         print(len(good_neighbours))
         for neighbour_idx in good_neighbours:
-            pairs_to_compute.add((idx, neighbour_idx))
+            # pairs_to_compute.add((idx, neighbour_idx))
             gistScore_goodNeighbours = computePairGistDistance(views[idx].image, views[neighbour_idx].image)
             gistScore_goodNeighbours_record.append(gistScore_goodNeighbours)
-            # if gistScore_goodNeighbours <= 0.66 :
-            #     pairs_to_compute.add((idx, neighbour_idx))
+            if gistScore_goodNeighbours <= 0.66 :
+                pairs_to_compute.add((idx, neighbour_idx))
             pass
 
     print(len(allpairsRecord))

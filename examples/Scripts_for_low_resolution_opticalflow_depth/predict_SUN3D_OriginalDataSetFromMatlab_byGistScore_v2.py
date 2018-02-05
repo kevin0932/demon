@@ -90,8 +90,8 @@ def compute_view_overlap( view1, view2 ):
 
 weights_dir = '/home/kevin/anaconda_tensorflow_demon_ws/demon/weights'
 
-outdir = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/hotel_beijing~beijing_hotel_2/demon_prediction_knn30_Gist066"
-outfile = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/hotel_beijing~beijing_hotel_2/demon_prediction_knn30_Gist066/demon_knn30_Gist066_hotel_beijing~beijing_hotel_2.h5"
+outdir = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/hotel_beijing~beijing_hotel_2/demon_prediction"
+outfile = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/hotel_beijing~beijing_hotel_2/demon_prediction/demon_hotel_beijing~beijing_hotel_2.h5"
 
 
 outimagedir_small = os.path.join(outdir,'images_demon_small')
@@ -119,9 +119,9 @@ inputSUN3D_trainFilePaths.append('/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/hote
 # knn = 15 # 5
 # max_angle = 90*math.pi/180  # 60*math.pi/180
 # min_overlap_ratio = 0.4     # 0.5
-knn = 30    # 5
+knn = 5
 max_angle = 60*math.pi/180  # 60*math.pi/180
-min_overlap_ratio = 0.4     # 0.5
+min_overlap_ratio = 0.5     # 0.5
 w = 256
 h = 192
 normalized_intrinsics = np.array([0.89115971, 1.18821287, 0.5, 0.5],np.float32)
@@ -216,16 +216,12 @@ if True:
                     if overlap > min_overlap_ratio:
                         good_neighbours.append(neighbour_idx)
 
-                # good_neighbours.append(neighbour_idx)
-
 
         print(len(good_neighbours))
         for neighbour_idx in good_neighbours:
             pairs_to_compute.add((idx, neighbour_idx))
             gistScore_goodNeighbours = computePairGistDistance(views[idx].image, views[neighbour_idx].image)
             gistScore_goodNeighbours_record.append(gistScore_goodNeighbours)
-            # if gistScore_goodNeighbours <= 0.66 :
-            #     pairs_to_compute.add((idx, neighbour_idx))
             pass
 
     print(len(allpairsRecord))

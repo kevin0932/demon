@@ -406,17 +406,23 @@ def read_relative_poses_theia_output(path, path_img_id_map):
     return image_pair_gt
 
 
+# # # reading theia intermediate output relative poses from textfile
+# #TheiaRtfilepath = '/home/kevin/JohannesCode/theia_trial_demon/intermediate_results_southbuilding_01012018/RelativePoses_after_step7_global_position_estimation.txt'
+# TheiaRtfilepath = '/home/kevin/JohannesCode/theia_trial_demon/intermediate_results_southbuilding_01012018/RelativePoses_after_step9_BA.txt'
+# TheiaIDNamefilepath = '/home/kevin/JohannesCode/theia_trial_demon/intermediate_results_southbuilding_01012018/viewid_imagename_pairs_file.txt'
+# TheiaRelativePosesGT = read_relative_poses_theia_output(TheiaRtfilepath,TheiaIDNamefilepath)
+# # # reading theia intermediate output global poses from textfile
+# #TheiaGlobalPosesfilepath = '/home/kevin/JohannesCode/theia_trial_demon/intermediate_results_southbuilding_01012018/after_step7_global_position_estimation.txt'
+# TheiaGlobalPosesfilepath = '/home/kevin/JohannesCode/theia_trial_demon/intermediate_results_southbuilding_01012018/after_step9_BA.txt'
+# TheiaGlobalPosesGT = read_global_poses_theia_output(TheiaGlobalPosesfilepath,TheiaIDNamefilepath)
+
 # # reading theia intermediate output relative poses from textfile
-#TheiaRtfilepath = '/home/kevin/JohannesCode/theia_trial_demon/intermediate_results_southbuilding_01012018/RelativePoses_after_step7_global_position_estimation.txt'
-TheiaRtfilepath = '/home/kevin/JohannesCode/theia_trial_demon/intermediate_results_southbuilding_01012018/RelativePoses_after_step9_BA.txt'
-TheiaIDNamefilepath = '/home/kevin/JohannesCode/theia_trial_demon/intermediate_results_southbuilding_01012018/viewid_imagename_pairs_file.txt'
+TheiaRtfilepath = '/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/images_demon/TheiaReconstructionFromImage/intermediate_results/RelativePoses_after_step7_global_position_estimation.txt'
+TheiaIDNamefilepath = '/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/images_demon/TheiaReconstructionFromImage/intermediate_results/viewid_imagename_pairs_file.txt'
 TheiaRelativePosesGT = read_relative_poses_theia_output(TheiaRtfilepath,TheiaIDNamefilepath)
 # # reading theia intermediate output global poses from textfile
-#TheiaGlobalPosesfilepath = '/home/kevin/JohannesCode/theia_trial_demon/intermediate_results_southbuilding_01012018/after_step7_global_position_estimation.txt'
-TheiaGlobalPosesfilepath = '/home/kevin/JohannesCode/theia_trial_demon/intermediate_results_southbuilding_01012018/after_step9_BA.txt'
+TheiaGlobalPosesfilepath = '/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/images_demon/TheiaReconstructionFromImage/intermediate_results/after_step9_BA.txt'
 TheiaGlobalPosesGT = read_global_poses_theia_output(TheiaGlobalPosesfilepath,TheiaIDNamefilepath)
-
-
 
 
 # # weights_dir = '/home/ummenhof/projects/demon/weights'
@@ -459,19 +465,19 @@ TheiaGlobalPosesGT = read_global_poses_theia_output(TheiaGlobalPosesfilepath,The
 # recondir = "/home/kevin/ThesisDATA/CVG_Datasets_3Dsymmetric/barcelona_Dataset/dense/"
 # recondir = "/home/kevin/ThesisDATA/CVG_Datasets_3Dsymmetric/redmond_Dataset/dense/"
 
-# outdir = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction"
-# # infile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/View128ColmapFilter_demon_sun3d_train_hotel_beijing~beijing_hotel_2.h5"
-# # ExhaustivePairInfile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/demon_sun3d_train_hotel_beijing~beijing_hotel_2.h5"
-# infile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/demon_sun3d_train_hotel_beijing~beijing_hotel_2.h5"
-# # infile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/kevin_southbuilding_demon.h5"
-# ExhaustivePairInfile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/kevin_southbuilding_demon.h5"
-# recondir = '/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/images_demon/dense/'
+outdir = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction"
+# infile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/View128ColmapFilter_demon_sun3d_train_hotel_beijing~beijing_hotel_2.h5"
+# ExhaustivePairInfile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/demon_sun3d_train_hotel_beijing~beijing_hotel_2.h5"
+infile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/demon_sun3d_train_hotel_beijing~beijing_hotel_2.h5"
+# infile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/kevin_southbuilding_demon.h5"
+ExhaustivePairInfile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/kevin_southbuilding_demon.h5"
+recondir = '/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_hotel_beijing~beijing_hotel_2/demon_prediction/images_demon/dense/'
 
-outdir = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_mit_w85_lounge1~wg_lounge1_1/demon_prediction/images_demon/dense/1"
-# infile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_mit_w85_lounge1~wg_lounge1_1/demon_prediction/images_demon/dense/1/kevin_exhaustive_demon.h5"
-infile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_mit_w85_lounge1~wg_lounge1_1/demon_prediction/demon_sun3d_train_mit_w85_lounge1~wg_lounge1_1.h5"
-ExhaustivePairInfile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_mit_w85_lounge1~wg_lounge1_1/demon_prediction/images_demon/dense/1/kevin_exhaustive_demon.h5"
-recondir = '/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_mit_w85_lounge1~wg_lounge1_1/demon_prediction/images_demon/dense/1'
+# outdir = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_mit_w85_lounge1~wg_lounge1_1/demon_prediction/images_demon/dense/1"
+# # infile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_mit_w85_lounge1~wg_lounge1_1/demon_prediction/images_demon/dense/1/kevin_exhaustive_demon.h5"
+# infile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_mit_w85_lounge1~wg_lounge1_1/demon_prediction/demon_sun3d_train_mit_w85_lounge1~wg_lounge1_1.h5"
+# ExhaustivePairInfile = "/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_mit_w85_lounge1~wg_lounge1_1/demon_prediction/images_demon/dense/1/kevin_exhaustive_demon.h5"
+# recondir = '/home/kevin/anaconda_tensorflow_demon_ws/demon/datasets/traindata/SUN3D_Train_mit_w85_lounge1~wg_lounge1_1/demon_prediction/images_demon/dense/1'
 
 
 cameras = colmap.read_cameras_txt(os.path.join(recondir,'sparse','cameras.txt'))
@@ -624,8 +630,20 @@ def visMultiViewsPointCloudInGlobalFrame(rendererNotUsed, alpha, image_pairs_One
         image_pairs.add(image_pair12)
         # image_pairs.add(image_pair21)
 
+        ###### Retrieve Theia Global poses for image 1 and 2
+        TheiaExtrinsics1_4by4 = np.eye(4)
+        TheiaExtrinsics2_4by4 = np.eye(4)
+        for ids,val in TheiaGlobalPosesGT.items():
+            if val.name == image_name1:
+                TheiaExtrinsics1_4by4[0:3,0:3] = val.rotmat
+                TheiaExtrinsics1_4by4[0:3,3] = -np.dot(val.rotmat, val.tvec) # theia output camera position in world frame instead of extrinsic t
+            if val.name == image_name2:
+                TheiaExtrinsics2_4by4[0:3,0:3] = val.rotmat
+                TheiaExtrinsics2_4by4[0:3,3] = -np.dot(val.rotmat, val.tvec) # theia output camera position in world frame instead of extrinsic t
+
         ##### compute scales
-        transScaleTheia = 0
+        # transScaleTheia = 0
+        transScaleTheia = np.linalg.norm(np.linalg.inv(TheiaExtrinsics2_4by4)[0:3,3] - np.linalg.inv(TheiaExtrinsics1_4by4)[0:3,3])
         transScaleColmap = One2MultiImagePairs_Colmap[image_pair12].scale12
         transScaleGT = One2MultiImagePairs_GT[image_pair12].scale12
         correctionScaleColmap = One2MultiImagePairs_correctionColmap[image_pair12].scale12
@@ -644,9 +662,9 @@ def visMultiViewsPointCloudInGlobalFrame(rendererNotUsed, alpha, image_pairs_One
         print("scaleRecordMat.shape = ", scaleRecordMat.shape)
 
 
-        # if PoseSource=='Theia':
-        #     GlobalExtrinsics1_4by4 = TheiaExtrinsics1_4by4
-        #     GlobalExtrinsics2_4by4 = TheiaExtrinsics2_4by4
+        if PoseSource=='Theia':
+            GlobalExtrinsics1_4by4 = TheiaExtrinsics1_4by4
+            GlobalExtrinsics2_4by4 = TheiaExtrinsics2_4by4
         if PoseSource=='Colmap':
             GlobalExtrinsics1_4by4 = One2MultiImagePairs_Colmap[image_pair12].Extrinsic1_4by4
             GlobalExtrinsics2_4by4 = One2MultiImagePairs_Colmap[image_pair12].Extrinsic2_4by4
@@ -691,11 +709,13 @@ def visMultiViewsPointCloudInGlobalFrame(rendererNotUsed, alpha, image_pairs_One
                 # scale_applied = 1
                 scale_applied = correctionScaleColmap
             if PoseSource=='GT':
-                # scale_applied = transScaleGT
+                scale_applied = transScaleGT
                 # scale_applied = 1/pred_scale
                 # scale_applied = pred_scale
                 # scale_applied = 1
-                scale_applied = correctionScaleGT
+                # scale_applied = correctionScaleGT
+            if PoseSource=='Theia':
+                scale_applied = transScaleTheia
 
             # normal_map = compute_normals_from_depth(One2MultiImagePairs_DeMoN[image_pair12].depth1*scale_applied*100)
             normal_map = compute_normals_from_depth(One2MultiImagePairs_DeMoN[image_pair12].depth1*scale_applied)
@@ -756,14 +776,14 @@ def visMultiViewsPointCloudInGlobalFrame(rendererNotUsed, alpha, image_pairs_One
         appendFilterModel.AddInputData(cam1_polydata)
 
         renderer.Modified()
-
         if tmp_PointCloud1['points'].shape[0] > 0:
             pointclouds_beforefiltering[image_pair12] = tmp_PointCloud1
 
 
         if True:   # debug: if the second cam is added for visualization
             ##### compute scales
-            transScaleTheia = 0
+            # transScaleTheia = 0
+            transScaleTheia = np.linalg.norm(np.linalg.inv(TheiaExtrinsics2_4by4)[0:3,3] - np.linalg.inv(TheiaExtrinsics1_4by4)[0:3,3])
             transScaleColmap = One2MultiImagePairs_Colmap[image_pair12].scale21
             transScaleGT = One2MultiImagePairs_GT[image_pair12].scale21
             correctionScaleColmap = One2MultiImagePairs_correctionColmap[image_pair12].scale21
@@ -803,11 +823,13 @@ def visMultiViewsPointCloudInGlobalFrame(rendererNotUsed, alpha, image_pairs_One
                     # scale_applied = 1
                     scale_applied = correctionScaleColmap
                 if PoseSource=='GT':
-                    # scale_applied = transScaleGT
+                    scale_applied = transScaleGT
                     # scale_applied = 1/pred_scale
                     # scale_applied = pred_scale
                     # scale_applied = 1
-                    scale_applied = correctionScaleGT
+                    # scale_applied = correctionScaleGT
+                if PoseSource=='Theia':
+                    scale_applied = transScaleTheia
 
                 # normal_map = compute_normals_from_depth(One2MultiImagePairs_DeMoN[image_pair12].depth1*scale_applied*100)
                 normal_map = compute_normals_from_depth(One2MultiImagePairs_DeMoN[image_pair12].depth2*scale_applied)
@@ -979,6 +1001,23 @@ DeMoNOrColmapOrGTDepths='DeMoN'
 
 tarImageFileName = 'mit_w85_lounge1~wg_lounge1_1-0000055_baseline_2_v1.JPG'
 # tarImageFileName = 'hotel_beijing~beijing_hotel_2-0000103_baseline_1_v0.JPG'
+# image1_filename_set = set()
+# image1_filename_set.add('mit_w85_lounge1~wg_lounge1_1-0000055_baseline_2_v1.JPG')
+# image1_filename_set.add('mit_w85_lounge1~wg_lounge1_1-0000059_baseline_4_v0.JPG')
+# image1_filename_set.add('mit_w85_lounge1~wg_lounge1_1-0000080_baseline_2_v0.JPG')
+# image1_filename_set.add('mit_w85_lounge1~wg_lounge1_1-0000032_baseline_2_v0.JPG')
+
+image1_filename_set = set()
+image1_filename_set.add('hotel_beijing~beijing_hotel_2-0000103_baseline_1_v0.JPG')
+image1_filename_set.add('hotel_beijing~beijing_hotel_2-0000004_baseline_2_v1.JPG')
+image1_filename_set.add('hotel_beijing~beijing_hotel_2-0000001_baseline_0_v0.JPG')
+image1_filename_set.add('hotel_beijing~beijing_hotel_2-0000060_baseline_3_v0.JPG')
+image1_filename_set.add('hotel_beijing~beijing_hotel_2-0000074_baseline_2_v0.JPG')
+image1_filename_set.add('hotel_beijing~beijing_hotel_2-0000097_baseline_1_v0.JPG')
+image1_filename_set.add('hotel_beijing~beijing_hotel_2-0000103_baseline_1_v0.JPG')
+image1_filename_set.add('hotel_beijing~beijing_hotel_2-0000128_baseline_1_v0.JPG')
+image1_filename_set.add('hotel_beijing~beijing_hotel_2-0000152_baseline_0_v1.JPG')
+image1_filename_set.add('hotel_beijing~beijing_hotel_2-0000117_baseline_2_v1.JPG')
 
 renderer = vtk.vtkRenderer()
 renderer.SetBackground(0, 0, 0)
@@ -1014,7 +1053,8 @@ class MyKeyPressInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
 # One2MultiImagePair = collections.namedtuple("One2MultiImagePair", ["name1", "name2", "image1", "image2", "depth1", "depth2", "Extrinsic1_4by4_Colmap", "Extrinsic2_4by4_Colmap", "Extrinsic1_4by4_GT", "Extrinsic2_4by4_GT", "Extrinsic1_4by4_DeMoN", "Extrinsic2_4by4_DeMoN", "Relative12_4by4_Colmap", "Relative12_4by4_GT", "Relative12_4by4_DeMoN", "scale_Colmap", "scale_GT", "scale_DeMoN"])
 One2MultiImagePair = collections.namedtuple("One2MultiImagePair", ["name1", "name2", "image1", "image2", "depth1", "depth2", "Extrinsic1_4by4", "Extrinsic2_4by4", "Relative12_4by4", "Relative21_4by4", "scale12", "scale21"])
 
-def findMultiPairs(infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, image1_filename='hotel_beijing~beijing_hotel_2-0000181_baseline_1_v0.JPG'):
+# def findMultiPairs(infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, image1_filename='hotel_beijing~beijing_hotel_2-0000181_baseline_1_v0.JPG'):
+def findMultiPairs(infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, image1_filename_set):
     # global initColmapGTRatio, renderer, appendFilterPC, appendFilterModel, curIteration, image_pairs, scaleRecordMat, tmpFittingCoef_Colmap_GT
 
     One2MultiImagePairs_Colmap = {}
@@ -1035,7 +1075,8 @@ def findMultiPairs(infile, ExhaustivePairInfile, data_format, target_K, w, h, ca
 
     for image_pair12 in (data.keys()):
         image_name1, image_name2 = image_pair12.split("---")
-        if image_name1 != image1_filename:
+        # if image_name1 != image1_filename:
+        if not image_name1 in image1_filename_set:
             continue
         print("add ", image_pair12, " to the candidate pool!")
 
@@ -1196,7 +1237,7 @@ def findMultiPairs(infile, ExhaustivePairInfile, data_format, target_K, w, h, ca
     print("inlier matches num = ", it)
     outlierfile.close()
 
-    if True:
+    if False:
         if len(image_pairs_One2Multi) >= 5:
             print("pair 1 (img1+img2): DeMoN scale12 = ", One2MultiImagePairs_DeMoN[list(image_pairs_One2Multi)[0]].scale12, ", while DeMoN scale21 = ", One2MultiImagePairs_DeMoN[list(image_pairs_One2Multi)[0]].scale21)
             print("pair 1 (img1+img2): GT scale12 = ", One2MultiImagePairs_GT[list(image_pairs_One2Multi)[0]].scale12, ", while GT scale21 = ", One2MultiImagePairs_GT[list(image_pairs_One2Multi)[0]].scale21)
@@ -2009,7 +2050,7 @@ def checkDepthConsistencyPixelwise_MultiViews(image_pairs_One2Multi, One2MultiIm
     # plt.show()
 
 
-image_pairs_One2Multi, One2MultiImagePairs_DeMoN, One2MultiImagePairs_GT, One2MultiImagePairs_Colmap, One2MultiImagePairs_correctionGT, One2MultiImagePairs_correctionColmap = findMultiPairs(infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, tarImageFileName)
+image_pairs_One2Multi, One2MultiImagePairs_DeMoN, One2MultiImagePairs_GT, One2MultiImagePairs_Colmap, One2MultiImagePairs_correctionGT, One2MultiImagePairs_correctionColmap = findMultiPairs(infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, image1_filename_set)    #tarImageFileName)
 
 pointclouds_beforefiltering = {}
 
@@ -2546,15 +2587,17 @@ def main():
 
 
 
-
     ###### involve cython implementation
     patchSize = 7*7
     for image_pair12 in pointclouds_beforefiltering.keys():
         print("pointclouds_beforefiltering[image_pair12]['points'].shape = ", pointclouds_beforefiltering[image_pair12]['points'].shape)
+        if pointclouds_beforefiltering[image_pair12]['points'].shape[0] <= 0:
+            print("point cloud preprocessing is skipped because there are no points!")
+            continue
         # pts = pointclouds_beforefiltering[image_pair12]['points']
         curPC = pointclouds_beforefiltering[image_pair12]['points']
-        ## fit normals by calling matlab function
-        pointclouds_beforefiltering[image_pair12]['normals'] = fit_normals_from_pointcloud_numpyarr_by_matlab(curPC, 66.0)
+        # ## fit normals by calling matlab function
+        # pointclouds_beforefiltering[image_pair12]['normals'] = fit_normals_from_pointcloud_numpyarr_by_matlab(curPC, 66.0)
         curNormals = pointclouds_beforefiltering[image_pair12]['normals']
         cam_v = np.linalg.inv(One2MultiImagePairs_GT[image_pair12].Extrinsic1_4by4)[0:3,3]
         print("cam_v = ", cam_v)
@@ -2574,9 +2617,9 @@ def main():
                 fitted_normals.append(fitted_normal)
 
                 ###### Calculate weights
-                weight_ptIdx = np.dot(fitted_normal, (queryPt-cam_v)/np.linalg.norm(queryPt-cam_v))
+                # weight_ptIdx = np.dot(fitted_normal, (queryPt-cam_v)/np.linalg.norm(queryPt-cam_v))
                 # # what if uniform weights are given so that we treat every point equally in filtering?
-                # weight_ptIdx = 1
+                weight_ptIdx = 1
                 weights_from_fitted_normals.append(weight_ptIdx)
                 depthsize_weights[curCoords[ptIdx,1],curCoords[ptIdx,0]] = weight_ptIdx
             print("np.array(fitted_normals).shape = ", np.array(fitted_normals).shape)
@@ -2600,8 +2643,16 @@ def main():
     cnt = 0
     for image_pair12_i in pointclouds_beforefiltering.keys():
         K2s[:,:,cnt] = target_K
-        R2s[:,:,cnt] = One2MultiImagePairs_GT[image_pair12_i].Extrinsic1_4by4[0:3,0:3]
-        t2s[:,cnt] = One2MultiImagePairs_GT[image_pair12_i].Extrinsic1_4by4[0:3,3]
+        if TheiaOrColmapOrGTPoses=='GT':
+            R2s[:,:,cnt] = One2MultiImagePairs_GT[image_pair12_i].Extrinsic1_4by4[0:3,0:3]
+            t2s[:,cnt] = One2MultiImagePairs_GT[image_pair12_i].Extrinsic1_4by4[0:3,3]
+        if TheiaOrColmapOrGTPoses=='Theia':
+            ###### Retrieve Theia Global poses for image 1 and 2
+            TheiaExtrinsics1_4by4 = np.eye(4)
+            for ids,val in TheiaGlobalPosesGT.items():
+                if val.name == image_pair12_i.split('---')[0]:
+                    R2s[:,:,cnt] = val.rotmat
+                    t2s[:,cnt] = -np.dot(val.rotmat, val.tvec) # theia output camera position in world frame instead of extrinsic t
         scaled_depth2s[:,:,cnt] = pointclouds_beforefiltering[image_pair12_i]['scaled_depth']
         weights2s[:,:,cnt] = pointclouds_beforefiltering[image_pair12_i]['depthsize_weights']
         colors2s[:,:,:,cnt] = One2MultiImagePairs_GT[image_pair12_i].image1
@@ -2630,8 +2681,16 @@ def main():
         print("len(pointclouds_beforefiltering[image_pair12_i]['points']) = ", len(pointclouds_beforefiltering[image_pair12_i]['points']))
         tmpt = time.time()
         K1 = target_K
-        R1 = One2MultiImagePairs_GT[image_pair12_i].Extrinsic1_4by4[0:3,0:3]
-        t1 = One2MultiImagePairs_GT[image_pair12_i].Extrinsic1_4by4[0:3,3]
+        if TheiaOrColmapOrGTPoses=='GT':
+            R1 = One2MultiImagePairs_GT[image_pair12_i].Extrinsic1_4by4[0:3,0:3]
+            t1 = One2MultiImagePairs_GT[image_pair12_i].Extrinsic1_4by4[0:3,3]
+        if TheiaOrColmapOrGTPoses=='Theia':
+            ###### Retrieve Theia Global poses for image 1 and 2
+            TheiaExtrinsics1_4by4 = np.eye(4)
+            for ids,val in TheiaGlobalPosesGT.items():
+                if val.name == image_pair12_i.split('---')[0]:
+                    R1 = val.rotmat
+                    t1 = -np.dot(val.rotmat, val.tvec) # theia output camera position in world frame instead of extrinsic t
         points_from_view1_in_global_frame = pointclouds_beforefiltering[image_pair12_i]['points']
         weights1 = pointclouds_beforefiltering[image_pair12_i]['weights_from_fitted_normals']
         colors1 = pointclouds_beforefiltering[image_pair12_i]['colors']
@@ -2641,9 +2700,9 @@ def main():
         print("avg_pt_in_global.shape = ", avg_pt_in_global.shape)
         print("time for processing one point cloud is ", (time.time()-tmpt), " sec")
         print("sum(mask_i) = ", sum(mask_i))
-        np.savetxt("file_"+str(fid)+"_mask.txt", mask_i)
-        np.savetxt("file_"+str(fid)+"_d_pt_record.txt", d_pt_record)
-        np.savetxt("file_"+str(fid)+"p_pt_record.txt", p_pt_record)
+        # np.savetxt("file_"+str(fid)+"_mask.txt", mask_i)
+        # np.savetxt("file_"+str(fid)+"_d_pt_record.txt", d_pt_record)
+        # np.savetxt("file_"+str(fid)+"p_pt_record.txt", p_pt_record)
         print("p_pt_record~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
         plot_hist_with_data(p_pt_record, np.linspace(0,10,21))
         print("d_pt_record~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
@@ -2659,6 +2718,8 @@ def main():
         print("pointclouds_beforefiltering[image_pair12_i]['points'][mask_i,:].shape = ", pointclouds_beforefiltering[image_pair12_i]['points'][mask_i,:].shape)
         fid += 1
         pointcloud1_polydata = create_pointcloud_polydata(
+                # points=pointclouds_beforefiltering[image_pair12_i]['points'],
+                # colors=pointclouds_beforefiltering[image_pair12_i]['colors'] if 'colors' in pointclouds_beforefiltering[image_pair12_i] else None,
                 # points=pointclouds_beforefiltering[image_pair12_i]['points'][mask_i,:],
                 points=avg_pt_in_global[mask_i,:],    # use average z-value in cam1 space
                 colors=pointclouds_beforefiltering[image_pair12_i]['colors'][mask_i,:] if 'colors' in pointclouds_beforefiltering[image_pair12_i] else None,
@@ -2684,7 +2745,7 @@ def main():
     appendFilterModel.Update()
 
     plywriter = vtk.vtkPLYWriter()
-    plywriter.SetFileName(('test_filtered_pointcloud.ply'))
+    plywriter.SetFileName(('multiviewchecking_multidepthfusion_filtered_pointcloud.ply'))
     # plywriter.SetFileName(('SUN3D_GT_pair_pointcloud_'+inputSUN3D_trainingdata.split('/')[-1][:-3]+'_'+SUN3D_datasetname+'_'+str(predict_scale)+'_'+str(predict_scale21)+'.ply'))
     # plywriter.SetInputData(pointcloud_polydata)
     plywriter.SetInputData(appendFilterModel.GetOutput())
