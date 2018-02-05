@@ -32,7 +32,7 @@ from depthmotionnet.dataset_tools.view_tools import *
 from depthmotionnet.dataset_tools.view_io import *
 
 
-def create_train_file_bySequenceName(outfile, sun3d_data_path, seq_name, seq_sharpness_dict):
+def create_train_file_bySequenceName(outfile, sun3d_data_path, seq_name, seq_sharpness_dict, outdir, subsamplingRate=50):
     """Creates a h5 file with training samples with a specific baseline range
 
     outfile: str
@@ -56,7 +56,7 @@ def create_train_file_bySequenceName(outfile, sun3d_data_path, seq_name, seq_sha
     created_groups = 0
     with h5py.File(outfile,'w') as f:
         # created_groups += create_samples_from_sequence(f, sun3d_data_path, seq_name, baseline_range, seq_sharpness_dict[seq_name])
-        created_groups += create_samples_from_sequence_bySequenceName(f, sun3d_data_path, seq_name, seq_sharpness_dict[seq_name])
+        created_groups += create_samples_from_sequence_bySequenceName(f, sun3d_data_path, seq_name, seq_sharpness_dict[seq_name], outdir, subsamplingRate)
     return created_groups
 
 
@@ -90,54 +90,56 @@ def main():
     # # read txt file with the train sequence names
     # with open('sun3d_train_sequences.txt', 'r') as f:
     #     sequences = f.read().splitlines()
-
+    subsamplingRate=1
     seq_name = 'hotel_hkust/hk_hotel_1'
     sequences = [seq_name]
-    # sun3d_data_path = 'https://sun3d.cs.princeton.edu/data'
-    # sun3d_data_path = 'ftp://sun3d.cs.princeton.edu/data'
     sun3d_data_path = 'http://sun3d.cs.princeton.edu/data'
-    # sun3d_data_path = 'http://sun3d.csail.mit.edu/data'
     outputdir = os.path.join('/media/kevin/SamsungT5_F/ThesisDATA/SUN3D_Python', seq_name.replace('/', '~'))
     os.makedirs(outputdir, exist_ok=True)
 
     # compute the sharpness scores for all sequences and images
-    if os.path.isfile('sun3d_seq_sharpness_dict.pkl'):
+    if os.path.isfile(os.path.join(outputdir, 'sun3d_seq_sharpness_dict.pkl')):
         print('Reading sequence sharpness file seq_sharpness_dict.pkl')
-        with open('sun3d_seq_sharpness_dict.pkl','rb') as f:
+        with open(os.path.join(outputdir, 'sun3d_seq_sharpness_dict.pkl'),'rb') as f:
             seq_sharpness_dict = pickle.load(f)
     else:
         print('Computing sharpness for all images. This could take a while.')
         with Pool(threads) as pool:
-            args = [(sun3d_data_path, seq,) for seq in sequences]
+            args = [(sun3d_data_path, seq, subsamplingRate) for seq in sequences]
             print("args = ", args)
             sequence_sharpness = pool.starmap(compute_sharpness_debug, args, chunksize=1)
-            print("sequence_sharpness.shape = ", sequence_sharpness.shape)
+            print("sequence_sharpness.shape = ", np.array(sequence_sharpness).shape)
+            print("sequence_sharpness = ", sequence_sharpness)
 
         seq_sharpness_dict = dict(zip(sequences, sequence_sharpness))
-
-        with open('sun3d_seq_sharpness_dict.pkl','wb') as f:
+        print("len(seq_sharpness_dict) = ", len(seq_sharpness_dict))
+        with open(os.path.join(outputdir, 'sun3d_seq_sharpness_dict.pkl'),'wb') as f:
             pickle.dump(seq_sharpness_dict, f)
 
+
+
+    outfile = os.path.join(outputdir, "GT_"+seq_name.replace('/','~')+".h5")
+    created_groups = create_train_file_bySequenceName(outfile, sun3d_data_path, seq_name, seq_sharpness_dict, outputdir, subsamplingRate)
 
     # # baseline ranges from 1cm-10cm to 1.6m-inf
     # baseline_ranges = [(0.01,0.10), (0.10,0.20), (0.20,0.40), (0.40,0.80), (0.80,1.60), (1.60, float('inf'))]
 
-    with Pool(threads) as pool:
-        # create temporary h5 files for each baseline and sequence combination
-        # baseline_range_files_dict = {b:[] for b in baseline_ranges}
-        args = []
-        # for i, base_range_seq_name in enumerate(itertools.product(baseline_ranges, sequences)):
-        #     base_range, seq_name = base_range_seq_name
-        #     #print(base_range, seq_name)
-        #     outfile = os.path.join(outputdir, seq_name.replace('/','~'),".h5")
-        #     args.append((outfile, sun3d_data_path, seq_name, base_range, seq_sharpness_dict))
-        #     # baseline_range_files_dict[base_range].append(outfile)
-
-        # for i, base_range_seq_name in enumerate(itertools.product(baseline_ranges, sequences)):
-        outfile = os.path.join(outputdir, "GT_"+seq_name.replace('/','~')+".h5")
-        args.append((outfile, sun3d_data_path, seq_name, seq_sharpness_dict))
-
-        created_groups = pool.starmap(create_train_file_bySequenceName, args, chunksize=1)
+    # with Pool(threads) as pool:
+    #     # create temporary h5 files for each baseline and sequence combination
+    #     # baseline_range_files_dict = {b:[] for b in baseline_ranges}
+    #     args = []
+    #     # for i, base_range_seq_name in enumerate(itertools.product(baseline_ranges, sequences)):
+    #     #     base_range, seq_name = base_range_seq_name
+    #     #     #print(base_range, seq_name)
+    #     #     outfile = os.path.join(outputdir, seq_name.replace('/','~'),".h5")
+    #     #     args.append((outfile, sun3d_data_path, seq_name, base_range, seq_sharpness_dict))
+    #     #     # baseline_range_files_dict[base_range].append(outfile)
+    #
+    #     # for i, base_range_seq_name in enumerate(itertools.product(baseline_ranges, sequences)):
+    #     outfile = os.path.join(outputdir, "GT_"+seq_name.replace('/','~')+".h5")
+    #     args.append((outfile, sun3d_data_path, seq_name, seq_sharpness_dict, subsamplingRate))
+    #
+    #     created_groups = pool.starmap(create_train_file_bySequenceName, args, chunksize=1)
 
     # # merge temporary files by creating one file per baseline range
     # for base_range in baseline_ranges:
@@ -145,7 +147,16 @@ def main():
     #     merge_h5files(outfile, baseline_range_files_dict[base_range])
 
 
-    print('created', sum(created_groups), 'groups')
+    # with h5py.File(outfile,'w') as dst:
+    #     for f in files:
+    #         print('copy', f, 'to', outfile)
+    #         with h5py.File(f,'r') as src:
+    #             for group_name in src:
+    #                 src.copy(source=group_name, dest=dst)
+    # for f in files:
+    #     os.remove(f)
+
+    # print('created', sum(created_groups), 'groups')
 
     return 0
 

@@ -563,8 +563,8 @@ def visPointCloudInGlobalFrame(renderer, alpha, data_format, target_K, w, h, Pos
         ###### Retrieve Ground Truth Global poses for image 1 and 2
 
         GTExtrinsics1_4by4 = np.eye(4)
-        K1GT, GTExtrinsics1_4by4[0:3,0:3], GTExtrinsics1_4by4[0:3,3] = read_camera_params(dataGT1[image_name1]['camera'], lmuFreiburgFormat=False)
-        tmp_view1 = read_view(dataGT1[image_name1], lmuFreiburgFormat=False)
+        K1GT, GTExtrinsics1_4by4[0:3,0:3], GTExtrinsics1_4by4[0:3,3] = read_camera_params(dataGT1[image_name1]['camera'], lmuFreiburgFormat=True)
+        tmp_view1 = read_view(dataGT1[image_name1], lmuFreiburgFormat=True)
         view1GT = adjust_intrinsics(tmp_view1, target_K, w, h,)
 
         if PointCloudVisBool == True:
