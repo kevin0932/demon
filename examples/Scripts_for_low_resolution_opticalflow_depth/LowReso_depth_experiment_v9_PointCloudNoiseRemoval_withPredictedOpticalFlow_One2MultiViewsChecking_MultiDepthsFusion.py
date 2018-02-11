@@ -27,6 +27,11 @@ import sys
 import time
 import matlab
 import matlab.engine
+import operator
+from operator import itemgetter
+from collections import OrderedDict
+import itertools
+
 
 examples_dir = os.path.dirname(__file__)
 sys.path.insert(0, os.path.join(examples_dir, '..', 'lmbspecialops', 'python'))
@@ -545,8 +550,8 @@ def get_tf_data_format():
 
     return data_format
 
-# data_format = get_tf_data_format()
-data_format='channels_first'
+data_format = get_tf_data_format()
+# data_format='channels_first'
 
 def computePoint2LineDist(pt, lineP1=None, lineP2=None, lineNormal=None):
     if lineNormal is None:
@@ -896,9 +901,9 @@ def visMultiViewsPointCloudInGlobalFrame(rendererNotUsed, alpha, image_pairs_One
 # TheiaOrColmapOrGTPoses='Colmap'
 # TheiaOrColmapOrGTPoses='Theia'
 TheiaOrColmapOrGTPoses='GT'
-DeMoNOrColmapOrGTDepths='GT'
+# DeMoNOrColmapOrGTDepths='GT'
 # DeMoNOrColmapOrGTDepths='Colmap'
-# DeMoNOrColmapOrGTDepths='DeMoN'
+DeMoNOrColmapOrGTDepths='DeMoN'
 weights_dir = '/home/kevin/anaconda_tensorflow_demon_ws/demon/weights'
 
 tarImageFileName = 'mit_w85_lounge1~wg_lounge1_1-0000055_baseline_2_v1.JPG'
@@ -1127,7 +1132,8 @@ def findOne2MultiPairs(infile, ExhaustivePairInfile, data_format, target_K, w, h
         DeMoNRelative12_4by4[0:3,3] = data[image_pair12]['translation'].value
         # One2MultiImagePairs_DeMoN[image_pair12] = One2MultiImagePair(name1=image_name1, name2=image_name2, image1=view1.image, image2=view2.image, depth1=1/data[image_pair12]['depth'].value, depth2=1/data[image_pair21]['depth'].value, Extrinsic1_4by4=np.eye(4), Extrinsic2_4by4=DeMoNRelative12_4by4, Relative12_4by4=DeMoNRelative12_4by4, Relative21_4by4=np.linalg.inv(DeMoNRelative12_4by4), scale12=data[image_pair12]['scale'].value, scale21=data[image_pair21]['scale'].value)
         One2MultiImagePairs_DeMoN[image_pair12] = One2MultiImagePair(name1=image_name1, name2=image_name2, image1=view1.image, image2=view2.image, depth1=1/data[image_pair12]['depth'].value, depth2=0, Extrinsic1_4by4=np.eye(4), Extrinsic2_4by4=DeMoNRelative12_4by4, Relative12_4by4=DeMoNRelative12_4by4, Relative21_4by4=np.linalg.inv(DeMoNRelative12_4by4), scale12=data[image_pair12]['scale'].value, scale21=0)
-        One2MultiImagePairs_192by256RGB[image_pair12] = list([tmp_view1.image, tmp_view2.image])
+        # One2MultiImagePairs_192by256RGB[image_pair12] = list([tmp_view1.image, tmp_view2.image])
+        One2MultiImagePairs_192by256RGB[image_pair12] = tmp_view1.image
 
 
         # ###### record reverse pair data in corresponding data structure for later access
@@ -1980,7 +1986,7 @@ One2MultiImagePairs_correctionGT_dict = {}
 One2MultiImagePairs_correctionColmap_dict = {}
 One2MultiImagePairs_192by256RGB_dict = {}
 
-One2MultiViewLimit = 5
+One2MultiViewLimit = 3
 for referenceImage1 in image1_filename_set:
     One2MultiImagePairs_192by256RGB, image_pairs_One2Multi, One2MultiImagePairs_DeMoN, One2MultiImagePairs_GT, One2MultiImagePairs_Colmap, One2MultiImagePairs_correctionGT, One2MultiImagePairs_correctionColmap = findOne2MultiPairs(infile, ExhaustivePairInfile, data_format, target_K, w, h, cameras, images, TheiaGlobalPosesGT, TheiaRelativePosesGT, referenceImage1)    #tarImageFileName)
     ### add referece image 1 only if it has at least x pairs, so that later filtering based on median can work to get approximately unified scale
@@ -2686,6 +2692,8 @@ def main():
     ##### directly take the average/median for each referenceImage1
     filteredScaledDepth_dict = {}
     RGBImage_dict = {}
+    DepthGT_dict = {}
+    RGBImage_192by256_dict = {}
     ViewPose_dict = {}
     for referenceImage1 in image_pairs_One2Multi_dict.keys():
         One2MultiImagePairs_192by256RGB = One2MultiImagePairs_192by256RGB_dict[referenceImage1]
@@ -2704,7 +2712,10 @@ def main():
             currentPC_numViews += 1
             tmpScaledDepthRecord.append(pointclouds_beforefiltering[image_pair12]['scaled_depth'])
             RGBImage_dict[referenceImage1] = One2MultiImagePairs_GT[image_pair12].image1
+            DepthGT_dict[referenceImage1] = One2MultiImagePairs_GT[image_pair12].depth1
+            RGBImage_192by256_dict[referenceImage1] = One2MultiImagePairs_192by256RGB[image_pair12]
             ViewPose_dict[referenceImage1] = One2MultiImagePairs_GT[image_pair12].Extrinsic1_4by4
+
         filteredScaledDepth_dict[referenceImage1] = np.nanmedian(np.array(tmpScaledDepthRecord), axis=0)
 
         # input_data = prepare_low_resolution_input_data(RGBImage_dict[referenceImage1], RGBImage_dict[referenceImage1], data_format)
@@ -2738,16 +2749,61 @@ def main():
     saver = tf.train.Saver()
     saver.restore(session,os.path.join(weights_dir,'demon_original'))
     ### predict Optical flow between each file and fuse the depths/points
+
+    appendFilterModel = vtk.vtkAppendPolyData()
+    photometricDiffNorm_record = []
+    AvgEndpointErrors_OpticalFlow_record = []
+    AvgEndpointErrors_OpticalFlow_OnlyValidPointRecord = []
+    AvgEndpointErrors_OpticalFlow_fromPredictedRt_record = []
+    AvgEndpointErrors_OpticalFlow_fromPredictedRt_OnlyValidPointRecord = []
+
     for ref_img1 in filteredScaledDepth_dict.keys():
+        ## check camera position and view overlaps
+        pair_pos_dist = {}
         for ref_img2 in filteredScaledDepth_dict.keys():
+            if ref_img1 == ref_img2:
+                continue
+            tmpDist = np.linalg.norm(np.linalg.inv(ViewPose_dict[ref_img2])[0:3,3] - np.linalg.inv(ViewPose_dict[ref_img1])[0:3,3])
+            # if tmpDist < 0.1:
+            if tmpDist < 0.1:
+                pair_pos_dist[ref_img2] = tmpDist
+        sorted_pair_pos_dist = OrderedDict(sorted(pair_pos_dist.items(), key=itemgetter(1)))
+        print("sorted_pair_pos_dist = ", sorted_pair_pos_dist)
+        if len(list(sorted_pair_pos_dist.keys()))>3:
+            # sorted_pair_pos_dist = itertools.islice(sorted_pair_pos_dist.items(), 0, 3)
+            sorted_pair_pos_dist = {k: sorted_pair_pos_dist[k] for k in list(sorted_pair_pos_dist)[:3]}
+            print("sorted_pair_pos_dist = ", sorted_pair_pos_dist)
+
+        K1 = target_K
+        R1 = ViewPose_dict[ref_img1][0:3,0:3]
+        t1 = ViewPose_dict[ref_img1][0:3,3]
+        weights1 = np.ones((h,w))
+        scaled_depth1 = filteredScaledDepth_dict[ref_img1]
+        color1 = np.array(RGBImage_dict[ref_img1])
+        Flow12s = []
+        K2s = []
+        R2s = []
+        t2s = []
+        color2s = []
+        scaled_depth2s = []
+        # for ref_img2, NotUsedVal in sorted_pair_pos_dist:
+        for ref_img2 in sorted_pair_pos_dist.keys():
             if ref_img1 == ref_img2:
                 continue
             cam_c1 = np.linalg.inv(ViewPose_dict[ref_img1])[0:3,3]
             cam_c2 = np.linalg.inv(ViewPose_dict[ref_img2])[0:3,3]
-            if np.dot(cam_c1, cam_c2)<0:
+            cam1_zaxis = np.dot(np.linalg.inv(ViewPose_dict[ref_img1]), np.array([0,0,1,0]))
+            cam2_zaxis = np.dot(np.linalg.inv(ViewPose_dict[ref_img2]), np.array([0,0,1,0]))
+            print("cam1_zaxis = ", cam1_zaxis)
+            print("cam2_zaxis = ", cam2_zaxis)
+            # if np.dot(cam_c1, cam_c2)<0:
+            ### check if the z-axis of camera coordinate has a maximum view angle whose cosine is larger than ?
+            # if np.dot(cam1_zaxis, cam2_zaxis)<0.5:
+            # if np.dot(cam1_zaxis, cam2_zaxis)<0.75:
+            if np.dot(cam1_zaxis, cam2_zaxis)<0.88:
                 continue
 
-            input_data = prepare_input_data(One2MultiImagePairs_192by256RGB_dict[ref_img1][0], One2MultiImagePairs_192by256RGB_dict[ref_img2][0], data_format)
+            input_data = prepare_input_data(RGBImage_192by256_dict[ref_img1], RGBImage_192by256_dict[ref_img2], data_format)
             # run the network
             result = bootstrap_net.eval(input_data['image_pair'], input_data['image2_2'])
             for i in range(3):
@@ -2763,8 +2819,168 @@ def main():
             predictedRotation = angleaxis_to_rotation_matrix(result['predict_rotation'].squeeze()).astype(np.float32)
             predictedTranslation = result['predict_translation'].squeeze().astype(np.float32)
             predictedOpticalFlow = result['predict_flow2'].squeeze()
-            print("predictedOpticalFlow.shape = ", predictedOpticalFlow.shape)
+            # print("predictedOpticalFlow.shape = ", predictedOpticalFlow.shape)
+            # print("predictedOpticalFlow = ", predictedOpticalFlow)
+            # print("np.max(predictedOpticalFlow[:,:,0]) = ", np.max(predictedOpticalFlow[:,:,0]))
+            # print("np.min(predictedOpticalFlow[:,:,0]) = ", np.min(predictedOpticalFlow[:,:,0]))
+            # print("np.max(predictedOpticalFlow[:,:,1]) = ", np.max(predictedOpticalFlow[:,:,1]))
+            # print("np.min(predictedOpticalFlow[:,:,1]) = ", np.min(predictedOpticalFlow[:,:,1]))
+            # return
+            predictedOpticalFlow[:,:,0] = w*(predictedOpticalFlow[:,:,0])
+            predictedOpticalFlow[:,:,1] = h*predictedOpticalFlow[:,:,1]
 
+            ## check the optical flow calculated from scaled_depth and Ground Truth R|t
+            RelativeTransformation_4by4 = np.dot(ViewPose_dict[ref_img2], np.linalg.inv(ViewPose_dict[ref_img1]))
+            flow12GT = flow_from_real_depth(DepthGT_dict[ref_img1], RelativeTransformation_4by4[0:3,0:3], RelativeTransformation_4by4[0:3,3], target_K)
+            matches12GT, coords121GT, coords122GT, mask12GT = flow_to_matches(flow12GT)
+            # print(flow12GT.shape)
+            flow12GT = np.transpose(flow12GT, [1,2,0])
+            flow12GT[:,:,0] = w*(flow12GT[:,:,0])
+            flow12GT[:,:,1] = h*flow12GT[:,:,1]
+            # print(flow12GT.shape)
+            tmpOPdiff = np.zeros((h,w,2))
+            tmpOPdiff[:,:,0] = (predictedOpticalFlow[:,:,0]-flow12GT[:,:,0])
+            tmpOPdiff[:,:,1] = (predictedOpticalFlow[:,:,1]-flow12GT[:,:,1])
+            tmpOPdiff = np.reshape(tmpOPdiff,(h*w,2))
+            AvgEndpointError = np.nanmean(np.linalg.norm(tmpOPdiff, axis=1))
+            AvgEndpointErrors_OpticalFlow_record.append(AvgEndpointError)
+            # print("AvgEndpointError = ", AvgEndpointError)
+            # return
+
+            ### check if the photometric error with predicted optical flow correspondences
+            xvalues = np.arange(w)
+            yvalues = np.arange(h)
+            xx, yy = np.meshgrid(xvalues, yvalues)
+            xx2 = xx+predictedOpticalFlow[:,:,0]
+            yy2 = yy+predictedOpticalFlow[:,:,1]
+            xx2 = xx2.astype(np.int8)
+            yy2 = yy2.astype(np.int8)
+            # xyMask = np.where(xx2>=0 and xx2<=w and yy2>=0 and yy2<=h)
+            xyMask = (xx2>=0) & (xx2<=w) & (yy2>=0) & (yy2<=h)
+            print(xyMask.shape)
+            print(color1[xyMask].shape)
+            print(np.array(RGBImage_dict[ref_img2], dtype=np.float32)[xyMask].shape)
+            photometricDiffNorm = np.linalg.norm(color1[xyMask]-np.array(RGBImage_dict[ref_img2], dtype=np.float32)[xyMask]) / color1[xyMask].shape[0]
+            print("photometricDiffNorm = ", photometricDiffNorm)
+            photometricDiffNorm_record.append(photometricDiffNorm)
+            print(color1[xyMask])
+            print(np.array(RGBImage_dict[ref_img2], dtype=np.float32)[xyMask])
+
+            if (np.reshape(xyMask, (xyMask.shape[0]*xyMask.shape[1])) & mask12GT).shape[0] > 0:
+                AvgEndpointErrorOnlyValidPoints = np.nanmean(np.linalg.norm(tmpOPdiff[(np.reshape(xyMask, (xyMask.shape[0]*xyMask.shape[1])) & mask12GT),:], axis=1))
+                AvgEndpointErrors_OpticalFlow_OnlyValidPointRecord.append(AvgEndpointErrorOnlyValidPoints)
+
+            # flow12 = flow_from_real_depth(filteredScaledDepth_dict[ref_img1], RelativeTransformation_4by4[0:3,0:3], RelativeTransformation_4by4[0:3,3], target_K)
+            flow12 = flow_from_real_depth(filteredScaledDepth_dict[ref_img1], predictedRotation, predictedTranslation*np.linalg.norm(np.linalg.inv(ViewPose_dict[ref_img2])[0:3,3]-np.linalg.inv(ViewPose_dict[ref_img1])[0:3,3]), target_K)
+            # flow12 = flow_from_real_depth(DepthGT_dict[ref_img1], predictedRotation, predictedTranslation*np.linalg.norm(np.linalg.inv(ViewPose_dict[ref_img2])[0:3,3]-np.linalg.inv(ViewPose_dict[ref_img1])[0:3,3]), target_K)
+            matches12, coords121, coords122, mask12 = flow_to_matches(flow12)
+            # print(flow12.shape)
+            flow12 = np.transpose(flow12, [1,2,0])
+            flow12[:,:,0] = w*(flow12[:,:,0])
+            flow12[:,:,1] = h*flow12[:,:,1]
+            # print(flow12.shape)
+            tmpOPdiff = np.zeros((h,w,2))
+            tmpOPdiff[:,:,0] = (flow12[:,:,0]-flow12GT[:,:,0])
+            tmpOPdiff[:,:,1] = (flow12[:,:,1]-flow12GT[:,:,1])
+            tmpOPdiff = np.reshape(tmpOPdiff,(h*w,2))
+            AvgEndpointError_fromPredictedRt = np.nanmean(np.linalg.norm(tmpOPdiff, axis=1))
+            AvgEndpointErrors_OpticalFlow_fromPredictedRt_record.append(AvgEndpointError_fromPredictedRt)
+            print("mask12 & mask12GT length = ", (mask12 & mask12GT).shape)
+            if (mask12 & mask12GT).shape[0] > 0:
+                AvgEndpointErrorOnlyValidPoints_fromPredictedRt = np.nanmean(np.linalg.norm(tmpOPdiff[(mask12 & mask12GT),:], axis=1))
+                print("AvgEndpointErrorOnlyValidPoints_fromPredictedRt.shape = ", AvgEndpointErrorOnlyValidPoints_fromPredictedRt.shape)
+                AvgEndpointErrors_OpticalFlow_fromPredictedRt_OnlyValidPointRecord.append(AvgEndpointErrorOnlyValidPoints_fromPredictedRt)
+
+            # if photometricDiffNorm > 2.5:
+            if photometricDiffNorm > 2.0:
+                continue
+
+            Flow12s.append(predictedOpticalFlow)
+            K2s.append(target_K)
+            R2s.append(ViewPose_dict[ref_img2][0:3,0:3])
+            t2s.append(ViewPose_dict[ref_img2][0:3,3])
+            scaled_depth2s.append(filteredScaledDepth_dict[ref_img2])
+            color2s.append(np.array(RGBImage_dict[ref_img2], dtype=np.float32))
+
+        Flow12s = np.array(Flow12s)
+        print("Flow12s.shape = ", Flow12s.shape)
+        if Flow12s.shape[0]==0:
+        # # if Flow12s.shape[0]>=0:
+        #     input_data = prepare_low_resolution_input_data(RGBImage_dict[ref_img1], RGBImage_dict[ref_img1], data_format)
+        #     # tmp_PointCloud1 = visualize_prediction(
+        #     tmp_PointCloud1 = organize_data_for_noise_removal_stage1(
+        #                 inverse_depth=1/scaled_depth1,
+        #                 intrinsics = np.array([0.89115971, 1.18821287, 0.5, 0.5]), # sun3d intrinsics
+        #                 image=input_data['image_pair'][0,0:3] if data_format=='channels_first' else input_data['image_pair'].transpose([0,3,1,2])[0,0:3],
+        #                 R1=R1,
+        #                 t1=t1,
+        #                 scale=1)
+        #     cam1_polydata = create_camera_polydata(R1, t1, True)
+        #     pointcloud1_polydata = create_pointcloud_polydata(
+        #         points=tmp_PointCloud1['points'],
+        #         colors=tmp_PointCloud1['colors'],
+        #         )
+        #     appendFilterModel.AddInputData(pointcloud1_polydata)
+        #     appendFilterModel.AddInputData(cam1_polydata)
+            continue
+        Flow12s = np.transpose(Flow12s, [1,2,3,0])
+        print("Flow12s.shape = ", Flow12s.shape)
+        K2s = np.array(K2s)
+        print("K2s.shape = ", K2s.shape)
+        K2s = np.transpose(K2s, [1,2,0])
+        print("K2s.shape = ", K2s.shape)
+        R2s = np.array(R2s)
+        print("R2s.shape = ", R2s.shape)
+        R2s = np.transpose(R2s, [1,2,0])
+        print("R2s.shape = ", R2s.shape)
+        t2s = np.array(t2s)
+        print("t2s.shape = ", t2s.shape)
+        t2s = np.transpose(t2s, [1,0])
+        print("t2s.shape = ", t2s.shape)
+        color2s = np.array(color2s)
+        print("color2s.shape = ", color2s.shape)
+        color2s = np.transpose(color2s, [1,2,3,0])
+        print("color2s.shape = ", color2s.shape)
+        scaled_depth2s = np.array(scaled_depth2s)
+        print("scaled_depth2s.shape = ", scaled_depth2s.shape)
+        scaled_depth2s = np.transpose(scaled_depth2s, [1,2,0])
+        print("scaled_depth2s.shape = ", scaled_depth2s.shape)
+        weights2s = np.ones((h,w,t2s.shape[1]))
+
+        avg_pt_in_global, maskfusion = fuse_points_with_given_optical_flow( K1, R1, t1, weights1, scaled_depth1, Flow12s, K2s, R2s, t2s, scaled_depth2s, weights2s, color2s, 0, 0, 0, 0)
+        print("avg_pt_in_global.shape = ", avg_pt_in_global.shape)
+        avg_pt_in_global = np.reshape(avg_pt_in_global, (h*w,3))
+        print("avg_pt_in_global.shape = ", avg_pt_in_global.shape)
+        color1 = np.reshape(color1, (h*w,3))
+        maskfusion = maskfusion.astype(np.bool)
+        maskfusion = np.reshape(maskfusion, (h*w))
+        cam1_polydata = create_camera_polydata(R1, t1, True)
+        pointcloud1_polydata = create_pointcloud_polydata(
+            points=avg_pt_in_global[maskfusion,:],
+            colors=color1[maskfusion,:],
+            )
+        appendFilterModel.AddInputData(pointcloud1_polydata)
+        appendFilterModel.AddInputData(cam1_polydata)
+
+    plt.hist(photometricDiffNorm_record, bins=20)
+    plt.show()
+    plt.hist(AvgEndpointErrors_OpticalFlow_record, bins=20)
+    plt.show()
+    plt.hist(AvgEndpointErrors_OpticalFlow_OnlyValidPointRecord, bins=20)
+    plt.show()
+    plt.hist(AvgEndpointErrors_OpticalFlow_fromPredictedRt_record, bins=20)
+    plt.show()
+    print("AvgEndpointErrors_OpticalFlow_fromPredictedRt_record = ", AvgEndpointErrors_OpticalFlow_fromPredictedRt_record)
+    print("AvgEndpointErrors_OpticalFlow_fromPredictedRt_OnlyValidPointRecord = ", AvgEndpointErrors_OpticalFlow_fromPredictedRt_OnlyValidPointRecord)
+    print("len(AvgEndpointErrors_OpticalFlow_fromPredictedRt_OnlyValidPointRecord) = ", len(AvgEndpointErrors_OpticalFlow_fromPredictedRt_OnlyValidPointRecord))
+    # AvgEndpointErrors_OpticalFlow_fromPredictedRt_OnlyValidPointRecord = [x for x in AvgEndpointErrors_OpticalFlow_fromPredictedRt_OnlyValidPointRecord if x != np.nan]
+    # AvgEndpointErrors_OpticalFlow_fromPredictedRt_OnlyValidPointRecord = [x for x in AvgEndpointErrors_OpticalFlow_fromPredictedRt_OnlyValidPointRecord if x !='nan']
+    AvgEndpointErrors_OpticalFlow_fromPredictedRt_OnlyValidPointRecord = np.array(AvgEndpointErrors_OpticalFlow_fromPredictedRt_OnlyValidPointRecord)
+    AvgEndpointErrors_OpticalFlow_fromPredictedRt_OnlyValidPointRecord = AvgEndpointErrors_OpticalFlow_fromPredictedRt_OnlyValidPointRecord[np.isfinite(AvgEndpointErrors_OpticalFlow_fromPredictedRt_OnlyValidPointRecord)]
+    plt.hist(AvgEndpointErrors_OpticalFlow_fromPredictedRt_OnlyValidPointRecord, bins=20)
+    plt.show()
+    print("AvgEndpointErrors_OpticalFlow_fromPredictedRt_OnlyValidPointRecord = ", AvgEndpointErrors_OpticalFlow_fromPredictedRt_OnlyValidPointRecord)
+        # break
     # ## save the filtered point cloud
     # ###############################################################
     # appendFilterModel = vtk.vtkAppendPolyData()

@@ -12,8 +12,8 @@ import cv2
 # recondir = '/home/kevin/ThesisDATA/gerrard-hall/dense/'
 # recondir = '/home/kevin/ThesisDATA/person-hall/dense/'
 # recondir = "/home/kevin/ThesisDATA/CVG_Datasets_3Dsymmetric/barcelona_Dataset/dense/"
-recondir = "/home/kevin/ThesisDATA/CVG_Datasets_3Dsymmetric/redmond_Dataset/dense/"
-
+# recondir = "/home/kevin/ThesisDATA/CVG_Datasets_3Dsymmetric/redmond_Dataset/dense/"
+recondir = '/media/kevin/SamsungT5_F/ThesisDATA/southbuilding/demon_prediction/images_demon/dense'
 
 path = os.path.join(recondir,'sparse','theia_calibration_file.txt')
 
@@ -28,6 +28,7 @@ for imgId,val in images.items():
     # print("images[imgId] = ", images[imgId])
     camId = val.cam_id
     cur_name = val.name
-    calibrFile.write("%s %f %f %f %f %f %f %f\n" % (cur_name, cameras[camId].params[0], cameras[camId].params[2], cameras[camId].params[3], 1, 0, 0, 0))
+    # calibrFile.write("%s %f %f %f %f %f %f %f\n" % (cur_name, cameras[camId].params[0], cameras[camId].params[2], cameras[camId].params[3], 1, 0, 0, 0))
+    calibrFile.write("%s %f %f %f %f %f %f %f\n" % (cur_name, 2737.64, 1536, 1152, 1, 0, 0, 0))
 
 calibrFile.close()

@@ -466,9 +466,26 @@ def vtkSliderCallback2(obj, event):
 # GTfile = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D/hotel_beijing~beijing_hotel_2/GT_hotel_beijing~beijing_hotel_2.h5"
 #################################################################################
 
+# outdir = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D_Python/mit_32_pingpong~pingpong_1"
+# GTfile = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D_Python/mit_32_pingpong~pingpong_1/GT_mit_32_pingpong~pingpong_1.h5"
 
-outdir = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D_Python/hotel_hkust~hk_hotel_1"
-GTfile = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D_Python/hotel_hkust~hk_hotel_1/GT_hotel_hkust~hk_hotel_1.h5"
+# outdir = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D_Python/home_ts~apartment_ts_oct_31_2012_scan1_erika"
+# GTfile = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D_Python/home_ts~apartment_ts_oct_31_2012_scan1_erika/GT_home_ts~apartment_ts_oct_31_2012_scan1_erika.h5"
+
+# outdir = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D_Python/hotel_graz~scan1_2012_aug_29"
+# GTfile = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D_Python/hotel_graz~scan1_2012_aug_29/GT_hotel_graz~scan1_2012_aug_29.h5"
+
+outdir = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D_Python/hotel_beijing~beijing_hotel_2"
+GTfile = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D_Python/hotel_beijing~beijing_hotel_2/GT_hotel_beijing~beijing_hotel_2.h5"
+
+# outdir = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D_Python/mit_32_pool~pool_1"
+# GTfile = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D_Python/mit_32_pool~pool_1/GT_mit_32_pool~pool_1.h5"
+
+# outdir = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D_Python/hotel_barcelona~scan1_2012_july_23"
+# GTfile = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D_Python/hotel_barcelona~scan1_2012_july_23/GT_hotel_barcelona~scan1_2012_july_23.h5"
+#
+# outdir = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D_Python/hotel_hkust~hk_hotel_1"
+# GTfile = "/media/kevin/SamsungT5_F/ThesisDATA/SUN3D_Python/hotel_hkust~hk_hotel_1/GT_hotel_hkust~hk_hotel_1.h5"
 
 ExhaustivePairInfile = ''
 cameras = ''

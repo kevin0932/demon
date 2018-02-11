@@ -94,12 +94,12 @@ weights_dir = '/home/kevin/anaconda_tensorflow_demon_ws/demon/weights'
 # outdir = '/home/kevin/ThesisDATA/person-hall/demon_prediction'
 # outdir = "/home/kevin/ThesisDATA/CVG_Datasets_3Dsymmetric/barcelona_Dataset/demon_prediction"
 # outdir = "/home/kevin/ThesisDATA/CVG_Datasets_3Dsymmetric/redmond_Dataset/demon_prediction"
-outdir = "/home/kevin/JohannesCode/ws1/demon_prediction"
+outdir = "/media/kevin/SamsungT5_F/ThesisDATA/southbuilding/demon_prediction"
 # outfile = '/home/kevin/ThesisDATA/gerrard-hall/demon_prediction/gerrard_hall_predictions.h5'
 # outfile = '/home/kevin/ThesisDATA/person-hall/demon_prediction/person_hall_predictions.h5'
 # outfile = "/home/kevin/ThesisDATA/CVG_Datasets_3Dsymmetric/barcelona_Dataset/demon_prediction/CVG_barcelona_predictions.h5"
 # outfile = "/home/kevin/ThesisDATA/CVG_Datasets_3Dsymmetric/redmond_Dataset/demon_prediction/CVG_redmond_predictions.h5"
-outfile = "/home/kevin/JohannesCode/ws1/demon_prediction/kevin_southbuilding_predictions_08012018.h5"
+outfile = os.path.join(outdir, "more_pairs_southbuilding_predictions_05022018.h5")
 
 
 outimagedir_small = os.path.join(outdir,'images_demon_small')
@@ -128,9 +128,9 @@ images = colmap.read_images_txt(os.path.join(recondir,'sparse','images.txt'))
 
 views = colmap.create_views(cameras, images, os.path.join(recondir,'images'), os.path.join(recondir,'stereo','depth_maps'))
 
-knn = 15 # 5
+knn = 25 # 5
 max_angle = 90*math.pi/180  # 60*math.pi/180
-min_overlap_ratio = 0.4     # 0.5
+min_overlap_ratio = 0.3     # 0.5
 w = 256
 h = 192
 normalized_intrinsics = np.array([0.89115971, 1.18821287, 0.5, 0.5],np.float32)
@@ -144,14 +144,16 @@ target_K[1,2] = h*normalized_intrinsics[3]
 # h_large = 8*h
 # w_large = 12.1*w
 # h_large = 12.05*h
+w_large = 12*w
+h_large = 12*h
 
 # w_large = 7.8125*w
 # h_large = 7.8125*h
 # #
 
-# # gerrard-hall, person-hall
-w_large = 7.8125*w
-h_large = 6.84896*h
+# # # gerrard-hall, person-hall
+# w_large = 7.8125*w
+# h_large = 6.84896*h
 
 # # # barcelona cvg
 # w_large = 7.8125*w
@@ -178,8 +180,8 @@ if True:
         # print("(tmp_views) = ", (tmp_views))
         new_v = adjust_intrinsics(tmp_views[0], target_K, w, h,)
         # print("type(new_v) = ", type(new_v))
-        # new_v_large = adjust_intrinsics(tmp_views[0], target_K_large, w_large, h_large,)
-        # new_v_large.image.save(os.path.join(outimagedir_large,image.name))
+        new_v_large = adjust_intrinsics(tmp_views[0], target_K_large, w_large, h_large,)
+        new_v_large.image.save(os.path.join(outimagedir_large,image.name))
         new_v.image.save(os.path.join(outimagedir_small,image.name))
         if not new_v is None:
             id_image_list.append((image_id,image))
