@@ -103,12 +103,14 @@ outdir = "/media/kevin/SamsungT5_F/ThesisDATA/southbuilding/other_sized_colmap_u
 outfile = os.path.join(outdir, "more_pairs_southbuilding_predictions_05022018.h5")
 
 
+outimagedir_6448 = os.path.join(outdir,'images_demon_6448')
 outimagedir_small = os.path.join(outdir,'images_demon_small')
 outimagedir_large = os.path.join(outdir,'images_demon')
 outimagedir_2 = os.path.join(outdir,'images_demon_2')
 outimagedir_4 = os.path.join(outdir,'images_demon_4')
 outimagedir_6 = os.path.join(outdir,'images_demon_6')
 os.makedirs(outdir, exist_ok=True)
+os.makedirs(outimagedir_6448, exist_ok=True)
 os.makedirs(outimagedir_small, exist_ok=True)
 os.makedirs(outimagedir_large, exist_ok=True)
 os.makedirs(outimagedir_2, exist_ok=True)
@@ -154,6 +156,8 @@ target_K[1,2] = h*normalized_intrinsics[3]
 w_large = 12*w
 h_large = 12*h
 
+w_6448 = 64
+h_6448 = 48
 w_2 = 2*w
 h_2 = 2*h
 w_4 = 4*w
@@ -200,6 +204,12 @@ target_K_6[1,1] = h_6*normalized_intrinsics[1]
 target_K_6[0,2] = w_6*normalized_intrinsics[2]
 target_K_6[1,2] = h_6*normalized_intrinsics[3]
 
+target_K_6448 = np.eye(3)
+target_K_6448[0,0] = w_6448*normalized_intrinsics[0]
+target_K_6448[1,1] = h_6448*normalized_intrinsics[1]
+target_K_6448[0,2] = w_6448*normalized_intrinsics[2]
+target_K_6448[1,2] = h_6448*normalized_intrinsics[3]
+
 if True:
     views = []
     id_image_list = []
@@ -212,14 +222,16 @@ if True:
         new_v = adjust_intrinsics(tmp_views[0], target_K, w, h,)
         # print("type(new_v) = ", type(new_v))
         new_v_large = adjust_intrinsics(tmp_views[0], target_K_large, w_large, h_large,)
-        new_v_large.image.save(os.path.join(outimagedir_large,image.name))
-        new_v.image.save(os.path.join(outimagedir_small,image.name))
-        new_v_2 = adjust_intrinsics(tmp_views[0], target_K_2, w_2, h_2,)
-        new_v_2.image.save(os.path.join(outimagedir_2,image.name))
-        new_v_4 = adjust_intrinsics(tmp_views[0], target_K_4, w_4, h_4,)
-        new_v_4.image.save(os.path.join(outimagedir_4,image.name))
-        new_v_6 = adjust_intrinsics(tmp_views[0], target_K_6, w_6, h_6,)
-        new_v_6.image.save(os.path.join(outimagedir_6,image.name))
+        # new_v_large.image.save(os.path.join(outimagedir_large,image.name))
+        # new_v.image.save(os.path.join(outimagedir_small,image.name))
+        new_v_6448 = adjust_intrinsics(tmp_views[0], target_K_6448, w_6448, h_6448,)
+        new_v_6448.image.save(os.path.join(outimagedir_6448,image.name))
+        # new_v_2 = adjust_intrinsics(tmp_views[0], target_K_2, w_2, h_2,)
+        # new_v_2.image.save(os.path.join(outimagedir_2,image.name))
+        # new_v_4 = adjust_intrinsics(tmp_views[0], target_K_4, w_4, h_4,)
+        # new_v_4.image.save(os.path.join(outimagedir_4,image.name))
+        # new_v_6 = adjust_intrinsics(tmp_views[0], target_K_6, w_6, h_6,)
+        # new_v_6.image.save(os.path.join(outimagedir_6,image.name))
         if not new_v is None:
             id_image_list.append((image_id,image))
             views.append(new_v)
