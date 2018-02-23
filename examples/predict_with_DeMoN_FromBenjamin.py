@@ -94,12 +94,18 @@ weights_dir = '/home/kevin/anaconda_tensorflow_demon_ws/demon/weights'
 # outdir = '/home/kevin/ThesisDATA/person-hall/demon_prediction'
 # outdir = "/home/kevin/ThesisDATA/CVG_Datasets_3Dsymmetric/barcelona_Dataset/demon_prediction"
 # outdir = "/home/kevin/ThesisDATA/CVG_Datasets_3Dsymmetric/redmond_Dataset/demon_prediction"
-outdir = "/media/kevin/SamsungT5_F/ThesisDATA/southbuilding/demon_prediction"
 # outfile = '/home/kevin/ThesisDATA/gerrard-hall/demon_prediction/gerrard_hall_predictions.h5'
 # outfile = '/home/kevin/ThesisDATA/person-hall/demon_prediction/person_hall_predictions.h5'
 # outfile = "/home/kevin/ThesisDATA/CVG_Datasets_3Dsymmetric/barcelona_Dataset/demon_prediction/CVG_barcelona_predictions.h5"
 # outfile = "/home/kevin/ThesisDATA/CVG_Datasets_3Dsymmetric/redmond_Dataset/demon_prediction/CVG_redmond_predictions.h5"
-outfile = os.path.join(outdir, "more_pairs_southbuilding_predictions_05022018.h5")
+
+# outdir = "/media/kevin/SamsungT5_F/ThesisDATA/southbuilding/demon_prediction"
+# outfile = os.path.join(outdir, "more_pairs_southbuilding_predictions_05022018.h5")
+# recondir = '/home/kevin/JohannesCode/ws1/dense/0/'
+
+recondir = '/home/kevin/ThesisDATA/gerrard-hall/dense/'
+outdir = "/media/kevin/SamsungT5_F/ThesisDATA/gerrard_hall/demon_prediction"
+outfile = os.path.join(outdir, "more_pairs_gerrard_hall_predictions_22022018.h5")
 
 
 outimagedir_small = os.path.join(outdir,'images_demon_small')
@@ -114,7 +120,6 @@ os.makedirs(os.path.join(outdir,'vizdepthmap'), exist_ok=True)
 
 
 # recondir = '/misc/lmbraid12/depthmotionnet/datasets/mvs_colmap/south-building/mvs/'
-recondir = '/home/kevin/JohannesCode/ws1/dense/0/'
 # recondir = '/home/kevin/ThesisDATA/ToyDataset_Desk/dense/'
 # recondir = '/home/kevin/ThesisDATA/gerrard-hall/dense/'
 # recondir = '/home/kevin/ThesisDATA/person-hall/dense/'
@@ -144,8 +149,11 @@ target_K[1,2] = h*normalized_intrinsics[3]
 # h_large = 8*h
 # w_large = 12.1*w
 # h_large = 12.05*h
-w_large = 12*w
-h_large = 12*h
+# w_large = 12*w
+# h_large = 12*h
+
+w_large = 2*w
+h_large = 2*h
 
 # w_large = 7.8125*w
 # h_large = 7.8125*h

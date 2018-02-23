@@ -483,13 +483,13 @@ def add_matches_withRt_OpticalFlow(connection, cursor, image_pair12, image_id1, 
 
     print("  => Cross-checked", matches.shape[0], "matches")
 
-    # #print(type(matches))
-    # matches = photometric_check(matches, max_photometric_error, img1PIL, img2PIL)
-    # #print("  => photo-checked", matches.size, "matches")
-    # print("  => photo-checked", matches.shape[0], "matches")
-    #
-    # if matches.size == 0:
-    #     return
+    #print(type(matches))
+    matches = photometric_check(matches, max_photometric_error, img1PIL, img2PIL)
+    #print("  => photo-checked", matches.size, "matches")
+    print("  => photo-checked", matches.shape[0], "matches")
+
+    if matches.size == 0:
+        return
 
     cursor.execute("INSERT INTO inlier_matches(pair_names, rows, cols, data, "
                    "config, image_id1, image_id2, rotation, translation, image_name1, image_name2) VALUES(?, ?, ?, ?, 3, ?, ?, ?, ?, ?, ?);",
@@ -515,17 +515,17 @@ def add_matches_OpticalFlow(connection, cursor, image_id1, image_id2,
     if matches.size == 0:
         return
 
-    # # matches = matches[::10].copy()
-    #
-    # #print("  => Cross-checked", matches.size, "matches")
-    #
-    # #print(type(matches))
-    # matches = photometric_check(matches, max_photometric_error, img1PIL, img2PIL)
-    # #print("  => photo-checked", matches.size, "matches")
-    # #print("  => photo-checked", matches.shape[0], "matches")
-    #
-    # if matches.size == 0:
-    #     return
+    # matches = matches[::10].copy()
+
+    #print("  => Cross-checked", matches.size, "matches")
+
+    #print(type(matches))
+    matches = photometric_check(matches, max_photometric_error, img1PIL, img2PIL)
+    #print("  => photo-checked", matches.size, "matches")
+    #print("  => photo-checked", matches.shape[0], "matches")
+
+    if matches.size == 0:
+        return
 
 
     cursor.execute("INSERT INTO inlier_matches(pair_id, rows, cols, data, "

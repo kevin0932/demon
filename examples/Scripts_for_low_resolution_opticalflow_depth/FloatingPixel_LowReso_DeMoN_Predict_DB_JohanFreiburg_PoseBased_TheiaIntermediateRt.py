@@ -304,7 +304,7 @@ def flow_to_matches(flow):
     coords2 = np.column_stack((x2, y2))[mask]
     return matches, coords1, coords2
 
-def flow_to_matches_float32Pixels_withDepthFiltering(flow, real_depth_map, distThreshold=5):
+def flow_to_matches_float32Pixels_withDepthFiltering(flow, real_depth_map, distThreshold=10000):
     fx = (flow[0] * flow.shape[2]).astype(np.float32)
     fy = (flow[1] * flow.shape[1]).astype(np.float32)
     fx_int = np.round(flow[0] * flow.shape[2]).astype(np.int)
@@ -529,6 +529,85 @@ def add_matches_withRt_photochecked(connection, cursor, image_pair12, image_id1,
 
     connection.commit()
 
+
+def PatchBased_NCC_photometric_check(matches, coords_12_1, coords_12_2, min_NCC_value, img1PIL, img2PIL, NCCThreshold=0.8, halfWindowSize=1):
+    matchesFiltered = []
+    coords_12_1_Filtered = []
+    coords_12_2_Filtered = []
+    ncols, nrows = img1PIL.size
+    img1Arr = np.array(img1PIL)
+    img2Arr = np.array(img2PIL)
+    # print("img1Arr.shape = ",img1Arr.shape)
+    for i in range(matches.shape[0]):
+        x1, y1 = recover_2D_coord_from_1D_idx(matches[i,0], nrows, ncols)
+        x2, y2 = recover_2D_coord_from_1D_idx(matches[i,1], nrows, ncols)
+
+        x1_lb = x1-halfWindowSize
+        if x1_lb<0:
+            # x1_lb = 0
+            continue
+        x1_ub = x1+halfWindowSize
+        if x1_ub>=ncols:
+            # x1_ub = ncols-1
+            continue
+        y1_lb = y1-halfWindowSize
+        if y1_lb<0:
+            # y1_lb = 0
+            continue
+        y1_ub = y1+halfWindowSize
+        if y1_ub>=nrows:
+            # y1_ub = nrows-1
+            continue
+        x2_lb = x2-halfWindowSize
+        if x2_lb<0:
+            # x2_lb = 0
+            continue
+        x2_ub = x2+halfWindowSize
+        if x2_ub>=ncols:
+            # x2_ub = ncols-1
+            continue
+        y2_lb = y2-halfWindowSize
+        if y2_lb<0:
+            # y2_lb = 0
+            continue
+        y2_ub = y2+halfWindowSize
+        if y2_ub>=nrows:
+            # y2_ub = nrows-1
+            continue
+
+        patch1 = img1Arr[y1_lb:y1_ub+1,x1_lb:x1_ub+1,:]
+        patch2 = img1Arr[y2_lb:y2_ub+1,x2_lb:x2_ub+1,:]
+        patch1 = np.reshape(patch1, [patch1.shape[0]*patch1.shape[1],patch1.shape[2]])
+        patch2 = np.reshape(patch2, [patch2.shape[0]*patch2.shape[1],patch2.shape[2]])
+        # print("patch1.shape = ",patch1.shape)
+        # print("patch2.shape = ",patch2.shape)
+        patch1_avg = np.mean(patch1, axis=0)
+        patch2_avg = np.mean(patch2, axis=0)
+        numPixels = patch1.shape[0]
+        # print("patch1_avg.shape = ",patch1_avg.shape)
+        # print("patch2_avg.shape = ",patch2_avg.shape)
+        avgMat1 = np.tile(patch1_avg, (numPixels,1))
+        avgMat2 = np.tile(patch2_avg, (numPixels,1))
+        # print("avgMat1.shape = ",avgMat1.shape)
+        # print("avgMat2.shape = ",avgMat2.shape)
+        tmpDotProductMat = np.dot((patch1-avgMat1), (patch2-avgMat2).T)
+        # print("tmpDotProductMat.shape = ",tmpDotProductMat.shape)
+        NCC = np.sum(tmpDotProductMat.diagonal())
+        # print(NCC)
+        tmpDotProductMat1 = np.dot((patch1-avgMat1), (patch1-avgMat1).T)
+        tmpDotProductMat2 = np.dot((patch2-avgMat2), (patch2-avgMat2).T)
+        NCC = NCC / math.sqrt(np.sum(tmpDotProductMat1.diagonal())*np.sum(tmpDotProductMat2.diagonal()))
+        # print(math.sqrt(np.sum(tmpDotProductMat1.diagonal())*np.sum(tmpDotProductMat2.diagonal())),"; ", NCC)
+        if NCC >= min_NCC_value:
+            matchesFiltered.append([matches[i,0], matches[i,1]])
+            coords_12_1_Filtered.append([coords_12_1[i,0], coords_12_1[i,1]])
+            coords_12_2_Filtered.append([coords_12_2[i,0], coords_12_2[i,1]])
+
+    matches_final = np.array(matchesFiltered)
+    coords_12_1_final = np.array(coords_12_1_Filtered)
+    coords_12_2_final = np.array(coords_12_2_Filtered)
+    return matches_final, coords_12_1_final, coords_12_2_final
+
 def add_matches_withRt_OpticalFlow(connection, cursor, image_pair12, image_id1, image_id2, image_name1, image_name2,
                 flow12, flow21, max_reproj_error, R_vec, t_vec, max_photometric_error, img1PIL, img2PIL, real_depth_map1, real_depth_map2):
     matches12, coords121, coords122 = flow_to_matches_float32Pixels_withDepthFiltering(flow12, real_depth_map1)
@@ -555,7 +634,7 @@ def add_matches_withRt_OpticalFlow(connection, cursor, image_pair12, image_id1, 
     print("  => Cross-checked", matches.shape[0], "matches")
 
     #print(type(matches))
-    matches = photometric_check(matches, max_photometric_error, img1PIL, img2PIL)
+    matches, coords_12_1, coords_12_2 = PatchBased_NCC_photometric_check(matches, coords_12_1, coords_12_2, max_photometric_error, img1PIL, img2PIL)
     #print("  => photo-checked", matches.size, "matches")
     print("  => photo-checked", matches.shape[0], "matches")
 
@@ -596,7 +675,7 @@ def add_matches_OpticalFlow(connection, cursor, image_id1, image_id2,
     #print("  => Cross-checked", matches.size, "matches")
 
     #print(type(matches))
-    matches = photometric_check(matches, max_photometric_error, img1PIL, img2PIL)
+    matches, coords_12_1, coords_12_2 = PatchBased_NCC_photometric_check(matches, coords_12_1, coords_12_2, max_photometric_error, img1PIL, img2PIL)
     #print("  => photo-checked", matches.size, "matches")
     #print("  => photo-checked", matches.shape[0], "matches")
 
@@ -1182,15 +1261,29 @@ def main():
         theia_R2 = global_poses_theia[image_name2].R_rotmat
         theia_C1 = global_poses_theia[image_name1].t_vec
         theia_C2 = global_poses_theia[image_name2].t_vec
-        R12_from_theia_motion_averaging = np.dot(theia_R2, theia_R1.T)
-        C12_from_theia_motion_averaging = np.dot(theia_R1, theia_C2)
-        t12_from_theia_motion_averaging = - np.dot(R12_from_theia_motion_averaging, C12_from_theia_motion_averaging)
-        R21_from_theia_motion_averaging = np.dot(theia_R1, theia_R2.T)
-        C21_from_theia_motion_averaging = np.dot(theia_R2, theia_C1)
-        t21_from_theia_motion_averaging = - np.dot(R21_from_theia_motion_averaging, C21_from_theia_motion_averaging)
+        # R12_from_theia_motion_averaging = np.dot(theia_R2, theia_R1.T)
+        # C12_from_theia_motion_averaging = np.dot(theia_R1, theia_C2)
+        # t12_from_theia_motion_averaging = - np.dot(R12_from_theia_motion_averaging, C12_from_theia_motion_averaging)
+        # R21_from_theia_motion_averaging = np.dot(theia_R1, theia_R2.T)
+        # C21_from_theia_motion_averaging = np.dot(theia_R2, theia_C1)
+        # t21_from_theia_motion_averaging = - np.dot(R21_from_theia_motion_averaging, C21_from_theia_motion_averaging)
+        Cam2World_T1 = np.eye(4)
+        Cam2World_T1[0:3,0:3] = theia_R1.T
+        Cam2World_T1[0:3,3] = theia_C1
+        Cam2World_T2 = np.eye(4)
+        Cam2World_T2[0:3,0:3] = theia_R2.T
+        Cam2World_T2[0:3,3] = theia_C2
+        World2Cam_T1 = np.linalg.inv(Cam2World_T1)
+        World2Cam_T2 = np.linalg.inv(Cam2World_T2)
+        Extrinsic_4by4_12 = np.dot(World2Cam_T2, np.linalg.inv(World2Cam_T1))
+        Extrinsic_4by4_21 = np.dot(World2Cam_T1, np.linalg.inv(World2Cam_T2))
+        R12_from_theia_motion_averaging = Extrinsic_4by4_12[0:3,0:3]
+        t12_from_theia_motion_averaging = Extrinsic_4by4_12[0:3,3]
+        R21_from_theia_motion_averaging = Extrinsic_4by4_21[0:3,0:3]
+        t21_from_theia_motion_averaging = Extrinsic_4by4_21[0:3,3]
         scale_from_theia_motion_averaging = np.linalg.norm(theia_C2-theia_C1)
         scale21_from_theia_motion_averaging = np.linalg.norm(theia_C1-theia_C2)
-
+        print("scale_from_theia_motion_averaging = , ", scale_from_theia_motion_averaging, "; scale21_from_theia_motion_averaging = ", scale21_from_theia_motion_averaging)
 
         img1PIL = view1Colmap.image
         #img1PIL.save(os.path.join(small_undistorted_images_dir, image_name1))
@@ -1233,7 +1326,8 @@ def main():
         # image_pair12_transVec = data[image_pair12]["translation"].value
         # image_pair21_transVec = data[image_pair21]["translation"].value
         image_pair12_transVec = t12_from_theia_motion_averaging
-        image_pair21_transVec = t12_from_theia_motion_averaging
+        image_pair21_transVec = t21_from_theia_motion_averaging
+        print("image_pair12_transVec = , ", image_pair12_transVec, "; image_pair21_transVec = ", image_pair21_transVec)
 
         # # qvec12 = relativePosesGT[imagePair_indexGT_12].qvec12
         # # qvec21 = relativePosesGT[imagePair_indexGT_21].qvec12

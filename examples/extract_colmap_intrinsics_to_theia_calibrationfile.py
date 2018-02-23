@@ -13,7 +13,8 @@ import cv2
 # recondir = '/home/kevin/ThesisDATA/person-hall/dense/'
 # recondir = "/home/kevin/ThesisDATA/CVG_Datasets_3Dsymmetric/barcelona_Dataset/dense/"
 # recondir = "/home/kevin/ThesisDATA/CVG_Datasets_3Dsymmetric/redmond_Dataset/dense/"
-recondir = '/media/kevin/SamsungT5_F/ThesisDATA/southbuilding/demon_prediction/images_demon/dense'
+# recondir = '/media/kevin/SamsungT5_F/ThesisDATA/southbuilding/demon_prediction/images_demon/dense'
+recondir = '/media/kevin/SamsungT5_F/ThesisDATA/gerrard_hall/demon_prediction/images_demon/dense'
 
 path = os.path.join(recondir,'sparse','theia_calibration_file.txt')
 

@@ -123,10 +123,9 @@ def parse_args():
     parser.add_argument("--relative_poses_Output_path", required=True)
     parser.add_argument("--images_path", required=True)
     parser.add_argument("--image_scale", type=float, default=12*4)
-    # parser.add_argument("--image_scale", type=float, default=1)
     parser.add_argument("--focal_length", type=float, default=228.13688/4)
     parser.add_argument("--max_reproj_error", type=float, default=1)
-    parser.add_argument("--max_photometric_error", type=float, default=1)
+    parser.add_argument("--max_photometric_error", type=float, default=10)
     args = parser.parse_args()
     return args
 
@@ -929,11 +928,9 @@ def main():
         correctionScaleColmap21 = computeCorrectionScale(data[image_pair21]['depth'].value, view1Colmap.depth, 60)
 
         img1PIL = view1Colmap.image
-        img1PIL.save(os.path.join(small_undistorted_images_dir, image_name1))
-        # img1PIL.show()
-        # return
+        #img1PIL.save(os.path.join(small_undistorted_images_dir, image_name1))
         img2PIL = view2Colmap.image
-        img2PIL.save(os.path.join(small_undistorted_images_dir, image_name2))
+        #img2PIL.save(os.path.join(small_undistorted_images_dir, image_name2))
         # imagepath1 = os.path.join(args.images_path, image_name1)
         # imagepath2 = os.path.join(args.images_path, image_name2)
         # img1PIL = PIL.Image.open(imagepath1)
@@ -977,31 +974,33 @@ def main():
         # image_pair21_transVec = relativePosesGT[imagePair_indexGT_21].tvec12
         scaled_depth_map1 = correctionScaleColmap12/data[image_pair12]["depth"]
         scaled_depth_map2 = correctionScaleColmap12/data[image_pair21]["depth"]
-        # # flow12 = flow_from_depth(data[image_pair12]["depth_upsampled"]/image_pair12_transScale,
-        # flow12 = flow_from_depth(data[image_pair12]["depth"]/correctionScaleColmap12,
-        flow12 = flow_from_depth(1/view1Colmap.depth,
-                                 #data[image_pair12]["rotation"],
-                                 #data[image_pair12]["translation"],
-                                 #(image_pair12_rotmat),
-                                 #(image_pair12_transVec),
-                                 image_pair12_rotmat,
-                                 # image_pair12_transVec*image_pair12_transScale,
-                                 # image_pair12_transVec*correctionScaleColmap12,
-                                 image_pair12_transVec,
-                                 args.focal_length)
+        flow12 = data[image_pair12]["flow"]
+        flow12 = np.transpose(flow12, [2, 0, 1])
+        # # flow12 = flow_from_depth(data[image_pair12]["depth"]/correctionScaleColmap12,
+        # flow12 = flow_from_depth(1/view1Colmap.depth,
+        #                          #data[image_pair12]["rotation"],
+        #                          #data[image_pair12]["translation"],
+        #                          #(image_pair12_rotmat),
+        #                          #(image_pair12_transVec),
+        #                          image_pair12_rotmat,
+        #                          # image_pair12_transVec*image_pair12_transScale,
+        #                          # image_pair12_transVec*correctionScaleColmap12,
+        #                          image_pair12_transVec,
+        #                          args.focal_length)
         print(flow12.shape)
-        # # flow21 = flow_from_depth(data[image_pair21]["depth_upsampled"]/image_pair21_transScale,
-        # flow21 = flow_from_depth(data[image_pair21]["depth"]/correctionScaleColmap21,
-        flow21 = flow_from_depth(1/view2Colmap.depth,
-                                 #data[image_pair21]["rotation"],
-                                 #data[image_pair21]["translation"],
-                                 #(image_pair21_rotmat),
-                                 #(image_pair21_transVec),
-                                 image_pair21_rotmat,
-                                 # image_pair21_transVec*image_pair21_transScale,
-                                 # image_pair21_transVec*correctionScaleColmap21,
-                                 image_pair21_transVec,
-                                 args.focal_length)
+        flow21 = data[image_pair21]["flow"]
+        flow21 = np.transpose(flow21, [2, 0, 1])
+        # # flow21 = flow_from_depth(data[image_pair21]["depth"]/correctionScaleColmap21,
+        # flow21 = flow_from_depth(1/view2Colmap.depth,
+        #                          #data[image_pair21]["rotation"],
+        #                          #data[image_pair21]["translation"],
+        #                          #(image_pair21_rotmat),
+        #                          #(image_pair21_transVec),
+        #                          image_pair21_rotmat,
+        #                          # image_pair21_transVec*image_pair21_transScale,
+        #                          # image_pair21_transVec*correctionScaleColmap21,
+        #                          image_pair21_transVec,
+        #                          args.focal_length)
         print(flow21.shape)
 
         eulerAnlges = mat2euler(image_pair12_rotmat)

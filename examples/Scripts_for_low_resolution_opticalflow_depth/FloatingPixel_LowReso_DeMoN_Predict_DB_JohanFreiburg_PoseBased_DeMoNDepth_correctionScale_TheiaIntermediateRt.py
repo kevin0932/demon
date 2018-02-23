@@ -304,7 +304,7 @@ def flow_to_matches(flow):
     coords2 = np.column_stack((x2, y2))[mask]
     return matches, coords1, coords2
 
-def flow_to_matches_float32Pixels_withDepthFiltering(flow, real_depth_map, flow12_diff, distThreshold=5, flowDiffThreshold=50000000000):
+def flow_to_matches_float32Pixels_withDepthFiltering(flow, real_depth_map, distThreshold=10000):
     fx = (flow[0] * flow.shape[2]).astype(np.float32)
     fy = (flow[1] * flow.shape[1]).astype(np.float32)
     fx_int = np.round(flow[0] * flow.shape[2]).astype(np.int)
@@ -316,12 +316,10 @@ def flow_to_matches_float32Pixels_withDepthFiltering(flow, real_depth_map, flow1
     y2_int = y1.ravel() + fy_int.ravel()
     real_depth_map = np.reshape(real_depth_map, [real_depth_map.shape[0]*real_depth_map.shape[1]])
     depthMask1D = real_depth_map < distThreshold
-    flow12_diff = np.reshape(flow12_diff, [flow12_diff.shape[0]*flow12_diff.shape[1]])
-    flowMask1D = flow12_diff < flowDiffThreshold
     # mask = (x2 >= 0) & (x2 < flow.shape[2]) & \
     #        (y2 >= 0) & (y2 < flow.shape[1]) & depthMask1D
     mask = (x2_int >= 0) & (x2_int < flow.shape[2]) & \
-           (y2_int >= 0) & (y2_int < flow.shape[1]) & depthMask1D & flowMask1D
+           (y2_int >= 0) & (y2_int < flow.shape[1]) & depthMask1D
     matches = np.zeros((mask.size, 2), dtype=np.uint32)
     matches[:, 0] = np.arange(mask.size)
     matches[:, 1] = y2_int * flow.shape[2] + x2_int
@@ -493,6 +491,43 @@ def photometric_check(matches, max_photometric_error, img1PIL, img2PIL):
     matches_final = np.array(matchesFiltered)
     return matches_final
 
+def add_matches_withRt_photochecked(connection, cursor, image_pair12, image_id1, image_id2, image_name1, image_name2,
+                flow12, flow21, max_reproj_error, R_vec, t_vec, max_photometric_error, img1PIL, img2PIL, real_depth_map1, real_depth_map2):
+    matches12, coords121, coords122 = flow_to_matches_float32Pixels_withDepthFiltering(flow12, real_depth_map1)
+    matches21, coords211, coords212 = flow_to_matches_float32Pixels_withDepthFiltering(flow21, real_depth_map2)
+    # matches12, coords121, coords122 = flow_to_matches_withDepthFiltering(flow12, real_depth_map1)
+    # matches21, coords211, coords212 = flow_to_matches_withDepthFiltering(flow21, real_depth_map2)
+    # # matches12, coords121, coords122 = flow_to_matches(flow12)
+    # # matches21, coords211, coords212 = flow_to_matches(flow21)
+
+    print("  => Found", matches12.size/2, "<->", matches21.size/2, "matches")
+
+    matches = cross_check_matches(matches12, coords121, coords122,
+                                  matches21, coords211, coords212,
+                                  max_reproj_error)
+
+    if matches.size == 0:
+        return
+
+    # matches = matches[::10].copy()
+
+    print("  => Cross-checked", matches.shape[0], "matches")
+
+    #print(type(matches))
+    matches = photometric_check(matches, max_photometric_error, img1PIL, img2PIL)
+    #print("  => photo-checked", matches.size, "matches")
+    print("  => photo-checked", matches.shape[0], "matches")
+
+    if matches.size == 0:
+        return
+
+    cursor.execute("INSERT INTO inlier_matches(pair_names, rows, cols, data, "
+                   "config, image_id1, image_id2, rotation, translation, image_name1, image_name2) VALUES(?, ?, ?, ?, 3, ?, ?, ?, ?, ?, ?);",
+                   (image_pair12,    #image_ids_to_pair_id(image_id1, image_id2),
+                    matches.shape[0], matches.shape[1],
+                    memoryview(matches), image_id1, image_id2, memoryview(R_vec), memoryview(t_vec), image_name1, image_name2))
+
+    connection.commit()
 
 def PatchBased_NCC_photometric_check(matches, coords_12_1, coords_12_2, min_NCC_value, img1PIL, img2PIL, NCCThreshold=0.8, halfWindowSize=1):
     matchesFiltered = []
@@ -572,48 +607,10 @@ def PatchBased_NCC_photometric_check(matches, coords_12_1, coords_12_2, min_NCC_
     coords_12_2_final = np.array(coords_12_2_Filtered)
     return matches_final, coords_12_1_final, coords_12_2_final
 
-def add_matches_withRt_photochecked(connection, cursor, image_pair12, image_id1, image_id2, image_name1, image_name2,
+def add_matches_withRt_OpticalFlow(connection, cursor, image_pair12, image_id1, image_id2, image_name1, image_name2,
                 flow12, flow21, max_reproj_error, R_vec, t_vec, max_photometric_error, img1PIL, img2PIL, real_depth_map1, real_depth_map2):
     matches12, coords121, coords122 = flow_to_matches_float32Pixels_withDepthFiltering(flow12, real_depth_map1)
     matches21, coords211, coords212 = flow_to_matches_float32Pixels_withDepthFiltering(flow21, real_depth_map2)
-    # matches12, coords121, coords122 = flow_to_matches_withDepthFiltering(flow12, real_depth_map1)
-    # matches21, coords211, coords212 = flow_to_matches_withDepthFiltering(flow21, real_depth_map2)
-    # # matches12, coords121, coords122 = flow_to_matches(flow12)
-    # # matches21, coords211, coords212 = flow_to_matches(flow21)
-
-    print("  => Found", matches12.size/2, "<->", matches21.size/2, "matches")
-
-    matches = cross_check_matches(matches12, coords121, coords122,
-                                  matches21, coords211, coords212,
-                                  max_reproj_error)
-
-    if matches.size == 0:
-        return
-
-    # matches = matches[::10].copy()
-
-    print("  => Cross-checked", matches.shape[0], "matches")
-
-    #print(type(matches))
-    matches = photometric_check(matches, max_photometric_error, img1PIL, img2PIL)
-    #print("  => photo-checked", matches.size, "matches")
-    print("  => photo-checked", matches.shape[0], "matches")
-
-    if matches.size == 0:
-        return
-
-    cursor.execute("INSERT INTO inlier_matches(pair_names, rows, cols, data, "
-                   "config, image_id1, image_id2, rotation, translation, image_name1, image_name2) VALUES(?, ?, ?, ?, 3, ?, ?, ?, ?, ?, ?);",
-                   (image_pair12,    #image_ids_to_pair_id(image_id1, image_id2),
-                    matches.shape[0], matches.shape[1],
-                    memoryview(matches), image_id1, image_id2, memoryview(R_vec), memoryview(t_vec), image_name1, image_name2))
-
-    connection.commit()
-
-def add_matches_withRt_OpticalFlow(connection, cursor, image_pair12, image_id1, image_id2, image_name1, image_name2,
-                flow12, flow21, max_reproj_error, R_vec, t_vec, max_photometric_error, img1PIL, img2PIL, real_depth_map1, real_depth_map2, flow12_diff, flow21_diff):
-    matches12, coords121, coords122 = flow_to_matches_float32Pixels_withDepthFiltering(flow12, real_depth_map1, flow12_diff,5,2)
-    matches21, coords211, coords212 = flow_to_matches_float32Pixels_withDepthFiltering(flow21, real_depth_map2, flow21_diff,5,2)
     # matches12, coords121, coords122 = flow_to_matches_withDepthFiltering(flow12, real_depth_map1)
     # matches21, coords211, coords212 = flow_to_matches_withDepthFiltering(flow21, real_depth_map2)
     # # matches12, coords121, coords122 = flow_to_matches(flow12)
@@ -653,9 +650,9 @@ def add_matches_withRt_OpticalFlow(connection, cursor, image_pair12, image_id1, 
     connection.commit()
 
 def add_matches_OpticalFlow(connection, cursor, image_id1, image_id2,
-                flow12, flow21, max_reproj_error, max_photometric_error, img1PIL, img2PIL, real_depth_map1, real_depth_map2, flow12_diff, flow21_diff):
-    matches12, coords121, coords122 = flow_to_matches_float32Pixels_withDepthFiltering(flow12, real_depth_map1, flow12_diff,5,2)
-    matches21, coords211, coords212 = flow_to_matches_float32Pixels_withDepthFiltering(flow21, real_depth_map2, flow21_diff,5,2)
+                flow12, flow21, max_reproj_error, max_photometric_error, img1PIL, img2PIL, real_depth_map1, real_depth_map2):
+    matches12, coords121, coords122 = flow_to_matches_float32Pixels_withDepthFiltering(flow12, real_depth_map1)
+    matches21, coords211, coords212 = flow_to_matches_float32Pixels_withDepthFiltering(flow21, real_depth_map2)
     # matches12, coords121, coords122 = flow_to_matches_withDepthFiltering(flow12, real_depth_map1)
     # matches21, coords211, coords212 = flow_to_matches_withDepthFiltering(flow21, real_depth_map2)
     # # matches12, coords121, coords122 = flow_to_matches(flow12)
@@ -976,6 +973,83 @@ def computeCorrectionScale(DeMoNPredictionInvDepth, GTDepth, DeMoNDepthThreshold
     correctionScale = np.exp(np.mean( (np.log(view1GTDepth) - np.log(DeMoNDepth)) ))
     return correctionScale
 
+ImagePairTheia = collections.namedtuple("ImagePair", ["id1", "name1", "id2", "name2", "R_rotmat", "R_angleaxis", "t_vec"])
+ImageTheia = collections.namedtuple("ImageTheia", ["id", "name", "R_rotmat", "R_angleaxis", "t_vec"])
+
+def read_relative_poses_theia_output(path, path_img_id_map):
+    image_id_name_pair = {}
+    with open(path_img_id_map, "r") as fid1:
+        while True:
+            line = fid1.readline()
+            if not line:
+                break
+            line = line.strip()
+            if len(line) > 0 and line[0] != "#":
+                elems = line.split()
+                image_id = int(elems[0])
+                image_name = (elems[1])
+                print("image_id = ", image_id, "; image_name = ", image_name)
+                image_id_name_pair[image_id] = image_name
+
+    image_pair_gt = {}
+    dummy_image_pair_id = 1
+    with open(path, "r") as fid:
+        while True:
+            line = fid.readline()
+            if not line:
+                break
+            line = line.strip()
+            if len(line) > 0 and line[0] != "#":
+                elems = line.split()
+                image_id1 = int(elems[1])
+                image_id2 = int(elems[3])
+                R_angleaxis = np.array(tuple(map(float, elems[8:11])), dtype=np.float64)
+                t_vec = np.array(tuple(map(float, elems[13:16])), dtype=np.float64)
+                R_rotmat = np.array(tuple(map(float, elems[17:26])), dtype=np.float64)
+                R_rotmat = np.reshape(R_rotmat, [3,3])
+                # image_pair_gt[dummy_image_pair_id] = ImagePairTheia(id1=image_id1, name1=image_id_name_pair[image_id1], id2=image_id2, name2=image_id_name_pair[image_id2], R_rotmat=R_rotmat, R_angleaxis=R_angleaxis, t_vec=t_vec)
+                pair_name = image_id_name_pair[image_id1]+"---"+image_id_name_pair[image_id2]
+                image_pair_gt[pair_name] = ImagePairTheia(id1=image_id1, name1=image_id_name_pair[image_id1], id2=image_id2, name2=image_id_name_pair[image_id2], R_rotmat=R_rotmat, R_angleaxis=R_angleaxis, t_vec=t_vec)
+                dummy_image_pair_id += 1
+
+    print("total num of input pairs = ", dummy_image_pair_id-1)
+    return image_pair_gt
+
+def read_global_poses_theia_output(path, path_img_id_map):
+    image_id_name_pair = {}
+    with open(path_img_id_map, "r") as fid1:
+        while True:
+            line = fid1.readline()
+            if not line:
+                break
+            line = line.strip()
+            if len(line) > 0 and line[0] != "#":
+                elems = line.split()
+                image_id = int(elems[0])
+                image_name = (elems[1])
+                print("image_id = ", image_id, "; image_name = ", image_name)
+                image_id_name_pair[image_id] = image_name
+
+    image_gt = {}
+    dummy_image_pair_id = 1
+    with open(path, "r") as fid:
+        while True:
+            line = fid.readline()
+            if not line:
+                break
+            line = line.strip()
+            if len(line) > 0 and line[0] != "#":
+                elems = line.split()
+                image_id = int(elems[0])
+                R_angleaxis = np.array(tuple(map(float, elems[1:4])), dtype=np.float64)
+                t_vec = np.array(tuple(map(float, elems[4:7])), dtype=np.float64)
+                R_rotmat = angleaxis_to_rotation_matrix(R_angleaxis)
+                image_gt[image_id_name_pair[image_id]] = ImageTheia(id=image_id, name=image_id_name_pair[image_id], R_rotmat=R_rotmat, R_angleaxis=R_angleaxis, t_vec=t_vec)
+                dummy_image_pair_id += 1
+
+    print("total num of input pairs = ", dummy_image_pair_id-1)
+    return image_gt
+
 def main():
 
     w = 64
@@ -1029,8 +1103,14 @@ def main():
     GTfilepath = '/home/kevin/JohannesCode/southbuilding_RtAngleAxis_groundtruth_from_colmap.txt'
     imagesGT = read_images_text(GTfilepath)
 
-    # relativePoses_GTfilepath = '/home/kevin/JohannesCode/ws1/sparse/0/textfiles_RelativePoses/relative_poses.txt'
-    # relativePosesGT = read_relative_poses_text(relativePoses_GTfilepath)
+    # theia_relativeposes_from_globalposes_GTfilepath = '/media/kevin/SamsungT5_F/ThesisDATA/southbuilding/other_sized_colmap_undistorted_images/images_demon_2/TheiaReconstructionFromDeMoN/fromImages/theia_intermediate_result_from_PoseBased_Johan_3_5/RelativePoses_after_step7_global_position_estimation.txt'
+    # theia_id_name_filepath = '/media/kevin/SamsungT5_F/ThesisDATA/southbuilding/other_sized_colmap_undistorted_images/images_demon_2/TheiaReconstructionFromDeMoN/fromImages/theia_intermediate_result_from_PoseBased_Johan_3_5/viewid_imagename_pairs_file.txt'
+    # relative_poses_theia = read_relative_poses_theia_output(theia_relativeposes_from_globalposes_GTfilepath,theia_id_name_filepath)
+
+    theia_intermediate_globalposes_GTfilepath = '/media/kevin/SamsungT5_F/ThesisDATA/southbuilding/other_sized_colmap_undistorted_images/images_demon_2/TheiaReconstructionFromDeMoN/fromImages/theia_intermediate_result_from_PoseBased_Johan_3_5/after_step7_global_position_estimation.txt'
+    theia_id_name_filepath = '/media/kevin/SamsungT5_F/ThesisDATA/southbuilding/other_sized_colmap_undistorted_images/images_demon_2/TheiaReconstructionFromDeMoN/fromImages/theia_intermediate_result_from_PoseBased_Johan_3_5/viewid_imagename_pairs_file.txt'
+    global_poses_theia = read_global_poses_theia_output(theia_intermediate_globalposes_GTfilepath,theia_id_name_filepath)
+
 
     # relativePoses_outputGTfilepath = '/home/kevin/JohannesCode/southbuilding_RelativePoses_Quaternion_AngleAxis_groundtruth_from_colmap.txt'
     relativePoses_outputGTfilepath = args.relative_poses_Output_path
@@ -1158,6 +1238,52 @@ def main():
         correctionScaleColmap12 = computeCorrectionScale(data[image_pair12]['depth'].value, view1Colmap.depth, 60)
         correctionScaleColmap21 = computeCorrectionScale(data[image_pair21]['depth'].value, view1Colmap.depth, 60)
 
+        # if image_pair12 not in relative_poses_theia.keys():
+        #     continue
+        # scale_from_theia_motion_averaging = np.linalg.norm(relative_poses_theia[image_pair12].t_vec)
+        # R12_from_theia_motion_averaging = (relative_poses_theia[image_pair12].R_rotmat)
+        # C12_from_theia_motion_averaging = (relative_poses_theia[image_pair12].t_vec)
+        # t12_from_theia_motion_averaging = - np.dot(R12_from_theia_motion_averaging, C12_from_theia_motion_averaging)
+        #
+        # if image_pair21 not in relative_poses_theia.keys():
+        #     continue
+        # scale21_from_theia_motion_averaging = np.linalg.norm(relative_poses_theia[image_pair21].t_vec)
+        # R21_from_theia_motion_averaging = (relative_poses_theia[image_pair21].R_rotmat)
+        # C21_from_theia_motion_averaging = (relative_poses_theia[image_pair21].t_vec)
+        # t21_from_theia_motion_averaging = - np.dot(R21_from_theia_motion_averaging, C21_from_theia_motion_averaging)
+
+        if image_name1 not in global_poses_theia.keys():
+            continue
+        if image_name2 not in global_poses_theia.keys():
+            continue
+        theia_R1 = global_poses_theia[image_name1].R_rotmat
+        theia_R2 = global_poses_theia[image_name2].R_rotmat
+        theia_C1 = global_poses_theia[image_name1].t_vec
+        theia_C2 = global_poses_theia[image_name2].t_vec
+        # R12_from_theia_motion_averaging = np.dot(theia_R2, theia_R1.T)
+        # C12_from_theia_motion_averaging = np.dot(theia_R1, theia_C2)
+        # t12_from_theia_motion_averaging = - np.dot(R12_from_theia_motion_averaging, C12_from_theia_motion_averaging)
+        # R21_from_theia_motion_averaging = np.dot(theia_R1, theia_R2.T)
+        # C21_from_theia_motion_averaging = np.dot(theia_R2, theia_C1)
+        # t21_from_theia_motion_averaging = - np.dot(R21_from_theia_motion_averaging, C21_from_theia_motion_averaging)
+        Cam2World_T1 = np.eye(4)
+        Cam2World_T1[0:3,0:3] = theia_R1.T
+        Cam2World_T1[0:3,3] = theia_C1
+        Cam2World_T2 = np.eye(4)
+        Cam2World_T2[0:3,0:3] = theia_R2.T
+        Cam2World_T2[0:3,3] = theia_C2
+        World2Cam_T1 = np.linalg.inv(Cam2World_T1)
+        World2Cam_T2 = np.linalg.inv(Cam2World_T2)
+        Extrinsic_4by4_12 = np.dot(World2Cam_T2, np.linalg.inv(World2Cam_T1))
+        Extrinsic_4by4_21 = np.dot(World2Cam_T1, np.linalg.inv(World2Cam_T2))
+        R12_from_theia_motion_averaging = Extrinsic_4by4_12[0:3,0:3]
+        t12_from_theia_motion_averaging = Extrinsic_4by4_12[0:3,3]
+        R21_from_theia_motion_averaging = Extrinsic_4by4_21[0:3,0:3]
+        t21_from_theia_motion_averaging = Extrinsic_4by4_21[0:3,3]
+        scale_from_theia_motion_averaging = np.linalg.norm(theia_C2-theia_C1)
+        scale21_from_theia_motion_averaging = np.linalg.norm(theia_C1-theia_C2)
+        print("scale_from_theia_motion_averaging = , ", scale_from_theia_motion_averaging, "; scale21_from_theia_motion_averaging = ", scale21_from_theia_motion_averaging)
+
         img1PIL = view1Colmap.image
         #img1PIL.save(os.path.join(small_undistorted_images_dir, image_name1))
         img2PIL = view2Colmap.image
@@ -1170,72 +1296,80 @@ def main():
         # return
         # check quaternion to rotation matrix conversion
 
-        # # # calculate relative poses according to the mechanism in twoview_info.h by TheiaSfM
-        # # # The relative rotation of camera2 is: R_12 = R2 * R1^t.
-        # # image_pair12_rotmatGT = np.dot(img2rotmat, img1rotmat.T)
-        # # image_pair21_rotmatGT = np.dot(img1rotmat, img2rotmat.T)
-        # image_pair12_rotmat = np.dot(view2Colmap.R, view1Colmap.R.T)
-        # image_pair21_rotmat = np.dot(view1Colmap.R, view2Colmap.R.T)
-        image_pair12_rotmat = data[image_pair12]["rotation"].value
-        image_pair21_rotmat = data[image_pair21]["rotation"].value
+        # # # # calculate relative poses according to the mechanism in twoview_info.h by TheiaSfM
+        # # # # The relative rotation of camera2 is: R_12 = R2 * R1^t.
+        # # # image_pair12_rotmatGT = np.dot(img2rotmat, img1rotmat.T)
+        # # # image_pair21_rotmatGT = np.dot(img1rotmat, img2rotmat.T)
+        # # image_pair12_rotmat = np.dot(view2Colmap.R, view1Colmap.R.T)
+        # # image_pair21_rotmat = np.dot(view1Colmap.R, view2Colmap.R.T)
+        # image_pair12_rotmat = data[image_pair12]["rotation"].value
+        # image_pair21_rotmat = data[image_pair21]["rotation"].value
+        image_pair12_rotmat = R12_from_theia_motion_averaging
+        image_pair21_rotmat = R21_from_theia_motion_averaging
 
-        # # # # Compute the position of camera 2 in the coordinate system of camera 1 using
-        # # # # the standard projection equation:
-        # # # #     X' = R * (X - c)
-        # # # # which yields:
-        # # # #     c2' = R1 * (c2 - c1).
-        # # image_pair12_transScale = np.linalg.norm(np.dot(img1rotmat, (img2tvec-img1tvec)))
-        # # image_pair21_transScale = np.linalg.norm(np.dot(img2rotmat, (img1tvec-img2tvec)))
-        # # # image_pair12_transScale = np.linalg.norm(-np.dot(img2rotmat.T, img2tvec) + np.dot(img1rotmat.T, img1tvec))
-        # # # image_pair21_transScale = np.linalg.norm(-np.dot(img1rotmat.T, img1tvec) + np.dot(img2rotmat.T, img2tvec))
-        # # print(image_pair12_transScale, " ", image_pair21_transScale)
-        # # if image_pair12_transScale!=image_pair21_transScale:
-        # #     print("GT scale computation is wrong!")
-        # #     return
-        # image_pair12_transVec = -np.dot(np.dot(view2Colmap.R, view1Colmap.R.T), np.dot(view1Colmap.R, (-np.dot(view2Colmap.R.T, view2Colmap.t) + np.dot(view1Colmap.R.T, view1Colmap.t))) )
-        # image_pair21_transVec = -np.dot(np.dot(view1Colmap.R, view2Colmap.R.T), np.dot(view2Colmap.R, (-np.dot(view1Colmap.R.T, view1Colmap.t) + np.dot(view2Colmap.R.T, view2Colmap.t))) )
-        image_pair12_transVec = data[image_pair12]["translation"].value
-        image_pair21_transVec = data[image_pair21]["translation"].value
+        # # # # # Compute the position of camera 2 in the coordinate system of camera 1 using
+        # # # # # the standard projection equation:
+        # # # # #     X' = R * (X - c)
+        # # # # # which yields:
+        # # # # #     c2' = R1 * (c2 - c1).
+        # # # image_pair12_transScale = np.linalg.norm(np.dot(img1rotmat, (img2tvec-img1tvec)))
+        # # # image_pair21_transScale = np.linalg.norm(np.dot(img2rotmat, (img1tvec-img2tvec)))
+        # # # # image_pair12_transScale = np.linalg.norm(-np.dot(img2rotmat.T, img2tvec) + np.dot(img1rotmat.T, img1tvec))
+        # # # # image_pair21_transScale = np.linalg.norm(-np.dot(img1rotmat.T, img1tvec) + np.dot(img2rotmat.T, img2tvec))
+        # # # print(image_pair12_transScale, " ", image_pair21_transScale)
+        # # # if image_pair12_transScale!=image_pair21_transScale:
+        # # #     print("GT scale computation is wrong!")
+        # # #     return
+        # # image_pair12_transVec = -np.dot(np.dot(view2Colmap.R, view1Colmap.R.T), np.dot(view1Colmap.R, (-np.dot(view2Colmap.R.T, view2Colmap.t) + np.dot(view1Colmap.R.T, view1Colmap.t))) )
+        # # image_pair21_transVec = -np.dot(np.dot(view1Colmap.R, view2Colmap.R.T), np.dot(view2Colmap.R, (-np.dot(view1Colmap.R.T, view1Colmap.t) + np.dot(view2Colmap.R.T, view2Colmap.t))) )
+        # image_pair12_transVec = data[image_pair12]["translation"].value
+        # image_pair21_transVec = data[image_pair21]["translation"].value
+        image_pair12_transVec = (t12_from_theia_motion_averaging/np.linalg.norm(t12_from_theia_motion_averaging))*correctionScaleColmap12
+        image_pair21_transVec = (t21_from_theia_motion_averaging/np.linalg.norm(t21_from_theia_motion_averaging))*correctionScaleColmap21
+        print("image_pair12_transVec = , ", image_pair12_transVec, "; image_pair21_transVec = ", image_pair21_transVec)
 
-        # qvec12 = relativePosesGT[imagePair_indexGT_12].qvec12
-        # qvec21 = relativePosesGT[imagePair_indexGT_21].qvec12
-        # image_pair12_rotmat = quaternion2RotMat(qvec12[0], qvec12[1], qvec12[2], qvec12[3])
-        # image_pair21_rotmat = quaternion2RotMat(qvec21[0], qvec21[1], qvec21[2], qvec21[3])
-        # image_pair12_transVec = relativePosesGT[imagePair_indexGT_12].tvec12
-        # image_pair21_transVec = relativePosesGT[imagePair_indexGT_21].tvec12
-        scaled_depth_map1 = correctionScaleColmap12/data[image_pair12]["depth"]
-        scaled_depth_map2 = correctionScaleColmap21/data[image_pair21]["depth"]
-        flow12 = data[image_pair12]["flow"]
-        flow12 = np.transpose(flow12, [2, 0, 1])
+        # # qvec12 = relativePosesGT[imagePair_indexGT_12].qvec12
+        # # qvec21 = relativePosesGT[imagePair_indexGT_21].qvec12
+        # # image_pair12_rotmat = quaternion2RotMat(qvec12[0], qvec12[1], qvec12[2], qvec12[3])
+        # # image_pair21_rotmat = quaternion2RotMat(qvec21[0], qvec21[1], qvec21[2], qvec21[3])
+        # # image_pair12_transVec = relativePosesGT[imagePair_indexGT_12].tvec12
+        # # image_pair21_transVec = relativePosesGT[imagePair_indexGT_21].tvec12
+        # scaled_depth_map1 = correctionScaleColmap12/data[image_pair12]["depth"]
+        # scaled_depth_map2 = correctionScaleColmap21/data[image_pair21]["depth"]
+        # scaled_depth_map1 = scale_from_theia_motion_averaging/data[image_pair12]["depth"]
+        # scaled_depth_map2 = scale_from_theia_motion_averaging/data[image_pair21]["depth"]
+        # scaled_depth_map1 = scale_from_theia_motion_averaging/data[image_pair12]["depth"].value
+        # scaled_depth_map2 = scale_from_theia_motion_averaging/data[image_pair21]["depth"].value
+        scaled_depth_map1 = correctionScaleColmap12/data[image_pair12]["depth"].value
+        scaled_depth_map2 = correctionScaleColmap21/data[image_pair21]["depth"].value
 
-        flow12_from_depth_Rt = flow_from_depth(1/scaled_depth_map1,
+        # flow12 = data[image_pair12]["flow"]
+        # flow12 = np.transpose(flow12, [2, 0, 1])
+        # flow12 = flow_from_depth(data[image_pair12]["depth"]/correctionScaleColmap12,
+        flow12 = flow_from_depth(1/scaled_depth_map1,
                                  #data[image_pair12]["rotation"],
                                  #data[image_pair12]["translation"],
                                  #(image_pair12_rotmat),
                                  #(image_pair12_transVec),
                                  image_pair12_rotmat,
                                  # image_pair12_transVec*image_pair12_transScale,
-                                 image_pair12_transVec*correctionScaleColmap12,
-                                 # image_pair12_transVec,
+                                 # image_pair12_transVec*correctionScaleColmap12,
+                                 image_pair12_transVec,
                                  args.focal_length)
-        flow12_diff = np.linalg.norm((flow12_from_depth_Rt - flow12),axis=0)
-        print("flow12_diff.shape = ", flow12_diff.shape)
         print(flow12.shape)
-        flow21 = data[image_pair21]["flow"]
-        flow21 = np.transpose(flow21, [2, 0, 1])
-
-        flow21_from_depth_Rt = flow_from_depth(1/scaled_depth_map2,
+        # flow21 = data[image_pair21]["flow"]
+        # flow21 = np.transpose(flow21, [2, 0, 1])
+        # flow21 = flow_from_depth(data[image_pair21]["depth"]/correctionScaleColmap21,
+        flow21 = flow_from_depth(1/scaled_depth_map2,
                                  #data[image_pair21]["rotation"],
                                  #data[image_pair21]["translation"],
                                  #(image_pair21_rotmat),
                                  #(image_pair21_transVec),
                                  image_pair21_rotmat,
                                  # image_pair21_transVec*image_pair21_transScale,
-                                 image_pair21_transVec*correctionScaleColmap21,
-                                 # image_pair21_transVec,
+                                 # image_pair21_transVec*correctionScaleColmap21,
+                                 image_pair21_transVec,
                                  args.focal_length)
-        flow21_diff = np.linalg.norm((flow21_from_depth_Rt - flow21),axis=0)
-        print("flow21_diff.shape = ", flow21_diff.shape)
         print(flow21.shape)
 
         eulerAnlges = mat2euler(image_pair12_rotmat)
@@ -1252,8 +1386,8 @@ def main():
         # #add_matches(connectionNoRt, cursorNoRt, images[image_name1], images[image_name2], flow12, flow21, args.max_reproj_error)
         # add_matches_withRt_photochecked(connection, cursor, images[image_name1], images[image_name2], image_name1, image_name2, flow12, flow21, args.max_reproj_error, R_angleaxis, t_Vec_npfloat32, args.max_photometric_error, img1PIL, img2PIL)
         # add_matches_photochecked(connectionNoRt, cursorNoRt, images[image_name1], images[image_name2], flow12, flow21, args.max_reproj_error, args.max_photometric_error, img1PIL, img2PIL)
-        add_matches_withRt_OpticalFlow(connection, cursor, image_pair12, image_indexGT_from_name1, image_indexGT_from_name2, image_name1, image_name2, flow12, flow21, args.max_reproj_error, R_angleaxis, t_Vec_npfloat32, args.max_photometric_error, img1PIL, img2PIL, scaled_depth_map1, scaled_depth_map2, flow12_diff, flow21_diff)
-        add_matches_OpticalFlow(connectionNoRt, cursorNoRt, image_indexGT_from_name1, image_indexGT_from_name2, flow12, flow21, args.max_reproj_error, args.max_photometric_error, img1PIL, img2PIL, scaled_depth_map1, scaled_depth_map2, flow12_diff, flow21_diff)
+        add_matches_withRt_OpticalFlow(connection, cursor, image_pair12, image_indexGT_from_name1, image_indexGT_from_name2, image_name1, image_name2, flow12, flow21, args.max_reproj_error, R_angleaxis, t_Vec_npfloat32, args.max_photometric_error, img1PIL, img2PIL, scaled_depth_map1, scaled_depth_map2)
+        add_matches_OpticalFlow(connectionNoRt, cursorNoRt, image_indexGT_from_name1, image_indexGT_from_name2, flow12, flow21, args.max_reproj_error, args.max_photometric_error, img1PIL, img2PIL, scaled_depth_map1, scaled_depth_map2)
 
         relativePoses_outputGTfile.write("%s %s %s %s %s %s %s %f %f %f %f %f %f\n" % (image_pair12, image_indexGT_from_name1, images[image_name1], image_name1, image_indexGT_from_name2, images[image_name2], image_name2, t_Vec_npfloat32[0], t_Vec_npfloat32[1], t_Vec_npfloat32[2], R_angleaxis[0], R_angleaxis[1], R_angleaxis[2]))
 
@@ -1263,7 +1397,7 @@ def main():
         R_angleaxis = recov_angle_axis_result[0]*(recov_angle_axis_result[1])
         R_angleaxis = np.array(R_angleaxis, dtype=np.float32)
         t_Vec_npfloat32 = np.array(-np.dot(image_pair21_rotmat.T,image_pair21_transVec), dtype=np.float32)
-        add_matches_withRt_OpticalFlow(connection, cursor, image_pair21, image_indexGT_from_name2, image_indexGT_from_name1, image_name2, image_name1, flow21, flow12, args.max_reproj_error, R_angleaxis, t_Vec_npfloat32, args.max_photometric_error, img2PIL, img1PIL, scaled_depth_map2, scaled_depth_map1, flow12_diff, flow21_diff)
+        add_matches_withRt_OpticalFlow(connection, cursor, image_pair21, image_indexGT_from_name2, image_indexGT_from_name1, image_name2, image_name1, flow21, flow12, args.max_reproj_error, R_angleaxis, t_Vec_npfloat32, args.max_photometric_error, img2PIL, img1PIL, scaled_depth_map2, scaled_depth_map1)
         # add_matches_photochecked(connectionNoRt, cursorNoRt, image_indexGT_from_name2, image_indexGT_from_name1, flow21, flow12, args.max_reproj_error, args.max_photometric_error, img2PIL, img1PIL, scaled_depth_map2, scaled_depth_map1)
 
     relativePoses_outputGTfile.close()
