@@ -37,6 +37,7 @@ def parse_args():
     parser.add_argument("--scale_factor", type=int, default=24)
     parser.add_argument("--min_num_features", type=int, default=1)
     parser.add_argument("--ratio_threshold", type=float, default=0.75)
+    parser.add_argument("--max_descriptor_distance", type=float, default=1.00)
     args = parser.parse_args()
     return args
 
@@ -100,6 +101,49 @@ def get_tf_data_format():
         data_format='channels_last'
 
     return data_format
+
+def cross_check_matches_float32Pixel(matches12, coords121, coords122,
+                        matches21, coords211, coords212,
+                        max_reproj_error):
+    if matches12.size == 0 or matches21.size == 0:
+        return np.zeros((0, 2), dtype=np.uint32)
+
+    matches121 = collections.defaultdict(list)
+    # coord_12_1_by_idx2 = collections.defaultdict(list)
+    # for match, coord in zip(matches12, coords121):
+    #     matches121[match[1]].append((match[0], coord))
+    for match, coord, coord2 in zip(matches12, coords121, coords122):
+        matches121[match[1]].append((match[0], coord, coord2))
+        # coord_12_1_by_idx2[match[1]].append(coord)
+
+    max_reproj_error = max_reproj_error**2
+
+    matches = []
+    float32_coords_1 = []
+    float32_coords_2 = []
+    for match, coord, coord1 in zip(matches21, coords212, coords211):
+        if match[0] not in matches121:
+            continue
+        match121 = matches121[match[0]]
+        coord_12_2 = match121[0][2]
+        coord_12_1 = match121[0][1]
+        coord_21_2 = coord1
+        coord_21_1 = coord
+        if len(match121) > 1:
+            continue
+        # if match121[0][0] == match[1]:
+        #     matches.append((match[1], match[0]))
+        diff = match121[0][1] - coord
+        if diff[0] * diff[0] + diff[1] * diff[1] <= max_reproj_error:
+            matches.append((match[1], match[0]))
+            float32_coords_1.append( coord_12_1 )
+            float32_coords_2.append( coord_12_2 )
+            matches.append((match[1], match[0]))
+            float32_coords_1.append( coord_21_1 )
+            float32_coords_2.append( coord_21_2 )
+
+    return np.array(matches, dtype=np.uint32), np.array(float32_coords_1, dtype=np.float32), np.array(float32_coords_2, dtype=np.float32)
+
 
 def main():
     # data_format = get_tf_data_format()
@@ -200,7 +244,7 @@ def main():
     data = h5py.File(args.demon_path)
 
     image_pairs = set()
-    with open(os.path.join(args.output_path, 'test_match_guide.txt'), "w") as fid:
+    with open(os.path.join(args.output_path, 'test_quantization_map_full_only_image_pairs.txt'), "w") as fid:
         for image_name1 in features_list.keys():
             for image_name2 in features_list.keys():
                 if image_name1 == image_name2:
@@ -215,12 +259,11 @@ def main():
 
                 fid.write("%s %s\n" % (image_name1, image_name2))
 
-                # image_pair21 = "{}---{}".format(image_name2, image_name1)
+                image_pair21 = "{}---{}".format(image_name2, image_name1)
                 image_pairs.add(image_pair12)
                 # image_pairs.add(image_pair21)
-
-                # if image_pair21 not in data:
-                #     continue
+                if image_pair21 not in data.keys():
+                    continue
 
                 # img1PIL = view1Colmap.image
                 # #img1PIL.save(os.path.join(small_undistorted_images_dir, image_name1))
@@ -236,47 +279,72 @@ def main():
                 flow12 = data[image_pair12]["flow"]
                 # flow12 = np.transpose(flow12, [2, 0, 1])
                 # print(flow12.shape)
-                # flow21 = data[image_pair21]["flow"]
+
+                flow21 = data[image_pair21]["flow"]
                 # flow21 = np.transpose(flow21, [2, 0, 1])
                 # print(flow21.shape)
 
                 matches12, coords121, coords122 = flow_to_matches_float32Pixels(flow12)
+
+                # guide_mapping_dict = {}
+                # for i in range(matches12.shape[0]):
+                #     guide_mapping_dict[matches12[i,0]] = matches12[i,1]
+                #     fid.write("%s %s\n" % (matches12[i,0], matches12[i,1]))
+
+                matches21, coords211, coords212 = flow_to_matches_float32Pixels(flow21)
+
+                print("  => Found", matches12.size/2, "<->", matches21.size/2, "matches")
+                if  matches12.size/2 <= 0 or matches21.size/2 <= 0:
+                    continue
+
+                matches, coords_12_1, coords_12_2 = cross_check_matches_float32Pixel(matches12, coords121, coords122,
+                                              matches21, coords211, coords212,
+                                              1.0)
+                                              # max_reproj_error)
+                print("matches.shape = ", matches.shape, "; ", "coords_12_1.shape = ", coords_12_1.shape, "coords_12_2.shape = ", coords_12_2.shape)
+
+                if matches.size == 0:
+                    continue
+                print("  => Cross-checked", matches.shape[0], "matches")
+
+                # matches, coords_12_1, coords_12_2 = PatchBased_NCC_photometric_check(matches, coords_12_1, coords_12_2, max_photometric_error, img1PIL, img2PIL)
+                # print("  => photo-checked", matches.shape[0], "matches")
+                # if matches.size == 0:
+                #     continue
+
                 guide_mapping_dict = {}
-                for i in range(matches12.shape[0]):
-                    guide_mapping_dict[matches12[i,0]] = matches12[i,1]
+                for i in range(matches.shape[0]):
+                    guide_mapping_dict[matches[i,0]] = matches[i,1]
+                    fid.write("%s %s\n" % (matches[i,0], matches[i,1]))
 
-                features1 = features_list[image_name1]
-                features2 = features_list[image_name2]
-                descriptors1 = descriptors_list[image_name1]
-                descriptors2 = descriptors_list[image_name2]
-                quantization_ids1 = quantization_list[image_name1]
-                quantization_ids2 = quantization_list[image_name2]
-                matched_ids2 = np.arange(features2.shape[0])
-                for id1 in range(features1.shape[0]):
-                    # print("image 1's feature ", id1, " / ", features1.shape[0])
-                    if quantization_ids1[id1] not in guide_mapping_dict.keys():
-                        continue
-                    search_space_quantization_id = guide_mapping_dict[quantization_ids1[id1]]
-                    search_mask1d = (quantization_ids2==search_space_quantization_id)
-                    if sum(search_mask1d)<=1:
-                        continue
-                    search_ids = quantization_ids2[search_mask1d]
-                    queryDescriptor = descriptors1[id1, :]
-                    queryDescriptor = np.reshape(queryDescriptor, [1, 128])
-                    candidateDescriptors = descriptors2[search_mask1d, :]
-                    candidate_matched_ids2 = matched_ids2[search_mask1d]
-                    # if sum(search_mask1d)==1:
-                    #     candidateDescriptors = np.reshape(candidateDescriptors, [1, 128])
-
-                    tmp_dists = distance.cdist(candidateDescriptors, queryDescriptor)
-                    # print("tmp_dists.shape = ", tmp_dists)
-                    dist_results = tmp_dists.squeeze()
-                    # print("dist_results.shape = ", dist_results)
-                    sorted_indices = np.argsort(dist_results)
-                    if dist_results[sorted_indices[0]]/dist_results[sorted_indices[1]] <= args.ratio_threshold:
-                        fid.write("%s %s\n" % (id1, candidate_matched_ids2[sorted_indices[0]]))
-                        print("image 1's feature ", id1, " / ", features1.shape[0])
-
+                # features1 = features_list[image_name1]
+                # features2 = features_list[image_name2]
+                # # descriptors1 = descriptors_list[image_name1]
+                # # descriptors2 = descriptors_list[image_name2]
+                # quantization_ids1 = quantization_list[image_name1]
+                # quantization_ids2 = quantization_list[image_name2]
+                # matched_ids2 = np.arange(features2.shape[0])
+                #
+                # # tmp_dists = distance.cdist(descriptors1, descriptors2)
+                # for id1 in range(features1.shape[0]):
+                #     # print("image 1's feature ", id1, " / ", features1.shape[0])
+                #     if quantization_ids1[id1] not in guide_mapping_dict.keys():
+                #         continue
+                #     search_space_quantization_id = guide_mapping_dict[quantization_ids1[id1]]
+                #     search_mask1d = (quantization_ids2==search_space_quantization_id)
+                #     # if sum(search_mask1d)<=1:
+                #     #     continue
+                #     # search_ids = quantization_ids2[search_mask1d]
+                #     # candidate_dists = tmp_dists[id1, search_mask1d]
+                #     candidate_matched_ids2 = matched_ids2[search_mask1d]
+                #     # sorted_indices = np.argsort(candidate_dists)
+                #     # print("image 1's feature ", id1, " / ", features1.shape[0], "; with distance = ", candidate_dists[sorted_indices[0]])
+                #     # if candidate_dists[sorted_indices[0]] < args.max_descriptor_distance and candidate_dists[sorted_indices[0]]/candidate_dists[sorted_indices[1]] <= args.ratio_threshold:
+                #     # if candidate_dists[sorted_indices[0]]/candidate_dists[sorted_indices[1]] <= args.ratio_threshold:
+                #     #         fid.write("%s %s\n" % (id1, candidate_matched_ids2[sorted_indices[0]]))
+                #     #         print("image 1's feature ", id1, " / ", features1.shape[0], "; with distance = ", candidate_dists[sorted_indices[0]])
+                #     for tmp_cnt in range(sum(search_mask1d)):
+                #         fid.write("%s %s\n" % (id1, candidate_matched_ids2[tmp_cnt]))
                 fid.write("\n") # empty line is added for colmap custom_match format
 
             # return

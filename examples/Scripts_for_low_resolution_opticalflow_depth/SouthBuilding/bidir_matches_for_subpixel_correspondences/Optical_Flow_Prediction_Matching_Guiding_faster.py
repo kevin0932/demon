@@ -37,6 +37,7 @@ def parse_args():
     parser.add_argument("--scale_factor", type=int, default=24)
     parser.add_argument("--min_num_features", type=int, default=1)
     parser.add_argument("--ratio_threshold", type=float, default=0.75)
+    parser.add_argument("--max_descriptor_distance", type=float, default=1.00)
     args = parser.parse_args()
     return args
 
@@ -252,6 +253,8 @@ def main():
                 quantization_ids1 = quantization_list[image_name1]
                 quantization_ids2 = quantization_list[image_name2]
                 matched_ids2 = np.arange(features2.shape[0])
+
+                tmp_dists = distance.cdist(descriptors1, descriptors2)
                 for id1 in range(features1.shape[0]):
                     # print("image 1's feature ", id1, " / ", features1.shape[0])
                     if quantization_ids1[id1] not in guide_mapping_dict.keys():
@@ -261,21 +264,14 @@ def main():
                     if sum(search_mask1d)<=1:
                         continue
                     search_ids = quantization_ids2[search_mask1d]
-                    queryDescriptor = descriptors1[id1, :]
-                    queryDescriptor = np.reshape(queryDescriptor, [1, 128])
-                    candidateDescriptors = descriptors2[search_mask1d, :]
+                    candidate_dists = tmp_dists[id1, search_mask1d]
                     candidate_matched_ids2 = matched_ids2[search_mask1d]
-                    # if sum(search_mask1d)==1:
-                    #     candidateDescriptors = np.reshape(candidateDescriptors, [1, 128])
-
-                    tmp_dists = distance.cdist(candidateDescriptors, queryDescriptor)
-                    # print("tmp_dists.shape = ", tmp_dists)
-                    dist_results = tmp_dists.squeeze()
-                    # print("dist_results.shape = ", dist_results)
-                    sorted_indices = np.argsort(dist_results)
-                    if dist_results[sorted_indices[0]]/dist_results[sorted_indices[1]] <= args.ratio_threshold:
-                        fid.write("%s %s\n" % (id1, candidate_matched_ids2[sorted_indices[0]]))
-                        print("image 1's feature ", id1, " / ", features1.shape[0])
+                    sorted_indices = np.argsort(candidate_dists)
+                    # print("image 1's feature ", id1, " / ", features1.shape[0], "; with distance = ", candidate_dists[sorted_indices[0]])
+                    # if candidate_dists[sorted_indices[0]] < args.max_descriptor_distance and candidate_dists[sorted_indices[0]]/candidate_dists[sorted_indices[1]] <= args.ratio_threshold:
+                    if candidate_dists[sorted_indices[0]]/candidate_dists[sorted_indices[1]] <= args.ratio_threshold:
+                            fid.write("%s %s\n" % (id1, candidate_matched_ids2[sorted_indices[0]]))
+                            print("image 1's feature ", id1, " / ", features1.shape[0], "; with distance = ", candidate_dists[sorted_indices[0]])
 
                 fid.write("\n") # empty line is added for colmap custom_match format
 

@@ -95,7 +95,9 @@ weights_dir = '/home/kevin/anaconda_tensorflow_demon_ws/demon/weights'
 # outdir = "/home/kevin/ThesisDATA/CVG_Datasets_3Dsymmetric/barcelona_Dataset/demon_prediction"
 # outdir = "/home/kevin/ThesisDATA/CVG_Datasets_3Dsymmetric/redmond_Dataset/demon_prediction"
 # outdir = "/media/kevin/SamsungT5_F/ThesisDATA/southbuilding/demon_prediction"
-outdir = "/media/kevin/SamsungT5_F/ThesisDATA/southbuilding/other_sized_colmap_undistorted_images"
+# outdir = "/media/kevin/SamsungT5_F/ThesisDATA/southbuilding/other_sized_colmap_undistorted_images"
+# outdir = "/media/kevin/MYDATA/textureless_labwall_10032018/DenseSIFT/"
+outdir = "/media/kevin/MYDATA/textureless_desk_10032018/DenseSIFT/"
 # outfile = '/home/kevin/ThesisDATA/gerrard-hall/demon_prediction/gerrard_hall_predictions.h5'
 # outfile = '/home/kevin/ThesisDATA/person-hall/demon_prediction/person_hall_predictions.h5'
 # outfile = "/home/kevin/ThesisDATA/CVG_Datasets_3Dsymmetric/barcelona_Dataset/demon_prediction/CVG_barcelona_predictions.h5"
@@ -103,19 +105,22 @@ outdir = "/media/kevin/SamsungT5_F/ThesisDATA/southbuilding/other_sized_colmap_u
 outfile = os.path.join(outdir, "more_pairs_southbuilding_predictions_05022018.h5")
 
 
-outimagedir_6448 = os.path.join(outdir,'images_demon_6448')
-outimagedir_small = os.path.join(outdir,'images_demon_small')
-outimagedir_large = os.path.join(outdir,'images_demon')
-outimagedir_2 = os.path.join(outdir,'images_demon_2')
-outimagedir_4 = os.path.join(outdir,'images_demon_4')
-outimagedir_6 = os.path.join(outdir,'images_demon_6')
-os.makedirs(outdir, exist_ok=True)
+outimagedir_6448 = os.path.join(outdir,'images_demon_48_64')
+outimagedir_12896 = os.path.join(outdir,'images_demon_96_128')
+# outimagedir_small = os.path.join(outdir,'images_demon_small')
+outimagedir_small = os.path.join(outdir,'images_demon_192_256')
+# outimagedir_large = os.path.join(outdir,'images_demon')
+# outimagedir_2 = os.path.join(outdir,'images_demon_2')
+# outimagedir_4 = os.path.join(outdir,'images_demon_4')
+# outimagedir_6 = os.path.join(outdir,'images_demon_6')
+# os.makedirs(outdir, exist_ok=True)
 os.makedirs(outimagedir_6448, exist_ok=True)
+os.makedirs(outimagedir_12896, exist_ok=True)
 os.makedirs(outimagedir_small, exist_ok=True)
-os.makedirs(outimagedir_large, exist_ok=True)
-os.makedirs(outimagedir_2, exist_ok=True)
-os.makedirs(outimagedir_4, exist_ok=True)
-os.makedirs(outimagedir_6, exist_ok=True)
+# os.makedirs(outimagedir_large, exist_ok=True)
+# os.makedirs(outimagedir_2, exist_ok=True)
+# os.makedirs(outimagedir_4, exist_ok=True)
+# os.makedirs(outimagedir_6, exist_ok=True)
 # os.makedirs(os.path.join(outdir,'graydepthmap'), exist_ok=True)
 # os.makedirs(os.path.join(outdir,'vizdepthmap'), exist_ok=True)
 
@@ -123,7 +128,9 @@ os.makedirs(outimagedir_6, exist_ok=True)
 
 
 # recondir = '/misc/lmbraid12/depthmotionnet/datasets/mvs_colmap/south-building/mvs/'
-recondir = '/home/kevin/JohannesCode/ws1/dense/0/'
+# recondir = '/home/kevin/JohannesCode/ws1/dense/0/'
+# recondir = '/media/kevin/MYDATA/textureless_labwall_10032018/dense/'
+recondir = '/media/kevin/MYDATA/textureless_desk_10032018/dense/'
 # recondir = '/home/kevin/ThesisDATA/ToyDataset_Desk/dense/'
 # recondir = '/home/kevin/ThesisDATA/gerrard-hall/dense/'
 # recondir = '/home/kevin/ThesisDATA/person-hall/dense/'
@@ -158,12 +165,14 @@ h_large = 12*h
 
 w_6448 = 64
 h_6448 = 48
-w_2 = 2*w
-h_2 = 2*h
-w_4 = 4*w
-h_4 = 4*h
-w_6 = 6*w
-h_6 = 6*h
+w_12896 = 128
+h_12896 = 96
+# w_2 = 2*w
+# h_2 = 2*h
+# w_4 = 4*w
+# h_4 = 4*h
+# w_6 = 6*w
+# h_6 = 6*h
 # w_large = 7.8125*w
 # h_large = 7.8125*h
 # #
@@ -186,29 +195,35 @@ target_K_large[1,1] = h_large*normalized_intrinsics[1]
 target_K_large[0,2] = w_large*normalized_intrinsics[2]
 target_K_large[1,2] = h_large*normalized_intrinsics[3]
 
-target_K_2 = np.eye(3)
-target_K_2[0,0] = w_2*normalized_intrinsics[0]
-target_K_2[1,1] = h_2*normalized_intrinsics[1]
-target_K_2[0,2] = w_2*normalized_intrinsics[2]
-target_K_2[1,2] = h_2*normalized_intrinsics[3]
-
-target_K_4 = np.eye(3)
-target_K_4[0,0] = w_4*normalized_intrinsics[0]
-target_K_4[1,1] = h_4*normalized_intrinsics[1]
-target_K_4[0,2] = w_4*normalized_intrinsics[2]
-target_K_4[1,2] = h_4*normalized_intrinsics[3]
-
-target_K_6 = np.eye(3)
-target_K_6[0,0] = w_6*normalized_intrinsics[0]
-target_K_6[1,1] = h_6*normalized_intrinsics[1]
-target_K_6[0,2] = w_6*normalized_intrinsics[2]
-target_K_6[1,2] = h_6*normalized_intrinsics[3]
+# target_K_2 = np.eye(3)
+# target_K_2[0,0] = w_2*normalized_intrinsics[0]
+# target_K_2[1,1] = h_2*normalized_intrinsics[1]
+# target_K_2[0,2] = w_2*normalized_intrinsics[2]
+# target_K_2[1,2] = h_2*normalized_intrinsics[3]
+#
+# target_K_4 = np.eye(3)
+# target_K_4[0,0] = w_4*normalized_intrinsics[0]
+# target_K_4[1,1] = h_4*normalized_intrinsics[1]
+# target_K_4[0,2] = w_4*normalized_intrinsics[2]
+# target_K_4[1,2] = h_4*normalized_intrinsics[3]
+#
+# target_K_6 = np.eye(3)
+# target_K_6[0,0] = w_6*normalized_intrinsics[0]
+# target_K_6[1,1] = h_6*normalized_intrinsics[1]
+# target_K_6[0,2] = w_6*normalized_intrinsics[2]
+# target_K_6[1,2] = h_6*normalized_intrinsics[3]
 
 target_K_6448 = np.eye(3)
 target_K_6448[0,0] = w_6448*normalized_intrinsics[0]
 target_K_6448[1,1] = h_6448*normalized_intrinsics[1]
 target_K_6448[0,2] = w_6448*normalized_intrinsics[2]
 target_K_6448[1,2] = h_6448*normalized_intrinsics[3]
+
+target_K_12896 = np.eye(3)
+target_K_12896[0,0] = w_12896*normalized_intrinsics[0]
+target_K_12896[1,1] = h_12896*normalized_intrinsics[1]
+target_K_12896[0,2] = w_12896*normalized_intrinsics[2]
+target_K_12896[1,2] = h_12896*normalized_intrinsics[3]
 
 if True:
     views = []
@@ -221,11 +236,13 @@ if True:
         # print("(tmp_views) = ", (tmp_views))
         new_v = adjust_intrinsics(tmp_views[0], target_K, w, h,)
         # print("type(new_v) = ", type(new_v))
-        new_v_large = adjust_intrinsics(tmp_views[0], target_K_large, w_large, h_large,)
+        # new_v_large = adjust_intrinsics(tmp_views[0], target_K_large, w_large, h_large,)
         # new_v_large.image.save(os.path.join(outimagedir_large,image.name))
-        # new_v.image.save(os.path.join(outimagedir_small,image.name))
+        new_v.image.save(os.path.join(outimagedir_small,image.name))
         new_v_6448 = adjust_intrinsics(tmp_views[0], target_K_6448, w_6448, h_6448,)
         new_v_6448.image.save(os.path.join(outimagedir_6448,image.name))
+        new_v_12896 = adjust_intrinsics(tmp_views[0], target_K_12896, w_12896, h_12896,)
+        new_v_12896.image.save(os.path.join(outimagedir_12896,image.name))
         # new_v_2 = adjust_intrinsics(tmp_views[0], target_K_2, w_2, h_2,)
         # new_v_2.image.save(os.path.join(outimagedir_2,image.name))
         # new_v_4 = adjust_intrinsics(tmp_views[0], target_K_4, w_4, h_4,)

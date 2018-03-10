@@ -200,7 +200,7 @@ def main():
     data = h5py.File(args.demon_path)
 
     image_pairs = set()
-    with open(os.path.join(args.output_path, 'test_match_guide.txt'), "w") as fid:
+    with open(os.path.join(args.output_path, 'DEBUG_test_match_guide.txt'), "w") as fid:
         for image_name1 in features_list.keys():
             for image_name2 in features_list.keys():
                 if image_name1 == image_name2:
@@ -253,18 +253,18 @@ def main():
                 quantization_ids2 = quantization_list[image_name2]
                 matched_ids2 = np.arange(features2.shape[0])
                 for id1 in range(features1.shape[0]):
-                    # print("image 1's feature ", id1, " / ", features1.shape[0])
-                    if quantization_ids1[id1] not in guide_mapping_dict.keys():
-                        continue
-                    search_space_quantization_id = guide_mapping_dict[quantization_ids1[id1]]
-                    search_mask1d = (quantization_ids2==search_space_quantization_id)
-                    if sum(search_mask1d)<=1:
-                        continue
-                    search_ids = quantization_ids2[search_mask1d]
+                    print("image 1's feature ", id1, " / ", features1.shape[0])
+                    # if quantization_ids1[id1] not in guide_mapping_dict.keys():
+                    #     continue
+                    # search_space_quantization_id = guide_mapping_dict[quantization_ids1[id1]]
+                    # search_mask1d = (quantization_ids2==search_space_quantization_id)
+                    # if sum(search_mask1d)<=1:
+                    #     continue
+                    # search_ids = quantization_ids2[search_mask1d]
                     queryDescriptor = descriptors1[id1, :]
                     queryDescriptor = np.reshape(queryDescriptor, [1, 128])
-                    candidateDescriptors = descriptors2[search_mask1d, :]
-                    candidate_matched_ids2 = matched_ids2[search_mask1d]
+                    candidateDescriptors = descriptors2
+                    # candidateDescriptors = descriptors2[search_mask1d, :]
                     # if sum(search_mask1d)==1:
                     #     candidateDescriptors = np.reshape(candidateDescriptors, [1, 128])
 
@@ -274,8 +274,8 @@ def main():
                     # print("dist_results.shape = ", dist_results)
                     sorted_indices = np.argsort(dist_results)
                     if dist_results[sorted_indices[0]]/dist_results[sorted_indices[1]] <= args.ratio_threshold:
-                        fid.write("%s %s\n" % (id1, candidate_matched_ids2[sorted_indices[0]]))
-                        print("image 1's feature ", id1, " / ", features1.shape[0])
+                        # fid.write("%s %s\n" % (id1, search_ids[sorted_indices[0]]))
+                        fid.write("%s %s\n" % (id1, matched_ids2[sorted_indices[0]]))
 
                 fid.write("\n") # empty line is added for colmap custom_match format
 

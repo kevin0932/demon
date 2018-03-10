@@ -103,18 +103,23 @@ weights_dir = '/home/kevin/anaconda_tensorflow_demon_ws/demon/weights'
 # outfile = os.path.join(outdir, "more_pairs_southbuilding_predictions_05022018.h5")
 # recondir = '/home/kevin/JohannesCode/ws1/dense/0/'
 
-recondir = '/home/kevin/ThesisDATA/gerrard-hall/dense/'
-outdir = "/media/kevin/SamsungT5_F/ThesisDATA/gerrard_hall/demon_prediction"
-outfile = os.path.join(outdir, "more_pairs_gerrard_hall_predictions_22022018.h5")
+# recondir = '/home/kevin/ThesisDATA/gerrard-hall/dense/'
+# outdir = "/media/kevin/SamsungT5_F/ThesisDATA/gerrard_hall/demon_prediction"
+# outfile = os.path.join(outdir, "more_pairs_gerrard_hall_predictions_22022018.h5")
 
+recondir = '/media/kevin/MYDATA/textureless_labwall_10032018/dense/'
+outdir = "/media/kevin/MYDATA/textureless_labwall_10032018/demon_prediction"
+# recondir = '/media/kevin/MYDATA/textureless_desk_10032018/dense/'
+# outdir = "/media/kevin/MYDATA/textureless_desk_10032018/demon_prediction"
+outfile = os.path.join(outdir, "more_pairs_textureless_predictions_10032018.h5")
 
-outimagedir_small = os.path.join(outdir,'images_demon_small')
-outimagedir_large = os.path.join(outdir,'images_demon')
+outimagedir_small = os.path.join(outdir,'images_demon_demonsize')
+outimagedir_large = os.path.join(outdir,'images_demon_undistorted')
 os.makedirs(outdir, exist_ok=True)
 os.makedirs(outimagedir_small, exist_ok=True)
 os.makedirs(outimagedir_large, exist_ok=True)
-os.makedirs(os.path.join(outdir,'graydepthmap'), exist_ok=True)
-os.makedirs(os.path.join(outdir,'vizdepthmap'), exist_ok=True)
+# os.makedirs(os.path.join(outdir,'graydepthmap'), exist_ok=True)
+# os.makedirs(os.path.join(outdir,'vizdepthmap'), exist_ok=True)
 
 
 
@@ -133,7 +138,7 @@ images = colmap.read_images_txt(os.path.join(recondir,'sparse','images.txt'))
 
 views = colmap.create_views(cameras, images, os.path.join(recondir,'images'), os.path.join(recondir,'stereo','depth_maps'))
 
-knn = 25 # 5
+knn = 15 # 25 # 5
 max_angle = 90*math.pi/180  # 60*math.pi/180
 min_overlap_ratio = 0.3     # 0.5
 w = 256
@@ -152,8 +157,8 @@ target_K[1,2] = h*normalized_intrinsics[3]
 # w_large = 12*w
 # h_large = 12*h
 
-w_large = 2*w
-h_large = 2*h
+w_large = 4*w
+h_large = 4*h
 
 # w_large = 7.8125*w
 # h_large = 7.8125*h
