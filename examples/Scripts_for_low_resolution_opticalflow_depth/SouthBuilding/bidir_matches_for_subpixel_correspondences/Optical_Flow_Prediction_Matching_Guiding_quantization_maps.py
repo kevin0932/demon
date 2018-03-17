@@ -36,10 +36,13 @@ def parse_args():
     parser.add_argument("--output_path", required=True)
     parser.add_argument("--image_path", required=True)
     parser.add_argument("--demon_path", required=True)
+    parser.add_argument("--input_good_pairs_path", required=True)
     parser.add_argument("--scale_factor", type=int, default=24)
     parser.add_argument("--min_num_features", type=int, default=1)
     parser.add_argument("--ratio_threshold", type=float, default=0.75)
     parser.add_argument("--max_descriptor_distance", type=float, default=1.00)
+    parser.add_argument("--max_pixel_error", type=float, default=1.00)
+    parser.add_argument("--OF_scale_factor", type=int, default=1)
     args = parser.parse_args()
     return args
 
@@ -153,8 +156,10 @@ def upsample_optical_flow(flow12, OF_scale_factor=1):
     # print(xx.shape)
     a = np.array(flow12[0,:,:])
     f = interpolate.interp2d(x, y, a, kind='linear')
-    xnew = np.array(range(flow12.shape[2]*OF_scale_factor))
-    ynew = np.array(range(flow12.shape[1]*OF_scale_factor))
+    # xnew = np.array(range(flow12.shape[2]*OF_scale_factor))
+    # ynew = np.array(range(flow12.shape[1]*OF_scale_factor))
+    xnew = np.array(range(flow12.shape[2]*OF_scale_factor))/OF_scale_factor
+    ynew = np.array(range(flow12.shape[1]*OF_scale_factor))/OF_scale_factor
     znew = f(xnew, ynew)
     # print(znew.shape)
     flow12upsampled = np.zeros((2,flow12.shape[1]*OF_scale_factor, flow12.shape[2]*OF_scale_factor))
@@ -284,11 +289,25 @@ def main():
     #     # print("quantization_ids.shape = ", quantization_ids.shape)
     #     quantization_list[image_name] = quantization_ids
 
+    good_pairs = []
+    with open((args.input_good_pairs_path), "r") as fid:
+        while True:
+            line = fid.readline()
+            if not line:
+                break
+            line = line.strip()
+            if len(line) > 0 and line[0] != "#":
+                elems = line.split()
+                good_pair = (elems[0])
+                good_pairs.append(good_pair)
+    print("good_pairs num = ", good_pairs)
+
     data = h5py.File(args.demon_path)
-    OF_scale_factor = 1
+    OF_scale_factor = args.OF_scale_factor
 
     image_pairs = set()
-    with open(os.path.join(args.output_path, 'test_quantization_map_OFscale_'+str(OF_scale_factor)+'.txt'), "w") as fid:
+    # with open(os.path.join(args.output_path, 'test_quantization_map_OFscale_'+str(OF_scale_factor)+'.txt'), "w") as fid:
+    with open(os.path.join(args.output_path, 'test_quantization_map_OFscale_'+str(OF_scale_factor)+'_err_'+str(int(args.max_pixel_error*1000))+'.txt'), "w") as fid:
         for image_name1 in features_list.keys():
             for image_name2 in features_list.keys():
                 if image_name1 == image_name2:
@@ -307,6 +326,11 @@ def main():
                 image_pairs.add(image_pair12)
                 # image_pairs.add(image_pair21)
                 if image_pair21 not in data.keys():
+                    continue
+
+                # if image_pair12 not in good_pairs:
+                if image_pair12 not in good_pairs or image_pair21 not in good_pairs :
+                    print("skip the image pair because it is not a good pair by visual inspection!")
                     continue
 
                 # img1PIL = view1Colmap.image
@@ -334,6 +358,7 @@ def main():
                     flow21_upsampled = upsample_optical_flow(flow21, OF_scale_factor=OF_scale_factor)
                     flow12 = flow12_upsampled
                     flow21 = flow21_upsampled
+                    print("updampled flow12.shape = ", flow12.shape)
                     # img12 = np.zeros((flow12.shape[1],flow12.shape[2],3), dtype=np.uint8)
                     # img12[:,:,:2] = np.transpose(flow12*128+128, [1, 2, 0])
                     # img12[:,:,2] = 0
@@ -364,7 +389,8 @@ def main():
 
                 matches, coords_12_1, coords_12_2 = cross_check_matches_float32Pixel(matches12, coords121, coords122,
                                               matches21, coords211, coords212,
-                                              1.0)
+                                              # args.max_pixel_error*OF_scale_factor)
+                                              args.max_pixel_error)
                                               # max_reproj_error)
                 print("matches.shape = ", matches.shape, "; ", "coords_12_1.shape = ", coords_12_1.shape, "coords_12_2.shape = ", coords_12_2.shape)
 
