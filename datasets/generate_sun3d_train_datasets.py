@@ -1,17 +1,17 @@
 #
 #  DeMoN - Depth Motion Network
 #  Copyright (C) 2017  Benjamin Ummenhofer, Huizhong Zhou
-#  
+#
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation, either version 3 of the License, or
 #  (at your option) any later version.
-#  
+#
 #  This program is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
-#  
+#
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
@@ -118,7 +118,7 @@ def main():
     else:
         print('Computing sharpness for all images. This could take a while.')
         with Pool(threads) as pool:
-            args = [(sun3d_data_path, seq,) for seq in sequences]    
+            args = [(sun3d_data_path, seq,) for seq in sequences]
             sequence_sharpness = pool.starmap(compute_sharpness, args, chunksize=1)
 
         seq_sharpness_dict = dict(zip(sequences, sequence_sharpness))
@@ -127,37 +127,36 @@ def main():
             pickle.dump(seq_sharpness_dict, f)
 
 
-    # baseline ranges from 1cm-10cm to 1.6m-inf
-    baseline_ranges = [(0.01,0.10), (0.10,0.20), (0.20,0.40), (0.40,0.80), (0.80,1.60), (1.60, float('inf'))]
-
-    with Pool(threads) as pool:
-
-        # create temporary h5 files for each baseline and sequence combination
-        baseline_range_files_dict = {b:[] for b in baseline_ranges}
-        args = []
-        for i, base_range_seq_name in enumerate(itertools.product(baseline_ranges, sequences)):
-            base_range, seq_name = base_range_seq_name
-            #print(base_range, seq_name)
-            outfile = os.path.join(outputdir,"{0}.h5".format(i))
-            args.append((outfile, sun3d_data_path, seq_name, base_range, seq_sharpness_dict))
-            baseline_range_files_dict[base_range].append(outfile)
-
-        created_groups = pool.starmap(create_train_file, args, chunksize=1)
-
-    # merge temporary files by creating one file per baseline range
-    for base_range in baseline_ranges:
-        outfile = os.path.join(outputdir, 'sun3d_train_{0}m_to_{1}m.h5'.format(*base_range))
-        merge_h5files(outfile, baseline_range_files_dict[base_range])
-
-
-    print('created', sum(created_groups), 'groups')
+    # # baseline ranges from 1cm-10cm to 1.6m-inf
+    # baseline_ranges = [(0.01,0.10), (0.10,0.20), (0.20,0.40), (0.40,0.80), (0.80,1.60), (1.60, float('inf'))]
+    #
+    # with Pool(threads) as pool:
+    #
+    #     # create temporary h5 files for each baseline and sequence combination
+    #     baseline_range_files_dict = {b:[] for b in baseline_ranges}
+    #     args = []
+    #     for i, base_range_seq_name in enumerate(itertools.product(baseline_ranges, sequences)):
+    #         base_range, seq_name = base_range_seq_name
+    #         #print(base_range, seq_name)
+    #         outfile = os.path.join(outputdir,"{0}.h5".format(i))
+    #         args.append((outfile, sun3d_data_path, seq_name, base_range, seq_sharpness_dict))
+    #         baseline_range_files_dict[base_range].append(outfile)
+    #
+    #     created_groups = pool.starmap(create_train_file, args, chunksize=1)
+    #
+    # # merge temporary files by creating one file per baseline range
+    # for base_range in baseline_ranges:
+    #     outfile = os.path.join(outputdir, 'sun3d_train_{0}m_to_{1}m.h5'.format(*base_range))
+    #     merge_h5files(outfile, baseline_range_files_dict[base_range])
+    #
+    #
+    # print('created', sum(created_groups), 'groups')
 
     return 0
 
 
-    
-    
+
+
 
 if __name__ == "__main__":
     sys.exit(main())
-

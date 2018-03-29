@@ -26,7 +26,7 @@ import six
 from scipy.spatial import distance
 from scipy import interpolate
 import cv2
-
+import shutil
 # examples_dir = os.path.dirname(__file__)
 # sys.path.insert(0, os.path.join(examples_dir, '..', 'lmbspecialops', 'python'))
 
@@ -43,6 +43,7 @@ def parse_args():
     parser.add_argument("--max_descriptor_distance", type=float, default=1.00)
     parser.add_argument("--max_pixel_error", type=float, default=1.00)
     parser.add_argument("--OF_scale_factor", type=int, default=1)
+    parser.add_argument("--survivor_ratio", type=float, default=0.50)
     args = parser.parse_args()
     return args
 
@@ -246,10 +247,10 @@ def main():
             featuresMat = features[:,0:2]
             image_name = images_id_to_name[image_id]
             features_list[image_name] = featuresMat
-            # featuresMat = np.concatenate((featuresMat, np.array([], dtype=np.float32))), axis=0)
-            fid.write("%s %d\n" % (image_name, features.shape[0]))
-            for i in range(features.shape[0]):
-                fid.write("%d %d %d %d %d %d\n" % tuple(features[i]))
+    #         # featuresMat = np.concatenate((featuresMat, np.array([], dtype=np.float32))), axis=0)
+    #         fid.write("%s %d\n" % (image_name, features.shape[0]))
+    #         for i in range(features.shape[0]):
+    #             fid.write("%d %d %d %d %d %d\n" % tuple(features[i]))
 
     # with open(os.path.join(args.output_path, 'test_descriptors.txt'), "w") as fid:
     #     cursor.execute("SELECT image_id, data FROM descriptors WHERE rows>=?;",
@@ -306,143 +307,161 @@ def main():
     OF_scale_factor = args.OF_scale_factor
 
     image_pairs = set()
+    valid_pair_num = 0
+    output_file_path = os.path.join(args.output_path, 'CrossCheckSurvivor_full_quantization_map_OFscale_'+str(OF_scale_factor)+'_err_'+str(int(args.max_pixel_error*1000))+'_survivorRatio_'+str(int(args.survivor_ratio*1000))+'.txt')
+    output_file_path_clean = os.path.join(args.output_path, 'Clean_CrossCheckSurvivor_full_quantization_map_OFscale_'+str(OF_scale_factor)+'_err_'+str(int(args.max_pixel_error*1000))+'_survivorRatio_'+str(int(args.survivor_ratio*1000))+'.txt')
     # with open(os.path.join(args.output_path, 'test_quantization_map_OFscale_'+str(OF_scale_factor)+'.txt'), "w") as fid:
-    with open(os.path.join(args.output_path, 'test_quantization_map_OFscale_'+str(OF_scale_factor)+'_err_'+str(int(args.max_pixel_error*1000))+'.txt'), "w") as fid:
-        for image_name1 in features_list.keys():
-            for image_name2 in features_list.keys():
-                if image_name1 == image_name2:
-                    continue
+    with open(output_file_path_clean, "w") as f2id:
+        with open(output_file_path, "w") as fid:
+            for image_name1 in features_list.keys():
+                for image_name2 in features_list.keys():
+                    if image_name1 == image_name2:
+                        continue
 
-                image_pair12 = image_name1+'---'+image_name2
-                if image_pair12 not in data.keys():
-                    continue
-                print("Processing", image_pair12, "; img1 has ", features_list[image_name1].shape[0], " features", "; img2 has ", features_list[image_name2].shape[0], " features")
-                if image_pair12 in image_pairs:
-                    continue
+                    image_pair12 = image_name1+'---'+image_name2
+                    if image_pair12 not in data.keys():
+                        continue
+                    print("Processing", image_pair12, "; img1 has ", features_list[image_name1].shape[0], " features", "; img2 has ", features_list[image_name2].shape[0], " features")
+                    if image_pair12 in image_pairs:
+                        continue
 
-                #fid.write("%s %s\n" % (image_name1, image_name2))
+                    #fid.write("%s %s\n" % (image_name1, image_name2))
 
-                image_pair21 = "{}---{}".format(image_name2, image_name1)
-                image_pairs.add(image_pair12)
-                # image_pairs.add(image_pair21)
-                if image_pair21 not in data.keys():
-                    continue
+                    image_pair21 = "{}---{}".format(image_name2, image_name1)
+                    image_pairs.add(image_pair12)
+                    image_pairs.add(image_pair21)
+                    # print(data.keys())
+                    if image_pair21 not in data.keys():
+                        continue
 
-                # if image_pair12 not in good_pairs:
-                if image_pair12 not in good_pairs or image_pair21 not in good_pairs :
-                    print("skip the image pair because it is not a good pair by visual inspection!")
-                    continue
-
-                # img1PIL = view1Colmap.image
-                # #img1PIL.save(os.path.join(small_undistorted_images_dir, image_name1))
-                # img2PIL = view2Colmap.image
-                # #img2PIL.save(os.path.join(small_undistorted_images_dir, image_name2))
-
-                # image_pair12_rotmat = data[image_pair12]["rotation"].value
-                # image_pair21_rotmat = data[image_pair21]["rotation"].value
-                #
-                # image_pair12_transVec = data[image_pair12]["translation"].value
-                # image_pair21_transVec = data[image_pair21]["translation"].value
-                #
+                    # if image_pair12 not in good_pairs:
+                    if image_pair12 not in good_pairs or image_pair21 not in good_pairs :
+                        print("skip the image pair because it is not a good pair by visual inspection!")
+                        continue
 
 
-                flow12 = data[image_pair12]["flow"]
-                # flow12 = np.transpose(flow12, [2, 0, 1])
-                print(flow12.shape)
+                    flow12 = data[image_pair12]["flow"]
+                    # flow12 = np.transpose(flow12, [2, 0, 1])
+                    print(flow12.shape)
 
-                flow21 = data[image_pair21]["flow"]
-                # flow21 = np.transpose(flow21, [2, 0, 1])
-                # print(flow21.shape)
+                    flow21 = data[image_pair21]["flow"]
+                    # flow21 = np.transpose(flow21, [2, 0, 1])
+                    # print(flow21.shape)
 
-                ### add code to upsample the predicted optical-flow
-                if OF_scale_factor > 1:
-                    flow12_upsampled = upsample_optical_flow(flow12, OF_scale_factor=OF_scale_factor)
-                    flow21_upsampled = upsample_optical_flow(flow21, OF_scale_factor=OF_scale_factor)
-                    flow12 = flow12_upsampled
-                    flow21 = flow21_upsampled
-                    print("updampled flow12.shape = ", flow12.shape)
-                    # img12 = np.zeros((flow12.shape[1],flow12.shape[2],3), dtype=np.uint8)
-                    # img12[:,:,:2] = np.transpose(flow12*128+128, [1, 2, 0])
-                    # img12[:,:,2] = 0
-                    # img12RGB = Image.fromarray(img12)
-                    # img12RGB.show()
-                    # return
-                    # img21 = np.zeros((flow21.shape[1],flow21.shape[2],3), dtype=np.uint8)
-                    # img21[:,:,:2] = np.transpose(flow21*128+128, [1, 2, 0])
-                    # img21[:,:,2] = 0
-                    # # cur_glitch = warp_flow(flow12_upsampled[0,:,:], flow12_upsampled)
-                    # # cv.imshow('glitch', cur_glitch)
+                    ### add code to upsample the predicted optical-flow
+                    if OF_scale_factor > 1:
+                        flow12_upsampled = upsample_optical_flow(flow12, OF_scale_factor=OF_scale_factor)
+                        flow21_upsampled = upsample_optical_flow(flow21, OF_scale_factor=OF_scale_factor)
+                        flow12 = flow12_upsampled
+                        flow21 = flow21_upsampled
+                        print("updampled flow12.shape = ", flow12.shape)
+                        # img12 = np.zeros((flow12.shape[1],flow12.shape[2],3), dtype=np.uint8)
+                        # img12[:,:,:2] = np.transpose(flow12*128+128, [1, 2, 0])
+                        # img12[:,:,2] = 0
+                        # img12RGB = Image.fromarray(img12)
+                        # img12RGB.show()
+                        # return
+                        # img21 = np.zeros((flow21.shape[1],flow21.shape[2],3), dtype=np.uint8)
+                        # img21[:,:,:2] = np.transpose(flow21*128+128, [1, 2, 0])
+                        # img21[:,:,2] = 0
+                        # # cur_glitch = warp_flow(flow12_upsampled[0,:,:], flow12_upsampled)
+                        # # cv.imshow('glitch', cur_glitch)
 
-                # flow_x=ToImg(flows[...,0],bound)
-                # flow_y=ToImg(flows[...,1],bound)
+                    # flow_x=ToImg(flows[...,0],bound)
+                    # flow_y=ToImg(flows[...,1],bound)
 
-                matches12, coords121, coords122 = flow_to_matches_float32Pixels(flow12)
+                    matches12, coords121, coords122 = flow_to_matches_float32Pixels(flow12)
 
-                # guide_mapping_dict = {}
-                # for i in range(matches12.shape[0]):
-                #     guide_mapping_dict[matches12[i,0]] = matches12[i,1]
-                #     fid.write("%s %s\n" % (matches12[i,0], matches12[i,1]))
+                    matches21, coords211, coords212 = flow_to_matches_float32Pixels(flow21)
 
-                matches21, coords211, coords212 = flow_to_matches_float32Pixels(flow21)
+                    print("  => Found", matches12.size/2, "<->", matches21.size/2, "matches")
+                    if  matches12.size/2 <= 0 or matches21.size/2 <= 0:
+                        continue
 
-                print("  => Found", matches12.size/2, "<->", matches21.size/2, "matches")
-                if  matches12.size/2 <= 0 or matches21.size/2 <= 0:
-                    continue
+                    matches, coords_12_1, coords_12_2 = cross_check_matches_float32Pixel(matches12, coords121, coords122,
+                                                  matches21, coords211, coords212,
+                                                  # args.max_pixel_error*OF_scale_factor)
+                                                  args.max_pixel_error)
+                                                  # max_reproj_error)
+                    print("matches.shape = ", matches.shape, "; ", "coords_12_1.shape = ", coords_12_1.shape, "coords_12_2.shape = ", coords_12_2.shape)
 
-                matches, coords_12_1, coords_12_2 = cross_check_matches_float32Pixel(matches12, coords121, coords122,
-                                              matches21, coords211, coords212,
-                                              # args.max_pixel_error*OF_scale_factor)
-                                              args.max_pixel_error)
-                                              # max_reproj_error)
-                print("matches.shape = ", matches.shape, "; ", "coords_12_1.shape = ", coords_12_1.shape, "coords_12_2.shape = ", coords_12_2.shape)
+                    if matches.size == 0:
+                        continue
+                    print("  => Cross-checked", matches.shape[0], "matches")
 
-                if matches.size == 0:
-                    continue
-                print("  => Cross-checked", matches.shape[0], "matches")
+                    # matches, coords_12_1, coords_12_2 = PatchBased_NCC_photometric_check(matches, coords_12_1, coords_12_2, max_photometric_error, img1PIL, img2PIL)
+                    # print("  => photo-checked", matches.shape[0], "matches")
+                    # if matches.size == 0:
+                    #     continue
 
-                # matches, coords_12_1, coords_12_2 = PatchBased_NCC_photometric_check(matches, coords_12_1, coords_12_2, max_photometric_error, img1PIL, img2PIL)
-                # print("  => photo-checked", matches.shape[0], "matches")
-                # if matches.size == 0:
-                #     continue
+                    # fid.write("%s %s\n" % (image_name1, image_name2))
+                    #
+                    # guide_mapping_dict = {}
+                    # for i in range(matches.shape[0]):
+                    #     guide_mapping_dict[matches[i,0]] = matches[i,1]
+                    #     fid.write("%s %s\n" % (matches[i,0], matches[i,1]))
+                    #
+                    # # features1 = features_list[image_name1]
+                    # # features2 = features_list[image_name2]
+                    # # # descriptors1 = descriptors_list[image_name1]
+                    # # # descriptors2 = descriptors_list[image_name2]
+                    # # quantization_ids1 = quantization_list[image_name1]
+                    # # quantization_ids2 = quantization_list[image_name2]
+                    # # matched_ids2 = np.arange(features2.shape[0])
+                    # #
+                    # # # tmp_dists = distance.cdist(descriptors1, descriptors2)
+                    # # for id1 in range(features1.shape[0]):
+                    # #     # print("image 1's feature ", id1, " / ", features1.shape[0])
+                    # #     if quantization_ids1[id1] not in guide_mapping_dict.keys():
+                    # #         continue
+                    # #     search_space_quantization_id = guide_mapping_dict[quantization_ids1[id1]]
+                    # #     search_mask1d = (quantization_ids2==search_space_quantization_id)
+                    # #     # if sum(search_mask1d)<=1:
+                    # #     #     continue
+                    # #     # search_ids = quantization_ids2[search_mask1d]
+                    # #     # candidate_dists = tmp_dists[id1, search_mask1d]
+                    # #     candidate_matched_ids2 = matched_ids2[search_mask1d]
+                    # #     # sorted_indices = np.argsort(candidate_dists)
+                    # #     # print("image 1's feature ", id1, " / ", features1.shape[0], "; with distance = ", candidate_dists[sorted_indices[0]])
+                    # #     # if candidate_dists[sorted_indices[0]] < args.max_descriptor_distance and candidate_dists[sorted_indices[0]]/candidate_dists[sorted_indices[1]] <= args.ratio_threshold:
+                    # #     # if candidate_dists[sorted_indices[0]]/candidate_dists[sorted_indices[1]] <= args.ratio_threshold:
+                    # #     #         fid.write("%s %s\n" % (id1, candidate_matched_ids2[sorted_indices[0]]))
+                    # #     #         print("image 1's feature ", id1, " / ", features1.shape[0], "; with distance = ", candidate_dists[sorted_indices[0]])
+                    # #     for tmp_cnt in range(sum(search_mask1d)):
+                    # #         fid.write("%s %s\n" % (id1, candidate_matched_ids2[tmp_cnt]))
 
-                fid.write("%s %s\n" % (image_name1, image_name2))
+                    if matches.shape[0] / matches12.shape[0] >= args.survivor_ratio:
+                        valid_pair_num += 1
+                        print("cross-check-survivor-ratio = ", matches.shape[0] / matches12.shape[0])
 
-                guide_mapping_dict = {}
-                for i in range(matches.shape[0]):
-                    guide_mapping_dict[matches[i,0]] = matches[i,1]
-                    fid.write("%s %s\n" % (matches[i,0], matches[i,1]))
+                        fid.write("%s %s\n" % (image_name1, image_name2))
+                        # guide_mapping_dict = {}
+                        for i in range(matches12.shape[0]):
+                            # guide_mapping_dict[matches12[i,0]] = matches12[i,1]
+                            # fid.write("%s %s\n" % (matches12[i,0], matches12[i,1]))
+                            ### record match id1, id2, flowx, flowy, pt1_x, pt1_y, pt2_x, pt2_y
+                            fid.write("%s %s %s %s %s %s %s %s\n" % (matches12[i,0], matches12[i,1], (coords122[i,0]-coords121[i,0]), (coords122[i,1]-coords121[i,1]), coords121[i,0], coords121[i,1], coords122[i,0], coords122[i,1]))
 
-                # features1 = features_list[image_name1]
-                # features2 = features_list[image_name2]
-                # # descriptors1 = descriptors_list[image_name1]
-                # # descriptors2 = descriptors_list[image_name2]
-                # quantization_ids1 = quantization_list[image_name1]
-                # quantization_ids2 = quantization_list[image_name2]
-                # matched_ids2 = np.arange(features2.shape[0])
-                #
-                # # tmp_dists = distance.cdist(descriptors1, descriptors2)
-                # for id1 in range(features1.shape[0]):
-                #     # print("image 1's feature ", id1, " / ", features1.shape[0])
-                #     if quantization_ids1[id1] not in guide_mapping_dict.keys():
-                #         continue
-                #     search_space_quantization_id = guide_mapping_dict[quantization_ids1[id1]]
-                #     search_mask1d = (quantization_ids2==search_space_quantization_id)
-                #     # if sum(search_mask1d)<=1:
-                #     #     continue
-                #     # search_ids = quantization_ids2[search_mask1d]
-                #     # candidate_dists = tmp_dists[id1, search_mask1d]
-                #     candidate_matched_ids2 = matched_ids2[search_mask1d]
-                #     # sorted_indices = np.argsort(candidate_dists)
-                #     # print("image 1's feature ", id1, " / ", features1.shape[0], "; with distance = ", candidate_dists[sorted_indices[0]])
-                #     # if candidate_dists[sorted_indices[0]] < args.max_descriptor_distance and candidate_dists[sorted_indices[0]]/candidate_dists[sorted_indices[1]] <= args.ratio_threshold:
-                #     # if candidate_dists[sorted_indices[0]]/candidate_dists[sorted_indices[1]] <= args.ratio_threshold:
-                #     #         fid.write("%s %s\n" % (id1, candidate_matched_ids2[sorted_indices[0]]))
-                #     #         print("image 1's feature ", id1, " / ", features1.shape[0], "; with distance = ", candidate_dists[sorted_indices[0]])
-                #     for tmp_cnt in range(sum(search_mask1d)):
-                #         fid.write("%s %s\n" % (id1, candidate_matched_ids2[tmp_cnt]))
-                fid.write("\n") # empty line is added for colmap custom_match format
+                        fid.write("\n") # empty line is added for colmap custom_match format
+
+                        f2id.write("%s %s\n" % (image_name1, image_name2))
+                        # guide_mapping_dict2 = {}
+                        for i in range(matches.shape[0]):
+                            # guide_mapping_dict2[matches12[i,0]] = matches12[i,1]
+                            ### record match id1, id2, flowx, flowy, pt1_x, pt1_y, pt2_x, pt2_y
+                            f2id.write("%s %s %s %s %s %s %s %s\n" % (matches[i,0], matches[i,1], (coords_12_2[i,0]-coords_12_1[i,0]), (coords_12_2[i,1]-coords_12_1[i,1]), coords_12_1[i,0], coords_12_1[i,1], coords_12_2[i,0], coords_12_2[i,1]))
+
+                        f2id.write("\n") # empty line is added for colmap custom_match format
 
             # return
+    ### copy the saved quantization map to another file with valid_pair_num and delete the original one
+    print("valid_pair_num = ", valid_pair_num)
+    final_output_file_path = os.path.join(args.output_path, 'CrossCheckSurvivor_full_quantization_map_OFscale_'+str(OF_scale_factor)+'_err_'+str(int(args.max_pixel_error*1000))+'_survivorRatio_'+str(int(args.survivor_ratio*1000))+'_validPairNum_'+str(int(valid_pair_num))+'.txt')
+    shutil.copy(output_file_path, final_output_file_path)
+    os.remove(output_file_path)
+    final_output_file_path_clean = os.path.join(args.output_path, 'Clean_CrossCheckSurvivor_full_quantization_map_OFscale_'+str(OF_scale_factor)+'_err_'+str(int(args.max_pixel_error*1000))+'_survivorRatio_'+str(int(args.survivor_ratio*1000))+'_validPairNum_'+str(int(valid_pair_num))+'.txt')
+    shutil.copy(output_file_path_clean, final_output_file_path_clean)
+    os.remove(output_file_path_clean)
 
 if __name__ == "__main__":
     main()

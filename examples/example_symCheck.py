@@ -153,11 +153,37 @@ translation = result['predict_translation']
 print('translation = ', translation)
 predict_scale = result['predict_scale']
 print('predict_scale = ', predict_scale)
+
+
+flowconf2 = result['predict_flowconf2'].squeeze()
+flowconf5 = result['predict_flowconf5'].squeeze()
+print("flowconf2.shape = ", flowconf2.shape)
+print("flowconf5.shape = ", flowconf5.shape)
+print("np.min(flowconf2[:,:,0]) = ", np.min(flowconf2[:,:,0]))
+print("np.max(flowconf2[:,:,0]) = ", np.max(flowconf2[:,:,0]))
+print("np.min(flowconf2[:,:,1]) = ", np.min(flowconf2[:,:,1]))
+print("np.max(flowconf2[:,:,1]) = ", np.max(flowconf2[:,:,1]))
+print("predict_flowconf2...................")
+plt.imshow(flowconf2[:,:,0], cmap='Greys')
+plt.show()
+plt.imshow(flowconf2[:,:,1], cmap='Greys')
+plt.show()
+plt.imshow(np.sqrt(np.square(flowconf2[:,:,0])+np.square(flowconf2[:,:,1])), cmap='Greys')
+plt.show()
+#
+# print("predict_flowconf5...................")
+# plt.imshow(result['predict_flowconf5'].squeeze(), cmap='Greys')
+# plt.show()
+
+
 result = refine_net.eval(input_data['image1'],result['predict_depth2'])
 
+img1.show()
+plt.imshow(result['predict_depth0'].squeeze(), cmap='Greys')
+plt.show()
 
-# plt.imshow(result['predict_depth0'].squeeze(), cmap='Greys')
-# plt.show()
+
+
 # depth12 = result['predict_depth0'][0]
 # print(depth12.shape)
 # compute_normals_from_depth(depth12)
@@ -186,172 +212,173 @@ print('predict_scale21 = ', predict_scale21)
 result21 = refine_net.eval(input_data21['image1'],result21['predict_depth2'])
 
 
-# plt.imshow(result21['predict_depth0'].squeeze(), cmap='Greys')
-# plt.show()
+plt.imshow(result21['predict_depth0'].squeeze(), cmap='Greys')
+plt.show()
+
 #
 # depth21 = result21['predict_depth0'][0]
 # compute_normals_from_depth(depth21)
 
-# try to visualize the point cloud
-try:
-    from depthmotionnet.vis import *
-    import vtk
-    tmpPC1 = visualize_prediction(
-    # visualize_prediction(
-        inverse_depth=result['predict_depth0'],
-        image=input_data['image_pair'][0,0:3] if data_format=='channels_first' else input_data['image_pair'].transpose([0,3,1,2])[0,0:3],
-        rotation=(rotation),
-        translation=translation[0],
-        scale=predict_scale)
-        # scale=1)
-
-
-
-
-
-    print("translation.shape = ", translation.shape)
-    print("translation[0].shape = ", translation[0].shape)
-    tmpPC2 = visualize_prediction(
-    # visualize_prediction(
-        inverse_depth=result21['predict_depth0'],
-        image=input_data21['image_pair'][0,0:3] if data_format=='channels_first' else input_data21['image_pair'].transpose([0,3,1,2])[0,0:3],
-        R1=angleaxis_to_rotation_matrix(rotation[0]),
-        t1=translation[0],
-        rotation=(rotation),
-        translation=translation[0],
-        scale=predict_scale21)
-        # scale=1)
-
-    tmpPC = {}
-    tmpPC['points'] = np.concatenate((tmpPC1['points'],tmpPC2['points']),axis=0)
-    # if 'colors' in tmpPC:
-    tmpPC['colors'] = np.concatenate((tmpPC1['colors'],tmpPC2['colors']),axis=0)
-
-    # tmpPC = tmpPC2
-    ####################################################################
-    import pypcd
-    # also can read from file handles.
-    pc = pypcd.PointCloud.from_path('table_scene_lms400.pcd')
-    # pc.pc_data has the data as a structured array
-    # pc.fields, pc.count, etc have the metadata
-
-    # center the x field
-    pc.pc_data['x'] -= pc.pc_data['x'].mean()
-
-    # save as binary compressed
-    pc.save_pcd('bar.pcd', compression='binary_compressed')
-    print("saving .pcd is successful!")
-
-    import pcl
-    import numpy as np
-    cloud = pcl.PointCloud()
-    pointcloud = np.array(tmpPC['points'], dtype = np.float32)
-    print("pointcloud.shape = ", pointcloud.shape)
-    cloud.from_array(pointcloud)
-    pcl.save(cloud, "cloud.pcd", format = 'pcd')
-
-    p = pcl.PointCloud()
-    # p.from_file("table_scene_lms400.pcd")
-    # p.from_file('table_scene_mug_stereo_textured.pcd')
-    pts = tmpPC['points']
-    print(pts.shape)
-    p.from_array(pts)
-    print(p.size)
-    ns = p.make_segmenter_normals(200)
-    ns.set_method_type(pcl.SAC_RANSAC)
-    ns.set_model_type(pcl.SACMODEL_CYLINDER)
-#     seg.setModelType(pcl::SACMODEL_CYLINDER);
-# seg.setMethodType(pcl::SAC_RANSAC);
-    print(ns.segment())
-
-    n = p.calc_normals(50)
-    print(n)
-    # pcl.save(pts, 'correct_format.pcd')
-    # print(".pcd saving is successful!")
-    fil = p.make_statistical_outlier_filter()
-    fil.set_mean_k(550)
-    fil.set_std_dev_mul_thresh(1.0)
-    print(fil.filter().size)
-    # fil.filter().to_file("inliers.ply")
-    filteredPts = fil.filter().to_array()
-    print("filteredPts.shape = ", filteredPts.shape)
-    # seg = p.make_segmenter()
-    # seg.set_model_type(pcl.SACMODEL_PLANE)
-    # seg.set_method_type(pcl.SAC_RANSAC)
-    # indices, model = seg.segment()
-    # print("indices = ", indices)
-    # print("model = ", model)
-    ####################################################################
-
-    print("tmpPC1['points'].shape = ", tmpPC1['points'].shape)
-    print("tmpPC2['points'].shape = ", tmpPC2['points'].shape)
-    print("tmpPC['points'].shape = ", tmpPC['points'].shape)
-    # export all point clouds in the same global coordinate to a local .ply file (for external visualization)
-    # output_prefix = './'
-    pointcloud_polydata = create_pointcloud_polydata(
-        points=tmpPC['points'],
-        # colors=tmpPC['colors'] if 'colors' in tmpPC else None,
-        colors=tmpPC['colors'],
-        )
-
-    appendFilterModel = vtk.vtkAppendPolyData()
-    cam1_polydata = create_camera_polydata(np.eye(3), [0,0,0], True)
-    cam2_polydata = create_camera_polydata(angleaxis_to_rotation_matrix(rotation[0]), translation[0], True)
-    appendFilterModel.AddInputData(pointcloud_polydata)
-    appendFilterModel.AddInputData(cam1_polydata)
-    appendFilterModel.AddInputData(cam2_polydata)
-    appendFilterModel.Update()
-
-    plywriter = vtk.vtkPLYWriter()
-    plywriter.SetFileName('DeMoN_Sculpture_Example_pointcloud.ply')
-    # plywriter.SetInputData(pointcloud_polydata)
-    plywriter.SetInputData(appendFilterModel.GetOutput())
-    # plywriter.SetFileTypeToASCII()
-    plywriter.SetArrayName('colors')
-    plywriter.Write()
-
-    renderer = vtk.vtkRenderer()
-    renderer.SetBackground(0, 0, 0)
-    pointcloud_actor = create_pointcloud_actor(
-       points=tmpPC1['points'],
-       colors=tmpPC1['colors'] if 'colors' in tmpPC1 else None,
-       )
-    renderer.AddActor(pointcloud_actor)
-    pointcloud_actor = create_pointcloud_actor(
-       points=tmpPC2['points'],
-       colors=tmpPC2['colors'] if 'colors' in tmpPC2 else None,
-       )
-    renderer.AddActor(pointcloud_actor)
-
-    cam1_actor = create_camera_actor(np.eye(3), [0,0,0])
-    renderer.AddActor(cam1_actor)
-    cam2_actor = create_camera_actor(angleaxis_to_rotation_matrix(rotation[0]), translation[0])
-    renderer.AddActor(cam2_actor)
-
-
-    axes = vtk.vtkAxesActor()
-    axes.GetXAxisCaptionActor2D().SetHeight(0.05)
-    axes.GetYAxisCaptionActor2D().SetHeight(0.05)
-    axes.GetZAxisCaptionActor2D().SetHeight(0.05)
-    axes.SetCylinderRadius(0.03)
-    axes.SetShaftTypeToCylinder()
-    renderer.AddActor(axes)
-
-    renwin = vtk.vtkRenderWindow()
-    renwin.SetWindowName("Point Cloud Viewer")
-    renwin.SetSize(800,600)
-    renwin.AddRenderer(renderer)
-
-
-    # An interactor
-    interactor = vtk.vtkRenderWindowInteractor()
-    interstyle = vtk.vtkInteractorStyleTrackballCamera()
-    interactor.SetInteractorStyle(interstyle)
-    interactor.SetRenderWindow(renwin)
-
-    # Start
-    interactor.Initialize()
-    interactor.Start()
-
-except ImportError as err:
-    print("Cannot visualize as pointcloud.", err)
+# # try to visualize the point cloud
+# try:
+#     from depthmotionnet.vis import *
+#     import vtk
+#     tmpPC1 = visualize_prediction(
+#     # visualize_prediction(
+#         inverse_depth=result['predict_depth0'],
+#         image=input_data['image_pair'][0,0:3] if data_format=='channels_first' else input_data['image_pair'].transpose([0,3,1,2])[0,0:3],
+#         rotation=(rotation),
+#         translation=translation[0],
+#         scale=predict_scale)
+#         # scale=1)
+#
+#
+#
+#
+#
+#     print("translation.shape = ", translation.shape)
+#     print("translation[0].shape = ", translation[0].shape)
+#     tmpPC2 = visualize_prediction(
+#     # visualize_prediction(
+#         inverse_depth=result21['predict_depth0'],
+#         image=input_data21['image_pair'][0,0:3] if data_format=='channels_first' else input_data21['image_pair'].transpose([0,3,1,2])[0,0:3],
+#         R1=angleaxis_to_rotation_matrix(rotation[0]),
+#         t1=translation[0],
+#         rotation=(rotation),
+#         translation=translation[0],
+#         scale=predict_scale21)
+#         # scale=1)
+#
+#     tmpPC = {}
+#     tmpPC['points'] = np.concatenate((tmpPC1['points'],tmpPC2['points']),axis=0)
+#     # if 'colors' in tmpPC:
+#     tmpPC['colors'] = np.concatenate((tmpPC1['colors'],tmpPC2['colors']),axis=0)
+#
+# #     # tmpPC = tmpPC2
+# #     ####################################################################
+# #     import pypcd
+# #     # also can read from file handles.
+# #     pc = pypcd.PointCloud.from_path('table_scene_lms400.pcd')
+# #     # pc.pc_data has the data as a structured array
+# #     # pc.fields, pc.count, etc have the metadata
+# #
+# #     # center the x field
+# #     pc.pc_data['x'] -= pc.pc_data['x'].mean()
+# #
+# #     # save as binary compressed
+# #     pc.save_pcd('bar.pcd', compression='binary_compressed')
+# #     print("saving .pcd is successful!")
+# #
+# #     import pcl
+# #     import numpy as np
+# #     cloud = pcl.PointCloud()
+# #     pointcloud = np.array(tmpPC['points'], dtype = np.float32)
+# #     print("pointcloud.shape = ", pointcloud.shape)
+# #     cloud.from_array(pointcloud)
+# #     pcl.save(cloud, "cloud.pcd", format = 'pcd')
+# #
+# #     p = pcl.PointCloud()
+# #     # p.from_file("table_scene_lms400.pcd")
+# #     # p.from_file('table_scene_mug_stereo_textured.pcd')
+# #     pts = tmpPC['points']
+# #     print(pts.shape)
+# #     p.from_array(pts)
+# #     print(p.size)
+# #     ns = p.make_segmenter_normals(200)
+# #     ns.set_method_type(pcl.SAC_RANSAC)
+# #     ns.set_model_type(pcl.SACMODEL_CYLINDER)
+# # #     seg.setModelType(pcl::SACMODEL_CYLINDER);
+# # # seg.setMethodType(pcl::SAC_RANSAC);
+# #     print(ns.segment())
+# #
+# #     n = p.calc_normals(50)
+# #     print(n)
+# #     # pcl.save(pts, 'correct_format.pcd')
+# #     # print(".pcd saving is successful!")
+# #     fil = p.make_statistical_outlier_filter()
+# #     fil.set_mean_k(550)
+# #     fil.set_std_dev_mul_thresh(1.0)
+# #     print(fil.filter().size)
+# #     # fil.filter().to_file("inliers.ply")
+# #     filteredPts = fil.filter().to_array()
+# #     print("filteredPts.shape = ", filteredPts.shape)
+# #     # seg = p.make_segmenter()
+# #     # seg.set_model_type(pcl.SACMODEL_PLANE)
+# #     # seg.set_method_type(pcl.SAC_RANSAC)
+# #     # indices, model = seg.segment()
+# #     # print("indices = ", indices)
+# #     # print("model = ", model)
+# #     ####################################################################
+#
+#     print("tmpPC1['points'].shape = ", tmpPC1['points'].shape)
+#     print("tmpPC2['points'].shape = ", tmpPC2['points'].shape)
+#     print("tmpPC['points'].shape = ", tmpPC['points'].shape)
+#     # export all point clouds in the same global coordinate to a local .ply file (for external visualization)
+#     # output_prefix = './'
+#     pointcloud_polydata = create_pointcloud_polydata(
+#         points=tmpPC['points'],
+#         # colors=tmpPC['colors'] if 'colors' in tmpPC else None,
+#         colors=tmpPC['colors'],
+#         )
+#
+#     appendFilterModel = vtk.vtkAppendPolyData()
+#     cam1_polydata = create_camera_polydata(np.eye(3), [0,0,0], True)
+#     cam2_polydata = create_camera_polydata(angleaxis_to_rotation_matrix(rotation[0]), translation[0], True)
+#     appendFilterModel.AddInputData(pointcloud_polydata)
+#     appendFilterModel.AddInputData(cam1_polydata)
+#     appendFilterModel.AddInputData(cam2_polydata)
+#     appendFilterModel.Update()
+#
+#     plywriter = vtk.vtkPLYWriter()
+#     plywriter.SetFileName('DeMoN_Sculpture_Example_pointcloud.ply')
+#     # plywriter.SetInputData(pointcloud_polydata)
+#     plywriter.SetInputData(appendFilterModel.GetOutput())
+#     # plywriter.SetFileTypeToASCII()
+#     plywriter.SetArrayName('colors')
+#     plywriter.Write()
+#
+#     renderer = vtk.vtkRenderer()
+#     renderer.SetBackground(0, 0, 0)
+#     pointcloud_actor = create_pointcloud_actor(
+#        points=tmpPC1['points'],
+#        colors=tmpPC1['colors'] if 'colors' in tmpPC1 else None,
+#        )
+#     renderer.AddActor(pointcloud_actor)
+#     pointcloud_actor = create_pointcloud_actor(
+#        points=tmpPC2['points'],
+#        colors=tmpPC2['colors'] if 'colors' in tmpPC2 else None,
+#        )
+#     renderer.AddActor(pointcloud_actor)
+#
+#     cam1_actor = create_camera_actor(np.eye(3), [0,0,0])
+#     renderer.AddActor(cam1_actor)
+#     cam2_actor = create_camera_actor(angleaxis_to_rotation_matrix(rotation[0]), translation[0])
+#     renderer.AddActor(cam2_actor)
+#
+#
+#     axes = vtk.vtkAxesActor()
+#     axes.GetXAxisCaptionActor2D().SetHeight(0.05)
+#     axes.GetYAxisCaptionActor2D().SetHeight(0.05)
+#     axes.GetZAxisCaptionActor2D().SetHeight(0.05)
+#     axes.SetCylinderRadius(0.03)
+#     axes.SetShaftTypeToCylinder()
+#     renderer.AddActor(axes)
+#
+#     renwin = vtk.vtkRenderWindow()
+#     renwin.SetWindowName("Point Cloud Viewer")
+#     renwin.SetSize(800,600)
+#     renwin.AddRenderer(renderer)
+#
+#
+#     # An interactor
+#     interactor = vtk.vtkRenderWindowInteractor()
+#     interstyle = vtk.vtkInteractorStyleTrackballCamera()
+#     interactor.SetInteractorStyle(interstyle)
+#     interactor.SetRenderWindow(renwin)
+#
+#     # Start
+#     interactor.Initialize()
+#     interactor.Start()
+#
+# except ImportError as err:
+#     print("Cannot visualize as pointcloud.", err)

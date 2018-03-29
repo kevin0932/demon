@@ -21,8 +21,8 @@ from depthmotionnet.networks_original import *
 # sys.path.append(r'/home/kevin/anaconda_tensorflow_demon_ws/demon/python/depthmotionnet/')
 
 examples_dir = os.path.dirname(__file__)
-weights_dir = os.path.join(examples_dir,'..','weights')
-sys.path.insert(0, os.path.join(examples_dir, '..', 'python'))
+weights_dir = os.path.join(examples_dir,'../..','weights')
+sys.path.insert(0, os.path.join(examples_dir, '../..', 'python'))
 
 def warp_flow(img, flow):
     flow = np.transpose(flow, [1,2,0])

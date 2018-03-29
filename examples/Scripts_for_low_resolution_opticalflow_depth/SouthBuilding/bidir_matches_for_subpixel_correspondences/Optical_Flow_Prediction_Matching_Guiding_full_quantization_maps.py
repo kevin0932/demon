@@ -307,7 +307,7 @@ def main():
 
     image_pairs = set()
     # with open(os.path.join(args.output_path, 'test_quantization_map_OFscale_'+str(OF_scale_factor)+'.txt'), "w") as fid:
-    with open(os.path.join(args.output_path, 'test_quantization_map_OFscale_'+str(OF_scale_factor)+'_err_'+str(int(args.max_pixel_error*1000))+'.txt'), "w") as fid:
+    with open(os.path.join(args.output_path, 'full_quantization_map_OFscale_'+str(OF_scale_factor)+'.txt'), "w") as fid:
         for image_name1 in features_list.keys():
             for image_name2 in features_list.keys():
                 if image_name1 == image_name2:
@@ -324,12 +324,12 @@ def main():
 
                 image_pair21 = "{}---{}".format(image_name2, image_name1)
                 image_pairs.add(image_pair12)
-                # image_pairs.add(image_pair21)
-                if image_pair21 not in data.keys():
-                    continue
+                # # image_pairs.add(image_pair21)
+                # if image_pair21 not in data.keys():
+                #     continue
 
-                # if image_pair12 not in good_pairs:
-                if image_pair12 not in good_pairs or image_pair21 not in good_pairs :
+                if image_pair12 not in good_pairs:
+                # if image_pair12 not in good_pairs or image_pair21 not in good_pairs :
                     print("skip the image pair because it is not a good pair by visual inspection!")
                     continue
 
@@ -350,16 +350,16 @@ def main():
                 # flow12 = np.transpose(flow12, [2, 0, 1])
                 print(flow12.shape)
 
-                flow21 = data[image_pair21]["flow"]
-                # flow21 = np.transpose(flow21, [2, 0, 1])
-                # print(flow21.shape)
+                # flow21 = data[image_pair21]["flow"]
+                # # flow21 = np.transpose(flow21, [2, 0, 1])
+                # # print(flow21.shape)
 
                 ### add code to upsample the predicted optical-flow
                 if OF_scale_factor > 1:
                     flow12_upsampled = upsample_optical_flow(flow12, OF_scale_factor=OF_scale_factor)
-                    flow21_upsampled = upsample_optical_flow(flow21, OF_scale_factor=OF_scale_factor)
+                    # flow21_upsampled = upsample_optical_flow(flow21, OF_scale_factor=OF_scale_factor)
                     flow12 = flow12_upsampled
-                    flow21 = flow21_upsampled
+                    # flow21 = flow21_upsampled
                     print("updampled flow12.shape = ", flow12.shape)
                     # img12 = np.zeros((flow12.shape[1],flow12.shape[2],3), dtype=np.uint8)
                     # img12[:,:,:2] = np.transpose(flow12*128+128, [1, 2, 0])
@@ -378,68 +378,71 @@ def main():
 
                 matches12, coords121, coords122 = flow_to_matches_float32Pixels(flow12)
 
-                # guide_mapping_dict = {}
-                # for i in range(matches12.shape[0]):
-                #     guide_mapping_dict[matches12[i,0]] = matches12[i,1]
-                #     fid.write("%s %s\n" % (matches12[i,0], matches12[i,1]))
-
-                matches21, coords211, coords212 = flow_to_matches_float32Pixels(flow21)
-
-                print("  => Found", matches12.size/2, "<->", matches21.size/2, "matches")
-                if  matches12.size/2 <= 0 or matches21.size/2 <= 0:
-                    continue
-
-                matches, coords_12_1, coords_12_2 = cross_check_matches_float32Pixel(matches12, coords121, coords122,
-                                              matches21, coords211, coords212,
-                                              # args.max_pixel_error*OF_scale_factor)
-                                              args.max_pixel_error)
-                                              # max_reproj_error)
-                print("matches.shape = ", matches.shape, "; ", "coords_12_1.shape = ", coords_12_1.shape, "coords_12_2.shape = ", coords_12_2.shape)
-
-                if matches.size == 0:
-                    continue
-                print("  => Cross-checked", matches.shape[0], "matches")
-
-                # matches, coords_12_1, coords_12_2 = PatchBased_NCC_photometric_check(matches, coords_12_1, coords_12_2, max_photometric_error, img1PIL, img2PIL)
-                # print("  => photo-checked", matches.shape[0], "matches")
-                # if matches.size == 0:
-                #     continue
-
                 fid.write("%s %s\n" % (image_name1, image_name2))
 
                 guide_mapping_dict = {}
-                for i in range(matches.shape[0]):
-                    guide_mapping_dict[matches[i,0]] = matches[i,1]
-                    fid.write("%s %s\n" % (matches[i,0], matches[i,1]))
+                for i in range(matches12.shape[0]):
+                    guide_mapping_dict[matches12[i,0]] = matches12[i,1]
+                    fid.write("%s %s\n" % (matches12[i,0], matches12[i,1]))
 
-                # features1 = features_list[image_name1]
-                # features2 = features_list[image_name2]
-                # # descriptors1 = descriptors_list[image_name1]
-                # # descriptors2 = descriptors_list[image_name2]
-                # quantization_ids1 = quantization_list[image_name1]
-                # quantization_ids2 = quantization_list[image_name2]
-                # matched_ids2 = np.arange(features2.shape[0])
+                # matches21, coords211, coords212 = flow_to_matches_float32Pixels(flow21)
                 #
-                # # tmp_dists = distance.cdist(descriptors1, descriptors2)
-                # for id1 in range(features1.shape[0]):
-                #     # print("image 1's feature ", id1, " / ", features1.shape[0])
-                #     if quantization_ids1[id1] not in guide_mapping_dict.keys():
-                #         continue
-                #     search_space_quantization_id = guide_mapping_dict[quantization_ids1[id1]]
-                #     search_mask1d = (quantization_ids2==search_space_quantization_id)
-                #     # if sum(search_mask1d)<=1:
-                #     #     continue
-                #     # search_ids = quantization_ids2[search_mask1d]
-                #     # candidate_dists = tmp_dists[id1, search_mask1d]
-                #     candidate_matched_ids2 = matched_ids2[search_mask1d]
-                #     # sorted_indices = np.argsort(candidate_dists)
-                #     # print("image 1's feature ", id1, " / ", features1.shape[0], "; with distance = ", candidate_dists[sorted_indices[0]])
-                #     # if candidate_dists[sorted_indices[0]] < args.max_descriptor_distance and candidate_dists[sorted_indices[0]]/candidate_dists[sorted_indices[1]] <= args.ratio_threshold:
-                #     # if candidate_dists[sorted_indices[0]]/candidate_dists[sorted_indices[1]] <= args.ratio_threshold:
-                #     #         fid.write("%s %s\n" % (id1, candidate_matched_ids2[sorted_indices[0]]))
-                #     #         print("image 1's feature ", id1, " / ", features1.shape[0], "; with distance = ", candidate_dists[sorted_indices[0]])
-                #     for tmp_cnt in range(sum(search_mask1d)):
-                #         fid.write("%s %s\n" % (id1, candidate_matched_ids2[tmp_cnt]))
+                # print("  => Found", matches12.size/2, "<->", matches21.size/2, "matches")
+                # if  matches12.size/2 <= 0 or matches21.size/2 <= 0:
+                #     continue
+                #
+                # matches, coords_12_1, coords_12_2 = cross_check_matches_float32Pixel(matches12, coords121, coords122,
+                #                               matches21, coords211, coords212,
+                #                               # args.max_pixel_error*OF_scale_factor)
+                #                               args.max_pixel_error)
+                #                               # max_reproj_error)
+                # print("matches.shape = ", matches.shape, "; ", "coords_12_1.shape = ", coords_12_1.shape, "coords_12_2.shape = ", coords_12_2.shape)
+                #
+                # if matches.size == 0:
+                #     continue
+                # print("  => Cross-checked", matches.shape[0], "matches")
+                #
+                # # matches, coords_12_1, coords_12_2 = PatchBased_NCC_photometric_check(matches, coords_12_1, coords_12_2, max_photometric_error, img1PIL, img2PIL)
+                # # print("  => photo-checked", matches.shape[0], "matches")
+                # # if matches.size == 0:
+                # #     continue
+                #
+                # fid.write("%s %s\n" % (image_name1, image_name2))
+                #
+                # guide_mapping_dict = {}
+                # for i in range(matches.shape[0]):
+                #     guide_mapping_dict[matches[i,0]] = matches[i,1]
+                #     fid.write("%s %s\n" % (matches[i,0], matches[i,1]))
+                #
+                # # features1 = features_list[image_name1]
+                # # features2 = features_list[image_name2]
+                # # # descriptors1 = descriptors_list[image_name1]
+                # # # descriptors2 = descriptors_list[image_name2]
+                # # quantization_ids1 = quantization_list[image_name1]
+                # # quantization_ids2 = quantization_list[image_name2]
+                # # matched_ids2 = np.arange(features2.shape[0])
+                # #
+                # # # tmp_dists = distance.cdist(descriptors1, descriptors2)
+                # # for id1 in range(features1.shape[0]):
+                # #     # print("image 1's feature ", id1, " / ", features1.shape[0])
+                # #     if quantization_ids1[id1] not in guide_mapping_dict.keys():
+                # #         continue
+                # #     search_space_quantization_id = guide_mapping_dict[quantization_ids1[id1]]
+                # #     search_mask1d = (quantization_ids2==search_space_quantization_id)
+                # #     # if sum(search_mask1d)<=1:
+                # #     #     continue
+                # #     # search_ids = quantization_ids2[search_mask1d]
+                # #     # candidate_dists = tmp_dists[id1, search_mask1d]
+                # #     candidate_matched_ids2 = matched_ids2[search_mask1d]
+                # #     # sorted_indices = np.argsort(candidate_dists)
+                # #     # print("image 1's feature ", id1, " / ", features1.shape[0], "; with distance = ", candidate_dists[sorted_indices[0]])
+                # #     # if candidate_dists[sorted_indices[0]] < args.max_descriptor_distance and candidate_dists[sorted_indices[0]]/candidate_dists[sorted_indices[1]] <= args.ratio_threshold:
+                # #     # if candidate_dists[sorted_indices[0]]/candidate_dists[sorted_indices[1]] <= args.ratio_threshold:
+                # #     #         fid.write("%s %s\n" % (id1, candidate_matched_ids2[sorted_indices[0]]))
+                # #     #         print("image 1's feature ", id1, " / ", features1.shape[0], "; with distance = ", candidate_dists[sorted_indices[0]])
+                # #     for tmp_cnt in range(sum(search_mask1d)):
+                # #         fid.write("%s %s\n" % (id1, candidate_matched_ids2[tmp_cnt]))
+
                 fid.write("\n") # empty line is added for colmap custom_match format
 
             # return

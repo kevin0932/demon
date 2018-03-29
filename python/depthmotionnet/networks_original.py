@@ -182,6 +182,11 @@ class IterativeNet:
                 'predict_translation': self.netDM2_result['predict_translation'],
                 ### add learned scale factor as one of the outputs
                 'predict_scale': self.netDM2_result['predict_scale'],
+                ### add predicted optical flow confidence as one of the outputs
+                # 'predict_flowconf5': self.netFlow2_result['predict_flowconf5'],
+                # 'predict_flowconf2': self.netFlow2_result['predict_flowconf2'],
+                'predict_flowconf5': self.predict_conf5,
+                'predict_flowconf2': self.predict_conf2,
                 }
         feed_dict = {
                 self.placeholder_image_pair: image_pair,

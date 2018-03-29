@@ -703,29 +703,29 @@ def main():
     images = dict()
     image_pairs = set()
 
-    GTfilepath = '/home/kevin/JohannesCode/ws1/dense/0/sparse/southbuilding_RtAngleAxis_groundtruth_from_colmap.txt'
-    #GTfilepath = '/home/kevin/JohannesCode/southbuilding_RtAngleAxis_groundtruth_from_colmap.txt'
-    # GTfilepath = '/home/kevin/ThesisDATA/person-hall/dense/sparse/southbuilding_RtAngleAxis_groundtruth_from_colmap.txt'
-    # GTfilepath = '/home/kevin/ThesisDATA/gerrard-hall/dense/sparse/southbuilding_RtAngleAxis_groundtruth_from_colmap.txt'
-    #GTfilepath = '/home/kevin/ThesisDATA/CVG_Datasets_3Dsymmetric/barcelona_Dataset/dense/sparse/southbuilding_RtAngleAxis_groundtruth_from_colmap.txt'
-    # GTfilepath = '/home/kevin/ThesisDATA/CVG_Datasets_3Dsymmetric/redmond_Dataset/dense/sparse/southbuilding_RtAngleAxis_groundtruth_from_colmap.txt'
-
-    imagesGT = read_images_text(GTfilepath)
+    # GTfilepath = '/home/kevin/JohannesCode/ws1/dense/0/sparse/southbuilding_RtAngleAxis_groundtruth_from_colmap.txt'
+    # #GTfilepath = '/home/kevin/JohannesCode/southbuilding_RtAngleAxis_groundtruth_from_colmap.txt'
+    # # GTfilepath = '/home/kevin/ThesisDATA/person-hall/dense/sparse/southbuilding_RtAngleAxis_groundtruth_from_colmap.txt'
+    # # GTfilepath = '/home/kevin/ThesisDATA/gerrard-hall/dense/sparse/southbuilding_RtAngleAxis_groundtruth_from_colmap.txt'
+    # #GTfilepath = '/home/kevin/ThesisDATA/CVG_Datasets_3Dsymmetric/barcelona_Dataset/dense/sparse/southbuilding_RtAngleAxis_groundtruth_from_colmap.txt'
+    # # GTfilepath = '/home/kevin/ThesisDATA/CVG_Datasets_3Dsymmetric/redmond_Dataset/dense/sparse/southbuilding_RtAngleAxis_groundtruth_from_colmap.txt'
+    #
+    # imagesGT = read_images_text(GTfilepath)
 
     relativePoses_outputGTfilepath = args.relative_poses_Output_path
 
     relativePoses_outputGTfile = open(relativePoses_outputGTfilepath,'w')
 
 
-    # for imgIdx in range(len(imagesGT)):
-    for imgIdx, val in imagesGT.items():
-        print("imgIdx = ", imgIdx)
-        images[val.name] = add_image_withRt(
-            connection, cursor, args.focal_length, val.name,
-            np.array([192, 256]), args.image_scale, val.qvec, val.tvec, val.angleaxis)
-        images[val.name] = add_image_withRt_colmap(
-            connectionNoRt, cursorNoRt, args.focal_length, val.name,
-            np.array([192, 256]), args.image_scale, val.qvec, val.tvec)
+    # # for imgIdx in range(len(imagesGT)):
+    # for imgIdx, val in imagesGT.items():
+    #     print("imgIdx = ", imgIdx)
+    #     images[val.name] = add_image_withRt(
+    #         connection, cursor, args.focal_length, val.name,
+    #         np.array([192, 256]), args.image_scale, val.qvec, val.tvec, val.angleaxis)
+    #     images[val.name] = add_image_withRt_colmap(
+    #         connectionNoRt, cursorNoRt, args.focal_length, val.name,
+    #         np.array([192, 256]), args.image_scale, val.qvec, val.tvec)
 
     data = h5py.File(args.demon_path)
     for image_pair12 in data.keys():
@@ -737,6 +737,17 @@ def main():
         image_name1, image_name2 = image_pair12.split("---")
         image_pair21 = "{}---{}".format(image_name2, image_name1)
         image_pairs.add(image_pair12)
+
+        if image_name1 not in images.keys():
+            images[image_name1] = add_image_withRt(
+                    connection, cursor, args.focal_length, image_name1,
+                    np.array([48, 64]), args.image_scale, np.zeros(4), np.zeros(3), np.zeros(3))
+        if image_name2 not in images.keys():
+            images[image_name2] = add_image_withRt_colmap(
+                    connectionNoRt, cursorNoRt, args.focal_length, image_name2,
+                    np.array([48, 64]), args.image_scale, np.zeros(4), np.zeros(3))
+        image_indexGT_from_name1 = images[image_name1]
+        image_indexGT_from_name2 = images[image_name2]
 
         ### further filtering the image pairs by prediction sym error ### Freiburg's data
         pred_rotmat12 = data[image_pair12]["rotation"].value
@@ -753,23 +764,23 @@ def main():
         # img2PIL = PIL.Image.open(imagepath2)
 
 
-        # retrieve the ground truth Rt from colmap result
-        for imgIdx, val in imagesGT.items():
-            if val.name == image_name1:
-                image_indexGT_from_name1 = imgIdx
-                print("the image id of name" + image_name1 + " is ", imgIdx)
-            if val.name == image_name2:
-                image_indexGT_from_name2 = imgIdx
-                print("the image id of name" + image_name2 + " is ", imgIdx)
+        # # retrieve the ground truth Rt from colmap result
+        # for imgIdx, val in imagesGT.items():
+        #     if val.name == image_name1:
+        #         image_indexGT_from_name1 = imgIdx
+        #         print("the image id of name" + image_name1 + " is ", imgIdx)
+        #     if val.name == image_name2:
+        #         image_indexGT_from_name2 = imgIdx
+        #         print("the image id of name" + image_name2 + " is ", imgIdx)
 
-        # # retrieve the ground truth relative poses from colmap result
-        img1qvec = imagesGT[image_indexGT_from_name1].qvec
-        img1tvec = imagesGT[image_indexGT_from_name1].tvec
-        img2qvec = imagesGT[image_indexGT_from_name2].qvec
-        img2tvec = imagesGT[image_indexGT_from_name2].tvec
-        img1rotmat = imagesGT[image_indexGT_from_name1].rotmat
-        img2rotmat = imagesGT[image_indexGT_from_name2].rotmat
-        # check quaternion to rotation matrix conversion
+        # # # retrieve the ground truth relative poses from colmap result
+        # img1qvec = imagesGT[image_indexGT_from_name1].qvec
+        # img1tvec = imagesGT[image_indexGT_from_name1].tvec
+        # img2qvec = imagesGT[image_indexGT_from_name2].qvec
+        # img2tvec = imagesGT[image_indexGT_from_name2].tvec
+        # img1rotmat = imagesGT[image_indexGT_from_name1].rotmat
+        # img2rotmat = imagesGT[image_indexGT_from_name2].rotmat
+        # # check quaternion to rotation matrix conversion
 
         # calculate relative poses according to the mechanism in twoview_info.h by TheiaSfM
         # The relative rotation of camera2 is: R_12 = R2 * R1^t.
