@@ -263,21 +263,24 @@ def main():
 
     image_pairs = set()
     valid_pair_num = 0
-    output_file_path = os.path.join(args.output_path, 'CrossCheckSurvivor_full_quantization_map_OFscale_'+str(OF_scale_factor)+'_err_'+str(int(args.max_pixel_error*1000))+'_survivorRatio_'+str(int(args.survivor_ratio*1000))+'.txt')
-    output_file_path_clean = os.path.join(args.output_path, 'Clean_CrossCheckSurvivor_full_quantization_map_OFscale_'+str(OF_scale_factor)+'_err_'+str(int(args.max_pixel_error*1000))+'_survivorRatio_'+str(int(args.survivor_ratio*1000))+'.txt')
-    output_OFfile_path = os.path.join(args.output_path, 'CrossCheckSurvivor_OpticalFlow_OFscale_'+str(OF_scale_factor)+'_err_'+str(int(args.max_pixel_error*1000))+'_survivorRatio_'+str(int(args.survivor_ratio*1000))+'.txt')
+    output_file_path = os.path.join(args.output_path, 'OrderEnforced_CrossCheckSurvivor_full_quantization_map_OFscale_'+str(OF_scale_factor)+'_err_'+str(int(args.max_pixel_error*1000))+'_survivorRatio_'+str(int(args.survivor_ratio*1000))+'.txt')
+    output_file_path_clean = os.path.join(args.output_path, 'OrderEnforced_Clean_CrossCheckSurvivor_full_quantization_map_OFscale_'+str(OF_scale_factor)+'_err_'+str(int(args.max_pixel_error*1000))+'_survivorRatio_'+str(int(args.survivor_ratio*1000))+'.txt')
+    output_OFfile_path = os.path.join(args.output_path, 'OrderEnforced_CrossCheckSurvivor_OpticalFlow_OFscale_'+str(OF_scale_factor)+'_err_'+str(int(args.max_pixel_error*1000))+'_survivorRatio_'+str(int(args.survivor_ratio*1000))+'.txt')
     with open(output_OFfile_path, "w") as fOFid:
         with open(output_file_path_clean, "w") as f2id:
             with open(output_file_path, "w") as fid:
-                for image_name1 in features_list.keys():
-                    for image_name2 in features_list.keys():
-                        if image_name1 == image_name2:
-                            continue
-
-                        image_pair12 = image_name1+'---'+image_name2
+                # for image_name1 in features_list.keys():
+                #     for image_name2 in features_list.keys():
+                for image_pair12 in data.keys():
+                    if True:
+                        # if image_name1 == image_name2:
+                        #     continue
+                        # image_pair12 = image_name1+'---'+image_name2
+                        image_name1, image_name2 = image_pair12.split('---')
                         if image_pair12 not in data.keys():
                             continue
-                        print("Processing", image_pair12, "; img1 has ", features_list[image_name1].shape[0], " features", "; img2 has ", features_list[image_name2].shape[0], " features")
+                        # print("Processing", image_pair12, "; img1 has ", features_list[image_name1].shape[0], " features", "; img2 has ", features_list[image_name2].shape[0], " features")
+                        print("Processing", image_pair12)
                         if image_pair12 in image_pairs:
                             continue
 
@@ -289,10 +292,22 @@ def main():
                         if image_pair21 not in data.keys():
                             continue
 
-                        # if image_pair12 not in good_pairs:
-                        if image_pair12 not in good_pairs or image_pair21 not in good_pairs :
-                            print("skip the image pair because it is not a good pair by visual inspection!")
-                            continue
+                        # # if image_pair12 not in good_pairs:
+                        # if image_pair12 not in good_pairs or image_pair21 not in good_pairs :
+                        #     print("skip the image pair because it is not a good pair by visual inspection!")
+                        #     continue
+
+                        ### To enforce Colmap image id order for unit testing
+                        imgColmapId1 = images_name_to_id[image_name1]
+                        imgColmapId2 = images_name_to_id[image_name2]
+                        if imgColmapId1 > imgColmapId2:
+                            tmp=image_name1
+                            image_name1=image_name2
+                            image_name2=tmp
+                            tmp=image_pair12
+                            image_pair12=image_pair21
+                            image_pair21=tmp
+                            print("@@@@@@ image 1 and 2 are swapped to enforce Colmap image id order!")
 
 
                         flow12 = data[image_pair12]["flow"]
@@ -376,13 +391,13 @@ def main():
                 # return
     ### copy the saved quantization map to another file with valid_pair_num and delete the original one
     print("valid_pair_num = ", valid_pair_num)
-    final_output_file_path = os.path.join(args.output_path, 'CrossCheckSurvivor_full_quantization_map_OFscale_'+str(OF_scale_factor)+'_err_'+str(int(args.max_pixel_error*1000))+'_survivorRatio_'+str(int(args.survivor_ratio*1000))+'_validPairNum_'+str(int(valid_pair_num))+'.txt')
+    final_output_file_path = os.path.join(args.output_path, 'OrderEnforced_CrossCheckSurvivor_full_quantization_map_OFscale_'+str(OF_scale_factor)+'_err_'+str(int(args.max_pixel_error*1000))+'_survivorRatio_'+str(int(args.survivor_ratio*1000))+'_validPairNum_'+str(int(valid_pair_num))+'.txt')
     shutil.copy(output_file_path, final_output_file_path)
     os.remove(output_file_path)
-    final_output_file_path_clean = os.path.join(args.output_path, 'Clean_CrossCheckSurvivor_full_quantization_map_OFscale_'+str(OF_scale_factor)+'_err_'+str(int(args.max_pixel_error*1000))+'_survivorRatio_'+str(int(args.survivor_ratio*1000))+'_validPairNum_'+str(int(valid_pair_num))+'.txt')
+    final_output_file_path_clean = os.path.join(args.output_path, 'OrderEnforced_Clean_CrossCheckSurvivor_full_quantization_map_OFscale_'+str(OF_scale_factor)+'_err_'+str(int(args.max_pixel_error*1000))+'_survivorRatio_'+str(int(args.survivor_ratio*1000))+'_validPairNum_'+str(int(valid_pair_num))+'.txt')
     shutil.copy(output_file_path_clean, final_output_file_path_clean)
     os.remove(output_file_path_clean)
-    final_output_OFfile_path = os.path.join(args.output_path, 'CrossCheckSurvivor_OpticalFlow_OFscale_'+str(OF_scale_factor)+'_err_'+str(int(args.max_pixel_error*1000))+'_survivorRatio_'+str(int(args.survivor_ratio*1000))+'_validPairNum_'+str(int(valid_pair_num))+'.txt')
+    final_output_OFfile_path = os.path.join(args.output_path, 'OrderEnforced_CrossCheckSurvivor_OpticalFlow_OFscale_'+str(OF_scale_factor)+'_err_'+str(int(args.max_pixel_error*1000))+'_survivorRatio_'+str(int(args.survivor_ratio*1000))+'_validPairNum_'+str(int(valid_pair_num))+'.txt')
     shutil.copy(output_OFfile_path, final_output_OFfile_path)
     os.remove(output_OFfile_path)
 

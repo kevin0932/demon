@@ -262,18 +262,40 @@ weights_dir = '/home/kevin/anaconda_tensorflow_demon_ws/demon/weights'
 # outdir = "/media/kevin/SamsungT5_F/ThesisDATA/gerrard_hall/demon_prediction"
 # outfile = os.path.join(outdir, "more_pairs_gerrard_hall_predictions_22022018.h5")
 
-# # recondir = '/media/kevin/MYDATA/textureless_labwall_10032018/dense/'
-# # outdir = "/media/kevin/MYDATA/textureless_labwall_10032018/demon_prediction"
-# # recondir = '/media/kevin/MYDATA/textureless_desk_10032018/dense/'
-# # outdir = "/media/kevin/MYDATA/textureless_desk_10032018/demon_prediction"
-recondir = '/home/kevin/JohannesCode/ws1/dense/0/'
-# outdir = "/media/kevin/MYDATA/southbuilding_10032018/demon_prediction"
-outdir = "/media/kevin/MYDATA/southbuilding_10032018/demon_prediction_15_30_066"
-# recondir = '/media/kevin/MYDATA/cab_front/dense_384_512/'
-# outdir = "/media/kevin/MYDATA/cab_front/dense_384_512/demon_prediction"
-# outfile = os.path.join(outdir, "more_pairs_textureless_predictions_10032018.h5")
-outfile = os.path.join(outdir, "less_pairs_textureless_predictions_10032018.h5")
+# # # recondir = '/media/kevin/MYDATA/textureless_labwall_10032018/dense/'
+# # # outdir = "/media/kevin/MYDATA/textureless_labwall_10032018/demon_prediction"
+# # # recondir = '/media/kevin/MYDATA/textureless_desk_10032018/dense/'
+# # # outdir = "/media/kevin/MYDATA/textureless_desk_10032018/demon_prediction"
+# recondir = '/home/kevin/JohannesCode/ws1/dense/0/'
+# # outdir = "/media/kevin/MYDATA/southbuilding_10032018/demon_prediction"
+# outdir = "/media/kevin/MYDATA/southbuilding_28032018/demon_prediction_20_30_060"
+# # recondir = '/media/kevin/MYDATA/cab_front/dense_384_512/'
+# # outdir = "/media/kevin/MYDATA/cab_front/dense_384_512/demon_prediction"
+# # outfile = os.path.join(outdir, "more_pairs_textureless_predictions_10032018.h5")
+# outfile = os.path.join(outdir, "less_pairs_textureless_predictions_10032018.h5")
 
+# recondir = '/home/kevin/ThesisDATA/30032018/CNB_wc/dense_192_256/'
+# outdir = "/home/kevin/ThesisDATA/30032018/CNB_wc/demon_prediction_20_30_060"
+# outfile = os.path.join(outdir, "less_pairs_textureless_predictions_10032018.h5")
+
+
+# recondir = '/home/kevin/ThesisDATA/labwall/DenseSIFT/dense_192_256/'
+# outdir = "/home/kevin/ThesisDATA/labwall/demon_prediction_20_30_060"
+# # outdir = "/home/kevin/ThesisDATA/labwall/demon_prediction_30_60_040"
+# outfile = os.path.join(outdir, "kevin_southbuilding_demon.h5")
+
+# recondir = '/home/kevin/ThesisDATA/NewLabWall/dense_192_256/'
+# # outdir = "/home/kevin/ThesisDATA/NewLabWall/demon_prediction_20_30_060"
+# outdir = "/home/kevin/ThesisDATA/NewLabWall/demon_prediction_30_60_040"
+# outfile = os.path.join(outdir, "kevin_southbuilding_demon.h5")
+
+# recondir = '/home/kevin/JohannesCode/ws1/dense/0/'
+# outdir = "/home/kevin/ThesisDATA/southbuilding_01042018/demon_prediction_80_20_080"
+# outfile = os.path.join(outdir, "kevin_southbuilding_demon.h5")
+
+recondir = '/home/kevin/ThesisDATA/CVG_Capitole/dense_192_256/'
+outdir = "/home/kevin/ThesisDATA/CVG_Capitole/demon_prediction_15_30_070"
+outfile = os.path.join(outdir, "kevin_southbuilding_demon.h5")
 
 # recondir = '/media/kevin/MYDATA/Datasets_14032018/CNB_labwall/dense_384_512'
 # # outdir = "/media/kevin/MYDATA/Datasets_14032018/CNB_labwall/demon_prediction"
@@ -319,7 +341,7 @@ views = colmap.create_views(cameras, images, os.path.join(recondir,'images'), os
 
 knn = 15 # 5
 max_angle = 30*math.pi/180  # 60*math.pi/180
-min_overlap_ratio = 0.66     # 0.5
+min_overlap_ratio = 0.7    # 0.5
 # knn = 20 # 25 # 5
 # max_angle = 45*math.pi/180  # 60*math.pi/180
 # min_overlap_ratio = 0.75     # 0.5
@@ -486,6 +508,18 @@ def main():
         os.stat(os.path.join(output_dir, "graydepthmap"))
     except:
         os.mkdir(os.path.join(output_dir, "graydepthmap"))
+    try:
+        os.stat(os.path.join(output_dir, "flowconf_48_64"))
+    except:
+        os.mkdir(os.path.join(output_dir, "flowconf_48_64"))
+    try:
+        os.stat(os.path.join(output_dir, "flowconf_x_48_64"))
+    except:
+        os.mkdir(os.path.join(output_dir, "flowconf_x_48_64"))
+    try:
+        os.stat(os.path.join(output_dir, "flowconf_y_48_64"))
+    except:
+        os.mkdir(os.path.join(output_dir, "flowconf_y_48_64"))
 
     print("Write a NeXus HDF5 file")
     output_h5_filename = u"kevin_southbuilding_demon.h5"
@@ -578,6 +612,11 @@ def main():
             # if tf.test.is_gpu_available(True) and data_format == 'channels_first':
             flow2 = flow2.transpose([2, 0, 1])
             print(flow2.shape)
+            ### also save the confidence of optical flow 2
+            flowconf2 = result['predict_flowconf2'].squeeze()
+            # if tf.test.is_gpu_available(True) and data_format == 'channels_first':
+            flowconf2 = flowconf2.transpose([2, 0, 1])
+            print(flowconf2.shape)
             # flow5 = result['predict_flow5'].squeeze()
             # print(flow5.shape)
             scale = result['predict_scale'].squeeze().astype(np.float32)
@@ -628,6 +667,7 @@ def main():
             h5file.create_dataset((file1 + "---" + file2 + "/depth"), data=depth_48by64)
             h5file.create_dataset((file1 + "---" + file2 + "/depth_upsampled"), data=depth_upsampled)
             h5file.create_dataset((file1 + "---" + file2 + "/flow"), data=flow2)
+            h5file.create_dataset((file1 + "---" + file2 + "/flowconf"), data=flowconf2)
             h5file.create_dataset((file1 + "---" + file2 + "/scale"), data=scale)
 
             # ofplot = warp_flow(input_data['image2_2'], flow2)
@@ -639,6 +679,15 @@ def main():
             # cv2.waitKey()
             # cv2.destroyAllWindows()
             # return
+            plt.imsave(os.path.join(output_dir, "flowconf_x_48_64", os.path.splitext(file1)[0] + "---" + os.path.splitext(file2)[0]), flowconf2[0,:,:], cmap='Greys')
+            plt.imsave(os.path.join(output_dir, "flowconf_y_48_64", os.path.splitext(file1)[0] + "---" + os.path.splitext(file2)[0]), flowconf2[1,:,:], cmap='Greys')
+            # ofplot = convert_flow_to_plot_img(flow2)
+            combinedFlowConf2 = np.sqrt(np.square(flowconf2[0,:,:])+np.square(flowconf2[1,:,:]))
+            tmpMin = np.min(combinedFlowConf2)
+            tmpMax = np.max(combinedFlowConf2)
+            combinedFlowConf2 = ((combinedFlowConf2-tmpMin)/(tmpMax-tmpMin))*255
+            plt.imsave(os.path.join(output_dir, "flowconf_48_64", os.path.splitext(file1)[0] + "---" + os.path.splitext(file2)[0]), combinedFlowConf2, cmap='Greys')
+
 
     h5file.close()   # be CERTAIN to close the file
     print("HDF5 file is written successfully:", output_h5_filepath)

@@ -62,6 +62,12 @@ def main():
     input_dir = args.input_dataset_dir_path
     output_dir = args.output_dir_path
 
+    ### create the folder rgb where the selected images will be stored!
+    try:
+        os.stat(os.path.join(output_dir, "rgb"))
+    except:
+        os.mkdir(os.path.join(output_dir, "rgb"))
+
     associated_pair_list = read_associated_pair_file_list(args.input_associated_pair_file_path)
     print("len(associated_pair_list) = ", len(associated_pair_list))
     # # # for item in associated_pair_list.items():

@@ -213,6 +213,18 @@ def main():
         os.stat(os.path.join(output_dir, "graydepthmap"))
     except:
         os.mkdir(os.path.join(output_dir, "graydepthmap"))
+    try:
+        os.stat(os.path.join(output_dir, "flowconf_48_64"))
+    except:
+        os.mkdir(os.path.join(output_dir, "flowconf_48_64"))
+    try:
+        os.stat(os.path.join(output_dir, "flowconf_x_48_64"))
+    except:
+        os.mkdir(os.path.join(output_dir, "flowconf_x_48_64"))
+    try:
+        os.stat(os.path.join(output_dir, "flowconf_y_48_64"))
+    except:
+        os.mkdir(os.path.join(output_dir, "flowconf_y_48_64"))
 
 
     print("Write a NeXus HDF5 file")
@@ -291,6 +303,12 @@ def main():
             # if tf.test.is_gpu_available(True) and data_format == 'channels_first':
             flow2 = flow2.transpose([2, 0, 1])
             print(flow2.shape)
+            ### also save the confidence of optical flow 2
+            flowconf2 = result['predict_flowconf2'].squeeze()
+            # if tf.test.is_gpu_available(True) and data_format == 'channels_first':
+            flowconf2 = flowconf2.transpose([2, 0, 1])
+            print(flowconf2.shape)
+
             # flow5 = result['predict_flow5'].squeeze()
             # print(flow5.shape)
             scale = result['predict_scale'].squeeze().astype(np.float32)
@@ -338,6 +356,7 @@ def main():
             h5file.create_dataset((file1 + "---" + file2 + "/depth"), data=depth_48by64)
             h5file.create_dataset((file1 + "---" + file2 + "/depth_upsampled"), data=depth_upsampled)
             h5file.create_dataset((file1 + "---" + file2 + "/flow"), data=flow2)
+            h5file.create_dataset((file1 + "---" + file2 + "/flowconf"), data=flowconf2)
             h5file.create_dataset((file1 + "---" + file2 + "/scale"), data=scale)
 
             # ofplot = warp_flow(input_data['image2_2'], flow2)
@@ -349,6 +368,15 @@ def main():
             # cv2.waitKey()
             # cv2.destroyAllWindows()
             # return
+            plt.imsave(os.path.join(output_dir, "flowconf_x_48_64", os.path.splitext(file1)[0] + "---" + os.path.splitext(file2)[0]), flowconf2[0,:,:], cmap='Greys')
+            plt.imsave(os.path.join(output_dir, "flowconf_y_48_64", os.path.splitext(file1)[0] + "---" + os.path.splitext(file2)[0]), flowconf2[1,:,:], cmap='Greys')
+            # ofplot = convert_flow_to_plot_img(flow2)
+            combinedFlowConf2 = np.sqrt(np.square(flowconf2[0,:,:])+np.square(flowconf2[1,:,:]))
+            tmpMin = np.min(combinedFlowConf2)
+            tmpMax = np.max(combinedFlowConf2)
+            combinedFlowConf2 = ((combinedFlowConf2-tmpMin)/(tmpMax-tmpMin))*255
+            plt.imsave(os.path.join(output_dir, "flowconf_48_64", os.path.splitext(file1)[0] + "---" + os.path.splitext(file2)[0]), combinedFlowConf2, cmap='Greys')
+
 
     h5file.close()   # be CERTAIN to close the file
     print("HDF5 file is written successfully:", output_h5_filepath)

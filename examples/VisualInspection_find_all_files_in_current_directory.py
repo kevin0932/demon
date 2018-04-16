@@ -21,6 +21,7 @@ def parse_args():
     parser.add_argument("--input_depth_dir_path", required=True)
     parser.add_argument("--input_optical_flow_dir_path", required=True)
     parser.add_argument("--output_good_pairs_path", required=True)
+    parser.add_argument("--ext", default='JPG')
     # parser.add_argument("--image_scale", type=float, default=12)
     args = parser.parse_args()
 
@@ -78,8 +79,11 @@ def main():
     with open(os.path.join(args.output_good_pairs_path, 'good_pairs_from_visual_inspection.txt'), "w") as fid:
         for i in range(len(good_pairs_filtered_by_depth_and_flow)):
             tmp = good_pairs_filtered_by_depth_and_flow[i].split('---')
-            image_pair12 = tmp[0]+'.JPG---'+tmp[1]+'.JPG'
-            # image_pair12 = tmp[0]+'.png---'+tmp[1]+'.png'
+            # if args.ext=='JPG':
+            #     image_pair12 = tmp[0]+'.JPG---'+tmp[1]+'.JPG'
+            # if args.ext=='png':
+            # # image_pair12 = tmp[0]+'.png---'+tmp[1]+'.png'
+            image_pair12 = tmp[0]+'.'+args.ext+'---'+tmp[1]+'.'+args.ext
             fid.write("%s\n" % (image_pair12))
     fid.close()
 

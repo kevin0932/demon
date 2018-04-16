@@ -5,6 +5,7 @@ from matplotlib import pyplot as plt
 import os
 import sys
 import h5py
+import cv2
 
 examples_dir = os.path.dirname(__file__)
 weights_dir = os.path.join(examples_dir,'..','weights')
@@ -67,6 +68,41 @@ def prepare_input_data(img1, img2, data_format):
     }
     return result
 
+def convert_flow_to_plot_img(flow):
+    flow = np.transpose(flow, [1,2,0])
+    # h, w = flow.shape[:2]
+    # # flow = flow*256
+    # # flow = flow*128+128
+    # # flow = flow*128+128
+    # flow[:,:,0] = flow[:,:,0]*w
+    # flow[:,:,1] = flow[:,:,1]*h
+    # zeros = np.zeros([h,w])
+    # # res = np.concatenate((flow,zeros), axis=2)
+    # res = np.dstack((flow,zeros))
+    # # res = flow
+    # # res[:,:,2] = 0
+    # print(res.shape)
+    # return res
+    h, w = flow.shape[:2]
+    # fx, fy = flow[:,:,0]*w, flow[:,:,1]*h
+    # fx, fy = flow[:,:,0]*255, flow[:,:,1]*255
+    xMin = np.min(flow[:,:,0])
+    xMax = np.max(flow[:,:,0])
+    yMin = np.min(flow[:,:,1])
+    yMax = np.max(flow[:,:,1])
+    fx, fy = ((flow[:,:,0]-xMin)/(xMax-xMin))*255, ((flow[:,:,1]-yMin)/(yMax-yMin))*255
+    print("np.min(fx) = ", np.min(fx))
+    print("np.max(fx) = ", np.max(fx))
+    print("np.min(fy) = ", np.min(fy))
+    print("np.max(fy) = ", np.max(fy))
+    ang = np.arctan2(fy, fx) + np.pi
+    v = np.sqrt(fx*fx+fy*fy)
+    hsv = np.zeros((h, w, 3), np.uint8)
+    hsv[...,0] = ang*(180/np.pi/2)
+    hsv[...,1] = 255
+    hsv[...,2] = np.minimum(v*4, 255)
+    bgr = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
+    return bgr
 
 if tf.test.is_gpu_available(True):
     data_format='channels_first'
@@ -164,11 +200,33 @@ print("np.max(flowconf2[:,:,0]) = ", np.max(flowconf2[:,:,0]))
 print("np.min(flowconf2[:,:,1]) = ", np.min(flowconf2[:,:,1]))
 print("np.max(flowconf2[:,:,1]) = ", np.max(flowconf2[:,:,1]))
 print("predict_flowconf2...................")
+
+# xMin = np.min(flowconf2[:,:,0])
+# xMax = np.max(flowconf2[:,:,0])
+# yMin = np.min(flowconf2[:,:,1])
+# yMax = np.max(flowconf2[:,:,1])
+# flowconf2[:,:,0] = ((flowconf2[:,:,0]-xMin)/(xMax-xMin))*255
+# flowconf2[:,:,1] = ((flowconf2[:,:,1]-yMin)/(yMax-yMin))*255
+
 plt.imshow(flowconf2[:,:,0], cmap='Greys')
 plt.show()
 plt.imshow(flowconf2[:,:,1], cmap='Greys')
 plt.show()
-plt.imshow(np.sqrt(np.square(flowconf2[:,:,0])+np.square(flowconf2[:,:,1])), cmap='Greys')
+combinedFlowConf2 = np.sqrt(np.square(flowconf2[:,:,0])+np.square(flowconf2[:,:,1]))
+tmpMin = np.min(combinedFlowConf2)
+tmpMax = np.max(combinedFlowConf2)
+combinedFlowConf2 = ((combinedFlowConf2-tmpMin)/(tmpMax-tmpMin))*255
+plt.imshow(combinedFlowConf2, cmap='Greys')
+plt.show()
+
+# convert_flow_to_plot_img(flowconf2)
+flowconf2 = np.transpose(flowconf2, [2, 0, 1])
+ofplot = convert_flow_to_plot_img(flowconf2)
+# plt.imsave(os.path.join(output_dir, "optical_flow_48_64", os.path.splitext(file1)[0] + "---" + os.path.splitext(file2)[0]), ofplot, cmap=cmap)
+plt.imshow(ofplot, cmap='Greys')
+plt.show()
+cmap = plt.cm.jet
+plt.imshow(ofplot, cmap=cmap)
 plt.show()
 #
 # print("predict_flowconf5...................")
