@@ -27,12 +27,68 @@ from scipy.spatial import distance
 from scipy import interpolate
 import cv2
 import shutil
+
+from collections import namedtuple
+from minieigen import Quaternion, Matrix3
 # examples_dir = os.path.dirname(__file__)
 # sys.path.insert(0, os.path.join(examples_dir, '..', 'lmbspecialops', 'python'))
+
+ColmapImage = namedtuple('ColmapImage',['cam_id','name','R','t'])
+
+def quaternion_to_rotation_matrix(q):
+    """Converts quaternion to rotation matrix
+
+    q: tuple with 4 elements
+
+    Returns a 3x3 numpy array
+    """
+    q = Quaternion(*q)
+    R = q.toRotationMatrix()
+    return np.array([list(R.row(0)), list(R.row(1)), list(R.row(2))],dtype=np.float32)
+
+def read_images_txt(filename):
+    """Simple reader for the images.txt file
+
+    filename: str
+        path to the images.txt
+
+    Returns a dictionary will all cameras
+    """
+    result = {}
+    with open(filename, 'r') as f:
+        line = f.readline()
+        while line.startswith('#'):
+            line = f.readline()
+
+        line1 = line
+        line2 = f.readline()
+
+        while line1:
+            items = line1.split(' ')
+            q = tuple([float(x) for x in items[1:5]])
+            t = tuple([float(x) for x in items[5:8]])
+            image = ColmapImage(
+                cam_id = int(items[8]),
+                name = items[9].strip(),
+                # q = tuple([float(x) for x in items[1:5]]),
+                # t = tuple([float(x) for x in items[5:8]])
+                R = quaternion_to_rotation_matrix(q).astype(np.float64),
+                t = np.array(t, dtype=np.float32).astype(np.float64)
+            )
+
+            # result[int(items[0])] = image
+            result[items[9].strip()] = image
+
+            line1 = f.readline()
+            line2 = f.readline()
+
+    return result
 
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--database_path", required=True)
+    parser.add_argument("--colmap_images_txt", required=True)
+    parser.add_argument("--GT_depth_dir_path", required=True)
     parser.add_argument("--output_path", required=True)
     parser.add_argument("--image_path", required=True)
     parser.add_argument("--demon_path", required=True)
@@ -215,8 +271,18 @@ def main():
 
     args = parse_args()
 
+    ColmapImages = read_images_txt(args.colmap_images_txt)
+    print("(ColmapImages) = ", (ColmapImages))
+    print("len(ColmapImages) = ", len(ColmapImages))
+    # return
+
     connection = sqlite3.connect(args.database_path)
     cursor = connection.cursor()
+
+    try:
+        os.stat(args.output_path)
+    except:
+        os.mkdir(args.output_path)
 
     images_id_to_name = {}
     images_name_to_id = {}
@@ -275,11 +341,20 @@ def main():
     image_pairs = set()
     valid_pair_num = 0
     survivor_ratio_list = []
+    survivor_ratio_list_bidir = []
     translation_pose_campos_consistency_list = []
     translation_pose_camvec_consistency_list = []
+    translation_pose_camvec_accuracy_list = []
     rotation_pose_consistency_list = []
-    avg_flow_consistency_list = []
+    rotation_pose_accuracy_list = []
+    avg_flow_consistency_error_121_list = []
+    avg_flow_consistency_error_212_list = []
     pixel_consistency_conf_mat = []
+    twoview_baseline_length_list = []
+    twoview_view_angle_list = []
+    twoview_medianDepthOverBaseline = []
+    twoview_meanDepthOverBaseline = []
+
 
     for image_pair12 in data.keys():
         image_name1, image_name2 = image_pair12.split('---')
@@ -326,8 +401,30 @@ def main():
         #     flow21 = flow21_upsampled
         #     print("updampled flow12.shape = ", flow12.shape)
 
-        matches12, coords121, coords122 = flow_to_matches_float32Pixels(flow12)
+        ### cross check from 2-1-2
+        matches12, coords121, coords122 = flow_to_matches_float32Pixels(flow21)
+        matches21, coords211, coords212 = flow_to_matches_float32Pixels(flow12)
 
+        print("  => Found", matches12.size/2, "<->", matches21.size/2, "matches")
+        if  matches12.size/2 <= 0 or matches21.size/2 <= 0:
+            continue
+
+        matches, coords_12_1, coords_12_2, all_matches_pixel_consistencies = cross_check_matches_float32Pixel(matches12, coords121, coords122,
+                                      matches21, coords211, coords212,
+                                      # args.max_pixel_error*OF_scale_factor)
+                                      args.max_pixel_error)
+                                      # max_reproj_error)
+        print("matches.shape = ", matches.shape, "; ", "coords_12_1.shape = ", coords_12_1.shape, "coords_12_2.shape = ", coords_12_2.shape)
+        if matches.size == 0:
+            continue
+        print("  => Cross-checked", matches.shape[0], "matches")
+
+        survivor_ratio_21 = matches.shape[0] / matches12.shape[0]
+        avg_flow_consistency_error_212_list.append(np.mean(all_matches_pixel_consistencies[:,2]))
+
+
+        ### cross check from 1-2-1
+        matches12, coords121, coords122 = flow_to_matches_float32Pixels(flow12)
         matches21, coords211, coords212 = flow_to_matches_float32Pixels(flow21)
 
         print("  => Found", matches12.size/2, "<->", matches21.size/2, "matches")
@@ -340,17 +437,28 @@ def main():
                                       args.max_pixel_error)
                                       # max_reproj_error)
         print("matches.shape = ", matches.shape, "; ", "coords_12_1.shape = ", coords_12_1.shape, "coords_12_2.shape = ", coords_12_2.shape)
-
         if matches.size == 0:
             continue
         print("  => Cross-checked", matches.shape[0], "matches")
 
+        survivor_ratio = matches.shape[0] / matches12.shape[0]
+        survivor_ratio_list.append(survivor_ratio)
+        avg_flow_consistency_error_121_list.append(np.mean(all_matches_pixel_consistencies[:,2]))
+
+
+        survivor_ratio_list_bidir.append([survivor_ratio, survivor_ratio_21])
 
         #### rotation errors
         # rotationError = np.dot(rotation12, rotation21)
         r, _ = cv2.Rodrigues(rotation12.dot(rotation21))
         rotation_error_from_identity = np.linalg.norm(r)
         rotation_pose_consistency_list.append(rotation_error_from_identity)
+
+        ColmapR12 = np.dot(ColmapImages[image_name2].R, ColmapImages[image_name1].R.T)
+        r, _ = cv2.Rodrigues(rotation12.dot(ColmapR12.T))
+        rotation_error_from_ColmapR = np.linalg.norm(r)
+        rotation_pose_accuracy_list.append(rotation_error_from_ColmapR*180/math.pi)
+
 
         ## translation errors
         cam_pos_12 = -np.dot(rotation12.T, translation12)
@@ -377,10 +485,42 @@ def main():
         TransAngularErr = math.acos( tmp )
         translation_pose_camvec_consistency_list.append(TransAngularErr)
 
+        ColmapCamPos2 = -np.dot(ColmapImages[image_name2].R.T, ColmapImages[image_name2].t)
+        ColmapCamPos1 = -np.dot(ColmapImages[image_name1].R.T, ColmapImages[image_name1].t)
+        cam_pos_12_Colmap = np.dot(ColmapImages[image_name1].R, (ColmapCamPos2-ColmapCamPos1))
+        TransMagBy12 = np.linalg.norm(cam_pos_12)
+        TransMagBy21 = np.linalg.norm(cam_pos_12_Colmap)
+        tmp = TheiaClamp(np.dot(cam_pos_12, cam_pos_12_Colmap)/(TransMagBy12*TransMagBy21), -1, 1)   # can be different if normalized or not?
+        TransAngularErrFromColmap = math.acos( tmp )
+        translation_pose_camvec_accuracy_list.append(TransAngularErrFromColmap*180/math.pi)
+
+        ### record the length of baseline, view angles of two-views to find out its relationship with the accuracy of predictions
+        baselineLength = np.linalg.norm(ColmapCamPos2-ColmapCamPos1)
+        twoview_baseline_length_list.append(baselineLength)
+
+        tmpGTDepth1 = np.fromfile(os.path.join(args.GT_depth_dir_path, image_name1),dtype=np.float32)
+        # tmpGTDepth1[np.isinf(tmpGTDepth1)]=0.0
+        # tmpGTDepth1 = np.reshape(tmpGTDepth1, [4032,6048])
+        median_GT_Depth_1 = np.nanmedian(tmpGTDepth1[~np.isinf(tmpGTDepth1)])
+        mean_GT_Depth_1 = np.nanmean(tmpGTDepth1[~np.isinf(tmpGTDepth1)])
+        print(median_GT_Depth_1, ", ", mean_GT_Depth_1, ", ", baselineLength)
+        twoview_medianDepthOverBaseline.append(median_GT_Depth_1/baselineLength)
+        twoview_meanDepthOverBaseline.append(mean_GT_Depth_1/baselineLength)
+
+        Extrinsic1_groundtruth = np.eye(4)
+        Extrinsic1_groundtruth[0:3,0:3] = ColmapImages[image_name1].R
+        Extrinsic1_groundtruth[0:3,3] = ColmapImages[image_name1].t
+        Extrinsic2_groundtruth = np.eye(4)
+        Extrinsic2_groundtruth[0:3,0:3] = ColmapImages[image_name2].R
+        Extrinsic2_groundtruth[0:3,3] = ColmapImages[image_name2].t
+        camDir1_global = np.dot(np.linalg.inv(Extrinsic1_groundtruth), np.array([0,0,1,0]))
+        camDir2_global = np.dot(np.linalg.inv(Extrinsic2_groundtruth), np.array([0,0,1,0]))
+        view_angle_imagepair = math.acos(TheiaClamp(np.dot(camDir1_global,camDir2_global) / np.linalg.norm(camDir2_global) / np.linalg.norm(camDir1_global), -1, 1))
+        twoview_view_angle_list.append(view_angle_imagepair*180/math.pi)
 
 
-        survivor_ratio = matches.shape[0] / matches12.shape[0]
-        survivor_ratio_list.append(survivor_ratio)
+        # survivor_ratio = matches.shape[0] / matches12.shape[0]
+        # survivor_ratio_list.append(survivor_ratio)
 
         for i in range(all_matches_pixel_consistencies.shape[0]):
             curItem = all_matches_pixel_consistencies[i,:]
@@ -389,15 +529,218 @@ def main():
             pixel_in_1_x = (int(curItem[0])%w)
             # print(curItem, "; (x,y) = (", pixel_in_1_x, ",", pixel_in_1_y,")")
             comb_xyconf = np.linalg.norm(flowconf12[:,pixel_in_1_y,pixel_in_1_x])
-            pixel_consistency_conf_mat.append([curItem[2], flowconf12[0,pixel_in_1_y,pixel_in_1_x], flowconf12[1,pixel_in_1_y,pixel_in_1_x], comb_xyconf, survivor_ratio, rotation_error_from_identity * 180.0 / math.pi, TransAngularErr * 180.0 / math.pi])
+            pixel_consistency_conf_mat.append([curItem[2], flowconf12[0,pixel_in_1_y,pixel_in_1_x], flowconf12[1,pixel_in_1_y,pixel_in_1_x], comb_xyconf, survivor_ratio, rotation_error_from_identity * 180.0 / math.pi, TransAngularErr * 180.0 / math.pi, survivor_ratio_21])
 
-        if survivor_ratio >= args.survivor_ratio:
+        # if survivor_ratio >= args.survivor_ratio:
+        #     valid_pair_num += 1
+        #     print("cross-check-survivor-ratio = ",survivor_ratio)
+        #     print("bi-dir survivor-ratio = ", survivor_ratio, " ", survivor_ratio_21)
+        if survivor_ratio >= args.survivor_ratio and survivor_ratio_21 >= args.survivor_ratio and rotation_error_from_identity*180/math.pi <= args.rotation_consistency_error_deg and TransAngularErr*180/math.pi <= args.translation_consistency_error_deg:
             valid_pair_num += 1
             print("cross-check-survivor-ratio = ",survivor_ratio)
+            print("bi-dir survivor-ratio = ", survivor_ratio, " ", survivor_ratio_21, "; pose consistency errors ", rotation_error_from_identity*180/math.pi, ", ", TransAngularErr*180/math.pi)
                 # return
     ### copy the saved quantization map to another file with valid_pair_num and delete the original one
     total_pair_num = len(list(data.keys()))
     print("valid_pair_num = ", valid_pair_num, "/ ", total_pair_num)
+    survivor_ratio_list_bidir_npArr = np.array(survivor_ratio_list_bidir)
+    print("survivor_ratio_list_bidir_npArr.shape = ", survivor_ratio_list_bidir_npArr.shape)
+
+    plt.figure()
+    # plt.scatter(pixel_consistency_conf_numpyArr[:,0], pixel_consistency_conf_numpyArr[:,3], s=pixel_consistency_conf_numpyArr[:,0], alpha=0.5)#, c=colors, alpha=0.5)
+    plt.scatter(survivor_ratio_list_bidir_npArr[:,0], survivor_ratio_list_bidir_npArr[:,1], s=1)#, c=colors, alpha=0.5)
+    plt.ylabel('survivor_ratio 2-1-2');
+    plt.xlabel('survivor_ratio 1-2-1');
+    plt.title("survivor_ratio 2-1-2 vs survivor_ratio 1-2-1")
+    plt.savefig(os.path.join(args.output_path,"survivor_ratio_2_1_2_vs_survivor_ratio_1_2_1.png"))
+    #plt.show()
+
+
+
+    # maskInliers = np.array(survivor_ratio_list_bidir_npArr[:,0]>=args.survivor_ratio) & np.array(survivor_ratio_list_bidir_npArr[:,1]>=args.survivor_ratio) & np.array(np.array(rotation_pose_consistency_list) <= args.rotation_consistency_error_deg) & np.array(np.array(translation_pose_camvec_consistency_list) <= args.translation_consistency_error_deg)
+    maskInliers = np.array(survivor_ratio_list_bidir_npArr[:,0]>=args.survivor_ratio) & np.array(survivor_ratio_list_bidir_npArr[:,1]>=args.survivor_ratio) & np.array(np.array(rotation_pose_consistency_list) <= args.rotation_consistency_error_deg) & np.array(np.array(translation_pose_camvec_consistency_list) <= args.translation_consistency_error_deg)
+
+    plt.figure()
+    plt.scatter(np.array(twoview_baseline_length_list)[maskInliers], np.array(rotation_pose_accuracy_list)[maskInliers], s=1)
+    plt.ylabel('rotation_prediction_error_from_GT');
+    plt.xlabel('twoview_baseline_length');
+    plt.title("rotation_prediction_error_from_GT vs twoview_baseline_length")
+    plt.savefig(os.path.join(args.output_path,"rotation_prediction_error_from_GT_vs_twoview_baseline_length.png"))
+    #plt.show()
+
+    plt.figure()
+    plt.scatter(np.array(twoview_view_angle_list)[maskInliers], np.array(rotation_pose_accuracy_list)[maskInliers], s=1)
+    plt.ylabel('rotation_prediction_error_from_GT');
+    plt.xlabel('twoview_view_angle');
+    plt.title("rotation_prediction_error_from_GT vs twoview_view_angle")
+    plt.savefig(os.path.join(args.output_path,"rotation_prediction_error_from_GT_vs_twoview_view_angle.png"))
+    #plt.show()
+
+    plt.figure()
+    plt.scatter(np.array(twoview_baseline_length_list)[maskInliers], np.array(translation_pose_camvec_accuracy_list)[maskInliers], s=1)
+    plt.ylabel('translation_prediction_error_from_GT');
+    plt.xlabel('twoview_baseline_length');
+    plt.title("translation_prediction_error_from_GT vs twoview_baseline_length")
+    plt.savefig(os.path.join(args.output_path,"translation_prediction_error_from_GT_vs_twoview_baseline_length.png"))
+    #plt.show()
+
+    plt.figure()
+    plt.scatter(np.array(twoview_view_angle_list)[maskInliers], np.array(translation_pose_camvec_accuracy_list)[maskInliers], s=1)
+    plt.ylabel('translation_prediction_error_from_GT');
+    plt.xlabel('twoview_view_angle');
+    plt.title("translation_prediction_error_from_GT vs twoview_view_angle")
+    plt.savefig(os.path.join(args.output_path,"translation_prediction_error_from_GT_vs_twoview_view_angle.png"))
+    #plt.show()
+
+    plt.figure()
+    plt.scatter(np.array(twoview_medianDepthOverBaseline)[maskInliers], np.array(rotation_pose_accuracy_list)[maskInliers], s=1)
+    plt.ylabel('rotation_prediction_error_from_GT');
+    plt.xlabel('twoview_medianDepthOverBaseline');
+    plt.title("rotation_prediction_error_from_GT vs twoview_medianDepthOverBaseline")
+    plt.savefig(os.path.join(args.output_path,"rotation_prediction_error_from_GT_vs_twoview_medianDepthOverBaseline.png"))
+    #plt.show()
+
+    plt.figure()
+    plt.scatter(np.array(twoview_meanDepthOverBaseline)[maskInliers], np.array(rotation_pose_accuracy_list)[maskInliers], s=1)
+    plt.ylabel('rotation_prediction_error_from_GT');
+    plt.xlabel('twoview_meanDepthOverBaseline');
+    plt.title("rotation_prediction_error_from_GT vs twoview_meanDepthOverBaseline")
+    plt.savefig(os.path.join(args.output_path,"rotation_prediction_error_from_GT_vs_twoview_meanDepthOverBaseline.png"))
+    #plt.show()
+
+    plt.figure()
+    plt.scatter(np.array(twoview_medianDepthOverBaseline)[maskInliers], np.array(translation_pose_camvec_accuracy_list)[maskInliers], s=1)
+    plt.ylabel('translation_prediction_error_from_GT');
+    plt.xlabel('twoview_medianDepthOverBaseline');
+    plt.title("translation_prediction_error_from_GT vs twoview_medianDepthOverBaseline")
+    plt.savefig(os.path.join(args.output_path,"translation_prediction_error_from_GT_vs_twoview_medianDepthOverBaseline.png"))
+    #plt.show()
+
+    plt.figure()
+    plt.scatter(np.array(twoview_meanDepthOverBaseline)[maskInliers], np.array(translation_pose_camvec_accuracy_list)[maskInliers], s=1)
+    plt.ylabel('translation_prediction_error_from_GT');
+    plt.xlabel('twoview_meanDepthOverBaseline');
+    plt.title("translation_prediction_error_from_GT vs twoview_meanDepthOverBaseline")
+    plt.savefig(os.path.join(args.output_path,"translation_prediction_error_from_GT_vs_twoview_meanDepthOverBaseline.png"))
+    #plt.show()
+
+
+    plt.figure()
+    plt.scatter(survivor_ratio_list_bidir_npArr[:,0][maskInliers], np.array(avg_flow_consistency_error_121_list)[maskInliers], s=1)
+    plt.ylabel('avg_flow_consistency_error_121');
+    plt.xlabel('survivor_ratio_1_2_1');
+    plt.title("avg_flow_consistency_error_121 vs survivor_ratio_1_2_1")
+    plt.savefig(os.path.join(args.output_path,"avg_flow_consistency_error_121_vs_survivor_ratio_1_2_1.png"))
+    #plt.show()
+
+    plt.figure()
+    plt.scatter(survivor_ratio_list_bidir_npArr[:,0], np.array(avg_flow_consistency_error_121_list), s=1)
+    plt.ylabel('avg_flow_consistency_error_121');
+    plt.xlabel('survivor_ratio_1_2_1');
+    plt.title("exhaustivePairs_avg_flow_consistency_error_121 vs survivor_ratio_1_2_1")
+    plt.savefig(os.path.join(args.output_path,"exhaustivePairs_avg_flow_consistency_error_121_vs_survivor_ratio_1_2_1.png"))
+    #plt.show()
+
+
+#####################################
+    survivorRatioThreshold = 0.4
+    print("(survivor_ratio_list_bidir_npArr[:,0]>=survivorRatioThreshold).shape = ", (survivor_ratio_list_bidir_npArr[:,0]>=survivorRatioThreshold).shape)
+    print("(survivor_ratio_list_bidir_npArr[:,1]>=survivorRatioThreshold).shape = ", (survivor_ratio_list_bidir_npArr[:,1]>=survivorRatioThreshold).shape)
+    maskBothSideSurvivor = np.array(survivor_ratio_list_bidir_npArr[:,0]>=survivorRatioThreshold) & np.array(survivor_ratio_list_bidir_npArr[:,1]>=survivorRatioThreshold)
+    # maskEitherSideSurvivor = np.array(survivor_ratio_list_bidir_npArr[:,0]>=survivorRatioThreshold) | np.array(survivor_ratio_list_bidir_npArr[:,1]>=survivorRatioThreshold)
+    plt.figure()
+    plt.scatter(np.array(translation_pose_camvec_consistency_list)[maskBothSideSurvivor]*180/math.pi, np.array(translation_pose_camvec_accuracy_list)[maskBothSideSurvivor], s=1)#, c=colors, alpha=0.5)
+    plt.ylabel('translation_error_from_colmap');
+    plt.xlabel('translation_pose_camvec_consistency_list');
+    plt.title("biDirSurvivor: translation_error_from_colmap vs translation_pose_camvec_consistency_list")
+    plt.savefig(os.path.join(args.output_path,"biDirSurvivor_translation_error_from_colmap_vs_translation_pose_camvec_consistency_list.png"))
+    #plt.show()
+
+    plt.figure()
+    plt.scatter(np.array(rotation_pose_consistency_list)[maskBothSideSurvivor]*180/math.pi, np.array(rotation_pose_accuracy_list)[maskBothSideSurvivor], s=1)#, c=colors, alpha=0.5)
+    plt.ylabel('rotation_error_from_colmap');
+    plt.xlabel('rotation_pose_consistency_list');
+    plt.title("biDirSurvivor: rotation_error_from_colmap vs rotation_pose_consistency_list")
+    plt.savefig(os.path.join(args.output_path,"biDirSurvivor_rotation_error_from_colmap_vs_rotation_pose_consistency_list.png"))
+    #plt.show()
+
+    # pixel_consistency_conf_numpyArr_filtered = pixel_consistency_conf_numpyArr[pixel_consistency_conf_numpyArr[:,4]>=0.5,:]
+    # plt.figure()
+    # plt.scatter(pixel_consistency_conf_numpyArr_filtered[:,0], pixel_consistency_conf_numpyArr_filtered[:,3])
+    # plt.ylabel('flow prediction confidence values');
+    # plt.xlabel('pixel consistency errors');
+    # plt.title("survivor_ratio >= 0.5: scatter plot of y (flowconf) vs x (pixel consistency error)")
+    # plt.savefig(os.path.join(args.output_path,"survivor_ratio_050_flowconf_vs_pixel_consistencey_error.png"))
+    # #plt.show()
+    # pixel_consistency_conf_numpyArr_filtered = pixel_consistency_conf_numpyArr[pixel_consistency_conf_numpyArr[:,4]>=0.7,:]
+    # print("pixel_consistency_conf_numpyArr_filtered.shape = ", pixel_consistency_conf_numpyArr_filtered.shape)
+    # plt.figure()
+    # plt.scatter(pixel_consistency_conf_numpyArr_filtered[:,0], pixel_consistency_conf_numpyArr_filtered[:,3])
+    # plt.ylabel('flow prediction confidence values');
+    # plt.xlabel('pixel consistency errors');
+    # plt.title("survivor_ratio >= 0.7: scatter plot of y (flowconf) vs x (pixel consistency error)")
+    # plt.savefig(os.path.join(args.output_path,"survivor_ratio_070_flowconf_vs_pixel_consistencey_error.png"))
+    # #plt.show()
+    # pixel_consistency_conf_numpyArr_filtered = pixel_consistency_conf_numpyArr[pixel_consistency_conf_numpyArr[:,4]>=0.9,:]
+    # print("pixel_consistency_conf_numpyArr_filtered.shape = ", pixel_consistency_conf_numpyArr_filtered.shape)
+    # plt.figure()
+    # plt.scatter(pixel_consistency_conf_numpyArr_filtered[:,0], pixel_consistency_conf_numpyArr_filtered[:,3])
+    # plt.ylabel('flow prediction confidence values');
+    # plt.xlabel('pixel consistency errors');
+    # plt.title("survivor_ratio >= 0.9: scatter plot of y (flowconf) vs x (pixel consistency error)")
+    # plt.savefig(os.path.join(args.output_path,"survivor_ratio_090_flowconf_vs_pixel_consistencey_error.png"))
+    # #plt.show()
+
+    plt.figure()
+    plt.scatter(survivor_ratio_list_bidir_npArr[maskBothSideSurvivor,0], np.array(translation_pose_camvec_accuracy_list)[maskBothSideSurvivor], s=1)#, c=colors, alpha=0.5)
+    plt.ylabel('translation_error_from_colmap');
+    plt.xlabel('survivor_ratio 1-2-1 (survivor_ratio 2-1-2)');
+    plt.title("translation_error_from_colmap vs survivor_ratio 1-2-1 (survivor_ratio 2-1-2)")
+    plt.savefig(os.path.join(args.output_path,"translation_error_from_colmap_vs_survivor_ratio_1_2_1_survivor_ratio_2_1_2.png"))
+    #plt.show()
+
+    plt.figure()
+    plt.scatter(survivor_ratio_list_bidir_npArr[maskBothSideSurvivor,0], np.array(rotation_pose_accuracy_list)[maskBothSideSurvivor], s=1)#, c=colors, alpha=0.5)
+    plt.ylabel('rotation_error_from_colmap');
+    plt.xlabel('survivor_ratio 1-2-1 (survivor_ratio 2-1-2)');
+    plt.title("rotation_error_from_colmap vs survivor_ratio 1-2-1 (survivor_ratio 2-1-2)")
+    plt.savefig(os.path.join(args.output_path,"rotation_error_from_colmap_vs_survivor_ratio_1_2_1_survivor_ratio_2_1_2.png"))
+    #plt.show()
+
+#####################################
+
+    plt.figure()
+    plt.scatter(survivor_ratio_list_bidir_npArr[:,0], translation_pose_camvec_accuracy_list, s=1)#, c=colors, alpha=0.5)
+    plt.ylabel('translation_error_from_colmap');
+    plt.xlabel('survivor_ratio 1-2-1');
+    plt.title("translation_error_from_colmap vs survivor_ratio 1-2-1")
+    plt.savefig(os.path.join(args.output_path,"translation_error_from_colmap_vs_survivor_ratio_1_2_1.png"))
+    #plt.show()
+
+    plt.figure()
+    plt.scatter(survivor_ratio_list_bidir_npArr[:,0], rotation_pose_accuracy_list, s=1)#, c=colors, alpha=0.5)
+    plt.ylabel('rotation_error_from_colmap');
+    plt.xlabel('survivor_ratio 1-2-1');
+    plt.title("rotation_error_from_colmap vs survivor_ratio 1-2-1")
+    plt.savefig(os.path.join(args.output_path,"rotation_error_from_colmap_vs_survivor_ratio_1_2_1.png"))
+    #plt.show()
+
+
+    plt.figure()
+    plt.scatter(np.array(translation_pose_camvec_consistency_list)*180/math.pi, translation_pose_camvec_accuracy_list, s=1)#, c=colors, alpha=0.5)
+    plt.ylabel('translation_error_from_colmap');
+    plt.xlabel('translation_pose_camvec_consistency_list');
+    plt.title("translation_error_from_colmap vs translation_pose_camvec_consistency_list")
+    plt.savefig(os.path.join(args.output_path,"translation_error_from_colmap_vs_translation_pose_camvec_consistency_list.png"))
+    #plt.show()
+
+    plt.figure()
+    plt.scatter(np.array(rotation_pose_consistency_list)*180/math.pi, rotation_pose_accuracy_list, s=1)#, c=colors, alpha=0.5)
+    plt.ylabel('rotation_error_from_colmap');
+    plt.xlabel('rotation_pose_consistency_list');
+    plt.title("rotation_error_from_colmap vs rotation_pose_consistency_list")
+    plt.savefig(os.path.join(args.output_path,"rotation_error_from_colmap_vs_rotation_pose_consistency_list.png"))
+    #plt.show()
 
     plt.figure()
     plt.hist(survivor_ratio_list, normed=False, bins=int(total_pair_num/20))
@@ -439,12 +782,27 @@ def main():
     #plt.show()
 
 
+    plt.figure()
+    plt.hist(rotation_pose_accuracy_list, normed=False, bins=int(total_pair_num/20))
+    plt.ylabel('Counts');
+    plt.title("rotation_pose_accuracy_list histogram in degrees")
+    plt.savefig(os.path.join(args.output_path,"rotation_pose_accuracy_list_histogram_inDegrees.png"))
+    #plt.show()
+    plt.figure()
+    plt.hist(translation_pose_camvec_accuracy_list, normed=False, bins=int(total_pair_num/20))
+    plt.ylabel('Counts');
+    plt.title("translation_pose_camvec_accuracy_list histogram in degrees")
+    plt.savefig(os.path.join(args.output_path,"translation_pose_camvec_accuracy_list_histogram_inDegrees.png"))
+    #plt.show()
+
+
+
     pixel_consistency_conf_numpyArr = np.array(pixel_consistency_conf_mat)
     print("### pixel_consistency_conf_numpyArr.shape = ", pixel_consistency_conf_numpyArr.shape)
-    np.save(os.path.join(args.output_path,"pixel_consistency_conf_numpyArr.npy"), pixel_consistency_conf_numpyArr)
+    # np.save(os.path.join(args.output_path,"pixel_consistency_conf_numpyArr.npy"), pixel_consistency_conf_numpyArr)
     plt.figure()
     # plt.scatter(pixel_consistency_conf_numpyArr[:,0], pixel_consistency_conf_numpyArr[:,1], s=pixel_consistency_conf_numpyArr[:,0], alpha=0.5)#, c=colors, alpha=0.5)
-    plt.scatter(pixel_consistency_conf_numpyArr[:,0], pixel_consistency_conf_numpyArr[:,1])#, c=colors, alpha=0.5)
+    plt.scatter(pixel_consistency_conf_numpyArr[:,0], pixel_consistency_conf_numpyArr[:,1], s=1)#, c=colors, alpha=0.5)
     plt.ylabel('flow x prediction confidence values');
     plt.xlabel('pixel consistency errors');
     plt.title("scatter plot of y (flowconf x) vs x (pixel consistency error)")
@@ -452,7 +810,7 @@ def main():
     #plt.show()
     plt.figure()
     # plt.scatter(pixel_consistency_conf_numpyArr[:,0], pixel_consistency_conf_numpyArr[:,2], s=pixel_consistency_conf_numpyArr[:,0], alpha=0.5)#, c=colors, alpha=0.5)
-    plt.scatter(pixel_consistency_conf_numpyArr[:,0], pixel_consistency_conf_numpyArr[:,2])#, c=colors, alpha=0.5)
+    plt.scatter(pixel_consistency_conf_numpyArr[:,0], pixel_consistency_conf_numpyArr[:,2], s=1)#, c=colors, alpha=0.5)
     plt.ylabel('flow y prediction confidence values');
     plt.xlabel('pixel consistency errors');
     plt.title("scatter plot of y (flowconf y) vs x (pixel consistency error)")
@@ -460,7 +818,7 @@ def main():
     #plt.show()
     plt.figure()
     # plt.scatter(pixel_consistency_conf_numpyArr[:,0], pixel_consistency_conf_numpyArr[:,3], s=pixel_consistency_conf_numpyArr[:,0], alpha=0.5)#, c=colors, alpha=0.5)
-    plt.scatter(pixel_consistency_conf_numpyArr[:,0], pixel_consistency_conf_numpyArr[:,3])#, c=colors, alpha=0.5)
+    plt.scatter(pixel_consistency_conf_numpyArr[:,0], pixel_consistency_conf_numpyArr[:,3], s=1)#, c=colors, alpha=0.5)
     plt.ylabel('flow prediction confidence values');
     plt.xlabel('pixel consistency errors');
     plt.title("scatter plot of y (flowconf) vs x (pixel consistency error)")
@@ -471,7 +829,7 @@ def main():
     pixel_consistency_conf_numpyArr_filtered = pixel_consistency_conf_numpyArr[pixel_consistency_conf_numpyArr[:,4]>=0.3,:]
     print("pixel_consistency_conf_numpyArr_filtered.shape = ", pixel_consistency_conf_numpyArr_filtered.shape)
     plt.figure()
-    plt.scatter(pixel_consistency_conf_numpyArr_filtered[:,0], pixel_consistency_conf_numpyArr_filtered[:,3])
+    plt.scatter(pixel_consistency_conf_numpyArr_filtered[:,0], pixel_consistency_conf_numpyArr_filtered[:,3], s=1)
     plt.ylabel('flow prediction confidence values');
     plt.xlabel('pixel consistency errors');
     plt.title("survivor_ratio >= 0.3: scatter plot of y (flowconf) vs x (pixel consistency error)")
@@ -480,7 +838,7 @@ def main():
     pixel_consistency_conf_numpyArr_filtered = pixel_consistency_conf_numpyArr[pixel_consistency_conf_numpyArr[:,4]>=0.5,:]
     print("pixel_consistency_conf_numpyArr_filtered.shape = ", pixel_consistency_conf_numpyArr_filtered.shape)
     plt.figure()
-    plt.scatter(pixel_consistency_conf_numpyArr_filtered[:,0], pixel_consistency_conf_numpyArr_filtered[:,3])
+    plt.scatter(pixel_consistency_conf_numpyArr_filtered[:,0], pixel_consistency_conf_numpyArr_filtered[:,3], s=1)
     plt.ylabel('flow prediction confidence values');
     plt.xlabel('pixel consistency errors');
     plt.title("survivor_ratio >= 0.5: scatter plot of y (flowconf) vs x (pixel consistency error)")
@@ -489,7 +847,7 @@ def main():
     pixel_consistency_conf_numpyArr_filtered = pixel_consistency_conf_numpyArr[pixel_consistency_conf_numpyArr[:,4]>=0.7,:]
     print("pixel_consistency_conf_numpyArr_filtered.shape = ", pixel_consistency_conf_numpyArr_filtered.shape)
     plt.figure()
-    plt.scatter(pixel_consistency_conf_numpyArr_filtered[:,0], pixel_consistency_conf_numpyArr_filtered[:,3])
+    plt.scatter(pixel_consistency_conf_numpyArr_filtered[:,0], pixel_consistency_conf_numpyArr_filtered[:,3], s=1)
     plt.ylabel('flow prediction confidence values');
     plt.xlabel('pixel consistency errors');
     plt.title("survivor_ratio >= 0.7: scatter plot of y (flowconf) vs x (pixel consistency error)")
@@ -498,7 +856,7 @@ def main():
     pixel_consistency_conf_numpyArr_filtered = pixel_consistency_conf_numpyArr[pixel_consistency_conf_numpyArr[:,4]>=0.9,:]
     print("pixel_consistency_conf_numpyArr_filtered.shape = ", pixel_consistency_conf_numpyArr_filtered.shape)
     plt.figure()
-    plt.scatter(pixel_consistency_conf_numpyArr_filtered[:,0], pixel_consistency_conf_numpyArr_filtered[:,3])
+    plt.scatter(pixel_consistency_conf_numpyArr_filtered[:,0], pixel_consistency_conf_numpyArr_filtered[:,3], s=1)
     plt.ylabel('flow prediction confidence values');
     plt.xlabel('pixel consistency errors');
     plt.title("survivor_ratio >= 0.9: scatter plot of y (flowconf) vs x (pixel consistency error)")
@@ -509,7 +867,7 @@ def main():
     pixel_consistency_conf_numpyArr_filtered = pixel_consistency_conf_numpyArr[pixel_consistency_conf_numpyArr[:,0]<=1,:]
     print("pixel_consistency_conf_numpyArr_filtered.shape = ", pixel_consistency_conf_numpyArr_filtered.shape)
     plt.figure()
-    plt.scatter(pixel_consistency_conf_numpyArr_filtered[:,0], pixel_consistency_conf_numpyArr_filtered[:,3])
+    plt.scatter(pixel_consistency_conf_numpyArr_filtered[:,0], pixel_consistency_conf_numpyArr_filtered[:,3], s=1)
     plt.ylabel('flow prediction confidence values');
     plt.xlabel('pixel consistency errors');
     plt.title("pixel_consistency_err <= 1 pixels: scatter plot of y (flowconf) vs x (pixel consistency error)")
@@ -518,7 +876,7 @@ def main():
     pixel_consistency_conf_numpyArr_filtered = pixel_consistency_conf_numpyArr[pixel_consistency_conf_numpyArr[:,0]<=2,:]
     print("pixel_consistency_conf_numpyArr_filtered.shape = ", pixel_consistency_conf_numpyArr_filtered.shape)
     plt.figure()
-    plt.scatter(pixel_consistency_conf_numpyArr_filtered[:,0], pixel_consistency_conf_numpyArr_filtered[:,3])
+    plt.scatter(pixel_consistency_conf_numpyArr_filtered[:,0], pixel_consistency_conf_numpyArr_filtered[:,3], s=1)
     plt.ylabel('flow prediction confidence values');
     plt.xlabel('pixel consistency errors');
     plt.title("pixel_consistency_err <= 2 pixels: scatter plot of y (flowconf) vs x (pixel consistency error)")
@@ -527,7 +885,7 @@ def main():
     pixel_consistency_conf_numpyArr_filtered = pixel_consistency_conf_numpyArr[pixel_consistency_conf_numpyArr[:,0]<=3,:]
     print("pixel_consistency_conf_numpyArr_filtered.shape = ", pixel_consistency_conf_numpyArr_filtered.shape)
     plt.figure()
-    plt.scatter(pixel_consistency_conf_numpyArr_filtered[:,0], pixel_consistency_conf_numpyArr_filtered[:,3])
+    plt.scatter(pixel_consistency_conf_numpyArr_filtered[:,0], pixel_consistency_conf_numpyArr_filtered[:,3], s=1)
     plt.ylabel('flow prediction confidence values');
     plt.xlabel('pixel consistency errors');
     plt.title("pixel_consistency_err <= 3 pixels: scatter plot of y (flowconf) vs x (pixel consistency error)")
@@ -536,7 +894,7 @@ def main():
     pixel_consistency_conf_numpyArr_filtered = pixel_consistency_conf_numpyArr[pixel_consistency_conf_numpyArr[:,0]<=5,:]
     print("pixel_consistency_conf_numpyArr_filtered.shape = ", pixel_consistency_conf_numpyArr_filtered.shape)
     plt.figure()
-    plt.scatter(pixel_consistency_conf_numpyArr_filtered[:,0], pixel_consistency_conf_numpyArr_filtered[:,3])
+    plt.scatter(pixel_consistency_conf_numpyArr_filtered[:,0], pixel_consistency_conf_numpyArr_filtered[:,3], s=1)
     plt.ylabel('flow prediction confidence values');
     plt.xlabel('pixel consistency errors');
     plt.title("pixel_consistency_err <= 5 pixels: scatter plot of y (flowconf) vs x (pixel consistency error)")
@@ -545,7 +903,7 @@ def main():
     pixel_consistency_conf_numpyArr_filtered = pixel_consistency_conf_numpyArr[pixel_consistency_conf_numpyArr[:,0]<=10,:]
     print("pixel_consistency_conf_numpyArr_filtered.shape = ", pixel_consistency_conf_numpyArr_filtered.shape)
     plt.figure()
-    plt.scatter(pixel_consistency_conf_numpyArr_filtered[:,0], pixel_consistency_conf_numpyArr_filtered[:,3])
+    plt.scatter(pixel_consistency_conf_numpyArr_filtered[:,0], pixel_consistency_conf_numpyArr_filtered[:,3], s=1)
     plt.ylabel('flow prediction confidence values');
     plt.xlabel('pixel consistency errors');
     plt.title("pixel_consistency_err <= 10 pixels: scatter plot of y (flowconf) vs x (pixel consistency error)")
@@ -678,26 +1036,26 @@ def main():
 
 
     ### check the correlation between survivor_ratio and prediction consistency
-    print("len(survivor_ratio_list) = ", len(survivor_ratio_list))
+    print("len(survivor_ratio_list_bidir_npArr) = ", len(survivor_ratio_list_bidir_npArr))
     print("len(translation_pose_camvec_consistency_list) = ", len(translation_pose_camvec_consistency_list))
     print("len(translation_pose_campos_consistency_list) = ", len(translation_pose_campos_consistency_list))
     print("len(rotation_pose_consistency_list) = ", len(rotation_pose_consistency_list))
     plt.figure()
-    plt.scatter(survivor_ratio_list, translation_pose_camvec_consistency_list)
+    plt.scatter(survivor_ratio_list_bidir_npArr[:,0], translation_pose_camvec_consistency_list, s=1)
     plt.ylabel('translation_pose_camvec_consistency');
     plt.xlabel('survivor_ratio');
     plt.title("scatter plot of y (translation_pose_camvec_consistency) vs x (survivor_ratio)")
     plt.savefig(os.path.join(args.output_path,"translation_pose_camvec_consistency_vs_survivor_ratio.png"))
     #plt.show()
     plt.figure()
-    plt.scatter(survivor_ratio_list, translation_pose_campos_consistency_list)
+    plt.scatter(survivor_ratio_list_bidir_npArr[:,0], translation_pose_campos_consistency_list, s=1)
     plt.ylabel('translation_pose_campos_consistency');
     plt.xlabel('survivor_ratio');
     plt.title("scatter plot of y (translation_pose_campos_consistency) vs x (survivor_ratio)")
     plt.savefig(os.path.join(args.output_path,"translation_pose_campos_consistency_vs_survivor_ratio.png"))
     #plt.show()
     plt.figure()
-    plt.scatter(survivor_ratio_list, rotation_pose_consistency_list)
+    plt.scatter(survivor_ratio_list_bidir_npArr[:,0], rotation_pose_consistency_list, s=1)
     plt.ylabel('rotation_pose_consistency_list');
     plt.xlabel('survivor_ratio');
     plt.title("scatter plot of y (rotation_pose_consistency_list) vs x (survivor_ratio)")

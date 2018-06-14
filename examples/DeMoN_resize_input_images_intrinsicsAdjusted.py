@@ -15,7 +15,10 @@ import cv2
 print(sys.path)
 from depthmotionnet.vis import *
 from depthmotionnet.networks_original import *
-
+from collections import namedtuple
+from depthmotionnet.dataset_tools.helpers import *
+# from depthmotionnet.dataset_tools.view_tools import *
+# from depthmotionnet.helpers import angleaxis_to_rotation_matrix
 ###### think about how to add lmbspecialops and depthmotionnet into anaconda env path!
 # sys.path.append(r'/home/kevin/anaconda_tensorflow_demon_ws/demon/lmbspecialops/python/')
 # sys.path.append(r'/home/kevin/anaconda_tensorflow_demon_ws/demon/python/depthmotionnet/')
@@ -23,6 +26,66 @@ from depthmotionnet.networks_original import *
 examples_dir = os.path.dirname(__file__)
 weights_dir = os.path.join(examples_dir,'..','weights')
 sys.path.insert(0, os.path.join(examples_dir, '..', 'python'))
+
+### adapted from Ben's code
+def adjust_intrinsics_crop_image(image, K_old, K_new, width_new, height_new):
+    from PIL import Image
+    from skimage.transform import resize
+    #from .helpers import safe_crop_image, safe_crop_array2d
+
+    #original parameters
+    fx = K_old[0,0]    # 2457.60
+    fy = K_old[1,1]    # 2457.60
+    cx = K_old[0,2]    # 1536
+    cy = K_old[1,2]    # 1152
+    width = image.width    # 3072
+    height = image.height  # 2304
+    # print("in lmbspecialops")
+    # print("view.K = ", view.K)
+    # print(fx, " ", fy, " ", cx, " ", cy, " ", width, " ", height)
+
+    #target param
+    fx_new = K_new[0,0] # 0.89115971*256=228.136886
+    fy_new = K_new[1,1] # 1.18821287*192=228.136871
+    cx_new = K_new[0,2] # 128
+    cy_new = K_new[1,2] # 96
+
+    scale_x = fx_new/fx # 228.1369/2457.6=0.09282914
+    scale_y = fy_new/fy # 228.1369/2457.6=0.09282914
+    # print(fx_new, " ", fy_new, " ", cx_new, " ", cy_new, " ", scale_x, " ", scale_y)
+
+    #resize to get the right focal length
+    width_resize = int(width*scale_x)   # 0.09282914*3072=285.17118 => 285
+    height_resize = int(height*scale_y) # 0.09282914*2304=213.878339 => 213
+    # principal point position in the resized image
+    cx_resize = cx*scale_x  # 0.09282914*1536=142.585559
+    cy_resize = cy*scale_y  # 0.09282914*1152=106.939169
+    # print(width_resize, " ", height_resize, " ", cx_resize, " ", cy_resize)
+    # view.image.show()
+    # return
+    img_resize = image.resize((width_resize, height_resize), Image.BILINEAR if scale_x > 1 else Image.LANCZOS)
+    # img_resize.show()
+
+    #crop to get the right principle point and resolution
+    # print(cx_resize, " ", cx_new, " ", cy_resize, " ", cy_new)
+    x0 = int(round(cx_resize - cx_new)) # int(round(142.585559-128) = 15
+    y0 = int(round(cy_resize - cy_new)) # int(round(106.939169-96) = 11
+    x1 = x0 + int(width_new)
+    y1 = y0 + int(height_new)
+    # print(x0, " ", x1, " ", y0, " ", y1)
+    if x0 < 0 or y0 < 0 or x1 > width_resize or y1 > height_resize:
+        print('Warning: Adjusting intrinsics adds a border to the image')
+        print("cropping is outside the new image size")
+        img_new = safe_crop_image(img_resize,(x0,y0,x1,y1),(127,127,127))
+
+    else:
+        img_new = img_resize.crop((x0,y0,x1,y1))
+        print("cropping is within the new image size")
+        # img_new.show()
+
+    # print("adjust_intrinsics function return view successfully!")
+    return img_new
+
 
 def warp_flow(img, flow):
     flow = np.transpose(flow, [1,2,0])
@@ -91,13 +154,9 @@ def convert_flow_to_save_img(flow):
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--input_images_dir_path", required=True)
+    parser.add_argument("--input_cameras_textfile_path", required=True)
     parser.add_argument("--output_h5_dir_path", required=True)
-    parser.add_argument("--height_new", type=int, default=2304)
-    parser.add_argument("--width_new", type=int, default=3072)
     args = parser.parse_args()
-
-    # input_dir = os.path.join(os.getcwd(), 'img')
-    # output_dir = os.path.join(os.getcwd(), 'out')
     return args
 
 
@@ -169,6 +228,28 @@ def prepare_input_data(img1, img2, data_format):
 #  and (K(1,3), K(2,3)) is the principal point.
 #  The parameters are normalized such that the image height and width is 1.
 #
+Camera = namedtuple('Camera',['model','width','height','params'])
+
+def read_colmap_cameras_txt(filename):
+    result = {}
+    with open(filename, 'r') as f:
+        for line in f:
+            if line.startswith('#'):
+                pass
+            else:
+                items = line.split(' ')
+                params = [ float(x) for x in items[4:] ]
+                camera = Camera(
+                    model = items[1],
+                    width = int(items[2]),
+                    height = int(items[3]),
+                    params = params,
+                )
+                result[int(items[0])] = camera
+    return result
+
+
+
 
 def main():
     args = parse_args()
@@ -177,8 +258,66 @@ def main():
     input_dir = args.input_images_dir_path
     output_dir = args.output_h5_dir_path
 
-    height_new = args.height_new
-    width_new = args.width_new
+    if args.input_cameras_textfile_path == 'manual':
+        # K_old = np.eye(3)
+        # K_old[0,0] = 2737.64
+        # K_old[1,1] = 2737.64
+        # K_old[0,2] = 1536
+        # K_old[1,2] = 1152
+        # print("K_old = ", K_old)
+        K_old = np.eye(3)
+        K_old[0,0] = 2704.457143
+        K_old[1,1] = 2704.457143
+        K_old[0,2] = 1632
+        K_old[1,2] = 1224
+        print("K_old = ", K_old)
+    else:
+        colmapCameras = read_colmap_cameras_txt(args.input_cameras_textfile_path)
+
+        # my own datasets
+        print("colmapCameras[1] = ", colmapCameras[1])
+        K_old = np.eye(3)
+        K_old[0,0] = colmapCameras[1].params[0]
+        K_old[1,1] = colmapCameras[1].params[1]
+        K_old[0,2] = colmapCameras[1].params[2]
+        K_old[1,2] = colmapCameras[1].params[3]
+        print("K_old = ", K_old)
+
+        # ## ETH3D Datsets
+        # print("colmapCameras[0] = ", colmapCameras[0])
+        # K_old = np.eye(3)
+        # K_old[0,0] = colmapCameras[0].params[0]
+        # K_old[1,1] = colmapCameras[0].params[1]
+        # K_old[0,2] = colmapCameras[0].params[2]
+        # K_old[1,2] = colmapCameras[0].params[3]
+        # print("K_old = ", K_old)
+
+    # my own datasets
+    K_new = np.eye(3)
+    K_new[0,0] = 2737.64 # 0.89115971*3072 = 2737.64263
+    K_new[1,1] = 2737.64 # 1.18821287*2304 = 2737.64245
+    K_new[0,2] = 1536
+    K_new[1,2] = 1152
+    height_new = 2304
+    width_new = 3072
+
+    # # my own datasets for ab test
+    # K_new = np.eye(3)
+    # K_new[0,0] = 2737.64 # 0.89115971*3072 = 2737.64263
+    # K_new[1,1] = 2737.64 # 1.18821287*2304 = 2737.64245
+    # K_new[0,2] = 320
+    # K_new[1,2] = 240
+    # height_new = 480
+    # width_new = 640
+
+    # ### ETH3D Datasets
+    # K_new = np.eye(3)
+    # K_new[0,0] = 4790.87 # 0.89115971*5376 = 4790.8746
+    # K_new[1,1] = 4790.87 # 1.18821287*4032 = 4790.87429
+    # K_new[0,2] = 2688
+    # K_new[1,2] = 2016
+    # height_new = 4032
+    # width_new = 5376
 
     # Create output directory, if not present
     try:
@@ -203,12 +342,13 @@ def main():
 
         img1 = Image.open(file1_path)
 
-        # input_data = prepare_input_data(img1,img2,data_format)
-        if img1.size[0] != width_new or img1.size[1] != height_new:
-            resized_img1 = img1.resize((width_new,height_new))
+        # # input_data = prepare_input_data(img1,img2,data_format)
+        # if img1.size[0] != 3072 or img1.size[1] != 2304:
+        #     resized_img1 = img1.resize((3072,2304))
+        resized_img1 = adjust_intrinsics_crop_image(img1, K_old, K_new, width_new, height_new)
 
         resized_img1.save(os.path.join(output_dir, "resized_images_%s_%s" % (height_new, width_new), file1))
-        # plt.imsave(os.path.join(output_dir, "resized_images", os.path.splitext(file1)[0]), resized_img1, cmap=cmap)
+        # plt.imsave(os.path.join(output_dir, "resized_images_%s_%s" % (height_new, width_new), os.path.splitext(file1)[0]), resized_img1, cmap=cmap)
 
         # # # a colormap and a normalization instance
         # cmap = plt.cm.jet

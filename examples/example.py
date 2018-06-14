@@ -62,8 +62,10 @@ else: # running on cpu requires channels_last data format
 #
 
 # read data
-img1 = Image.open(os.path.join(examples_dir,'sculpture1.png'))
-img2 = Image.open(os.path.join(examples_dir,'sculpture2.png'))
+# img1 = Image.open(os.path.join(examples_dir,'sculpture1.png'))
+# img2 = Image.open(os.path.join(examples_dir,'sculpture2.png'))
+img1 = Image.open(os.path.join('/home/kevin/ThesisDATA/southbuilding_april/DenseSIFT/resized_images_2304_3072','P1180152.JPG'))
+img2 = Image.open(os.path.join('/home/kevin/ThesisDATA/southbuilding_april/DenseSIFT/resized_images_2304_3072','P1180151.JPG'))
 
 input_data = prepare_input_data(img1,img2,data_format)
 

@@ -293,8 +293,24 @@ weights_dir = '/home/kevin/anaconda_tensorflow_demon_ws/demon/weights'
 # outdir = "/home/kevin/ThesisDATA/southbuilding_01042018/demon_prediction_80_20_080"
 # outfile = os.path.join(outdir, "kevin_southbuilding_demon.h5")
 
-recondir = '/home/kevin/ThesisDATA/CVG_Capitole/dense_192_256/'
-outdir = "/home/kevin/ThesisDATA/CVG_Capitole/demon_prediction_15_30_070"
+# recondir = '/home/kevin/ThesisDATA/CVG_Capitole/dense_192_256/'
+# outdir = "/home/kevin/ThesisDATA/CVG_Capitole/demon_prediction_15_50_050"
+# outfile = os.path.join(outdir, "kevin_southbuilding_demon.h5")
+
+# recondir = '/home/kevin/ThesisDATA/ETH3D/multi_view_training_dslr_undistorted/facade/DenseSIFT/dense_192_256/'
+# outdir = "/home/kevin/ThesisDATA/ETH3D/multi_view_training_dslr_undistorted/facade/demon_prediction_15_50_050"
+# outfile = os.path.join(outdir, "kevin_southbuilding_demon.h5")
+#
+# recondir = '/home/kevin/ThesisDATA/ETH3D/multi_view_training_dslr_undistorted/delivery_area/DenseSIFT/dense_192_256/'
+# outdir = "/home/kevin/ThesisDATA/ETH3D/multi_view_training_dslr_undistorted/delivery_area/demon_prediction_15_50_050"
+# outfile = os.path.join(outdir, "kevin_southbuilding_demon.h5")
+
+# recondir = '/home/kevin/ThesisDATA/ETH3D/multi_view_training_dslr_undistorted/terrace/DenseSIFT/dense_192_256/'
+# outdir = "/home/kevin/ThesisDATA/ETH3D/multi_view_training_dslr_undistorted/terrace/demon_prediction_15_50_050"
+# outfile = os.path.join(outdir, "kevin_southbuilding_demon.h5")
+
+recondir = '/home/kevin/ThesisDATA/ETH3D/multi_view_training_dslr_undistorted/relief/DenseSIFT/dense_192_256/'
+outdir = "/home/kevin/ThesisDATA/ETH3D/multi_view_training_dslr_undistorted/relief/demon_prediction_15_50_050"
 outfile = os.path.join(outdir, "kevin_southbuilding_demon.h5")
 
 # recondir = '/media/kevin/MYDATA/Datasets_14032018/CNB_labwall/dense_384_512'
@@ -340,8 +356,8 @@ images = colmap.read_images_txt(os.path.join(recondir,'sparse','images.txt'))
 views = colmap.create_views(cameras, images, os.path.join(recondir,'images'), os.path.join(recondir,'stereo','depth_maps'))
 
 knn = 15 # 5
-max_angle = 30*math.pi/180  # 60*math.pi/180
-min_overlap_ratio = 0.7    # 0.5
+max_angle = 50*math.pi/180  # 60*math.pi/180
+min_overlap_ratio = 0.5    # 0.5
 # knn = 20 # 25 # 5
 # max_angle = 45*math.pi/180  # 60*math.pi/180
 # min_overlap_ratio = 0.75     # 0.5
