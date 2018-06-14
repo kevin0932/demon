@@ -1,6 +1,7 @@
 #!/bin/bash
 
-# $dataset_name is the folder name that stores the input datasets under current directory
+# $dataset_name is the folder name that stores the input datasets under the specific directory
+# you may change the directory path accordingly
 for dataset_name
 do
   # preprocess the input images
