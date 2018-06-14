@@ -21,9 +21,15 @@
 
 # make the following .sh scripts and this script executable (chmod +x scriptfile) if they are not executable
 
-
-# modify theia global SfM setup in the file 
-# modify calibration parameters as the file "calibrationfile.txt" if you want to manually provide intrinsics for Theia pipelines
+# Generally, please consider about and check the following parameters existing in the following scripts if the pipeline is broken or should be modified:
+#	feature_matcher setups: standard, fixed_radius, adaptive_radius
+#	thresholds: consistency_filtering_ratio (e.g. 0.6), flow_consistency_error (squared_error, e.g. 1), pre-defined searching radius (e.g. 4), relative rotation/translation consistency errors in degrees (e.g. 360)
+#	executable paths, directory paths
+#	initial intrinsics for intrinsic adjustment
+#	paths or linking of dependencies
+#
+#	modify theia global SfM setup in the file "base_theia_flag_file.txt"
+# 	modify calibration parameters as the file "calibrationfile.txt" if you want to manually provide intrinsics for Theia pipelines
 
 for dataset_name
 do
@@ -74,7 +80,6 @@ do
 
   # check the reconstruction results of adaptive-radius guided matching pipelines
   #./auto_theiacheck_adapR_optical_flow_guided_reconstruction.sh $dataset_name
-
 done
 
 
