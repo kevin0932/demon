@@ -19,7 +19,7 @@
 #		--original_images			->	original image files in either .JPG or .png
 #		--sparse				->	COLMAP sparse results from original images (it can be used as accurate reference if COLMAP makes reasonable reconstructions)
 
-# make the following .sh scripts executable (chmod +x scriptfile) if they are not executable
+# make the following .sh scripts and this script executable (chmod +x scriptfile) if they are not executable
 
 for dataset_name
 do
