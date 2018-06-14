@@ -15,6 +15,8 @@ Major scripts for thesis pipeline and experiments can be found in the folder "th
 
 Please ignore the duplicated scripts in other folders if there are any.
 
+Feel free to drop a line to the email: kevin.qixuan.zhangATgmail.com if more explanations of the scripts are needed.
+
 
 ==================================================The rest is the original README contend from DeMoN==================================================
 # DeMoN: Depth and Motion Network
