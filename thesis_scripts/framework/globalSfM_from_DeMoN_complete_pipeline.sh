@@ -2,6 +2,15 @@
 
 # $dataset_name is the folder name that stores the input datasets under the specific directory
 # you may change the directory path accordingly
+
+# please organize your input dataset like "Sample_Dataset_Folder" (in the same directory)
+#	--Sample_Dataset_Folder
+#		--demon_prediction_exhaustive_pairs	->	DeMoN predictions will be stored here
+#		--dense_results_by_COLMAP		->	dense reconstruction by COLMAP if you need it
+#		--DenseSIFT				->	our results will be stored accordingly in this folder
+#		--original_images			->	original image files in either .JPG or .png
+#		--sparse				->	COLMAP sparse results from original images (it can be used as accurate reference if COLMAP makes reasonable reconstructions)
+
 for dataset_name
 do
   # preprocess the input images
