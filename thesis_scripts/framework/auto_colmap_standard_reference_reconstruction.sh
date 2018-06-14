@@ -14,8 +14,8 @@ do
   opt_max_squared_pixel_err=1 
   opt_min_survivor_ratio=5
 
-  opt_max_rotation_consistency=20
-  opt_max_translation_consistency=50
+  opt_max_rotation_consistency=360
+  opt_max_translation_consistency=360
 
   tmpChar=_
   format_factor_scaler=100

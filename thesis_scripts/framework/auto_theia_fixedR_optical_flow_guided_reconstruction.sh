@@ -15,8 +15,8 @@ do
 
   matched_database_suffix=FixedOF
 
-  opt_max_squared_pixel_err=4
-  opt_min_survivor_ratio=4
+  opt_max_squared_pixel_err=1
+  opt_min_survivor_ratio=5
 
   tmpChar=_
   format_factor_scaler=100
