@@ -23,7 +23,7 @@
 
 for dataset_name
 do
-  # preprocess the input images: please change the initial intrinsics accordingly in the file "DeMoN_resize_input_images_intrinsicsAdjusted.py" under the folder "examples" of demon
+  # preprocess the input images: #please change the initial intrinsics accordingly# in the file "DeMoN_resize_input_images_intrinsicsAdjusted.py" under the folder "examples" of demon
   auto_resize_and_adjust_intrinsics_to_get_input_images.sh $dataset_name
 
   # DeMoN inference exhaustively on all possible image pairs and save results into .hdf5 file
