@@ -5,12 +5,17 @@ It is based on three major frameworks (forked repos can be found via links attac
   1. DeMoN (https://github.com/kevin0932/demon.git)
   2. COLMAP (https://github.com/kevin0932/colmap.git)
   3. TheiaSfM (https://github.com/kevin0932/TheiaSfM.git)
+
 Please checkout the branch "thesis_submission" and find the code for thesis submission. (The rest branches are just experimental/prototype scripts).
 
 Major scripts for thesis pipeline and experiments can be found in the folder "thesis_scripts" of demon:
+
   I. Folder "framework" includes all the code for the thesis pipeline and please find the complete pipeline script at the file "globalSfM_from_DeMoN_complete_pipeline.sh" (with descriptions on other scripts);
+
   II. Folder "experiment_scripts_for_ETH3D" includes some scripts for experiments with ETH3D datasets;
+
   III. Folder "experiments" includes the preliminary experiments that were done in the beginning of the thesis, mainly including the trials on DeMoN learnt depth/flow.
+
 Please ignore the duplicated scripts in other folders if there are any.
 
 
