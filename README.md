@@ -26,11 +26,15 @@ As described in the paper, DeMoN adopts 6-parameter representation for relative 
 The inputs to DeMoN are images of any types but their size should be adapted to 256*192 with the intrinsic adjustment process. The outputs of DeMoN are defaultly stored in HDF5 files. Be aware that the depth prediction has already scaled with DeMoN estimated scale factors and DeMoN defaultly does not store/output the scale factor predictions. Here, the code has been adapted so that those DeMoN estimated scale factors are outputed!
 
 ## COLMAP
+The camera poses are stored as extrinsic parameters in COLMAP, which is different from TheiaSfM. The Main data formats include the .db database files that may store extracted features, (inlier) matches, camera poses, and the text/binary files storing the intermediate/optimized results (camera poses, text files for pose comparison or geo-registration).
 
-## Theia
+## TheiaSfM
+The relative poses of the 2nd camera are stored a bit differently than those in DeMoN and COLMAP. Here the camera position of the 2nd camera in the coordinate of the 1st reference camera is used, instead of the extrinsic parameters. Also, there is an important data storage file, i.e., the matchfile that may serve as the start of the TheiaSfM pipeline and stores the matching information pre-computed. Such matchfiles are serialized with [Cereal library](https://uscilab.github.io/cereal/), so the corresponding library should be used when you produce or read from the matchfiles.
 
 ---
 # FAQs (for the problems I met during my thesis, mainly on the installation or setups)
+## Camera Pose Representation Difference
+Be careful with the camera poses produced by DeMoN, COLMAP and TheiaSfM, since they may store them in different formats (either poses or extrinsic parameters). Conversions may be required. Here in the experiments done in this thesis, DeMoN and COLMAP use extrinsic parameters, while TheiaSfM adopts the 2nd camera position in the coordinate of the reference camera as the relative poses.
 
 ## DeMoN Intrinsic Adjustment
 Details are described in the thesis as well as the script coming with DeMoN. There is also [an closed GitHub issue](https://github.com/lmb-freiburg/demon/issues/15) discussing the process.
