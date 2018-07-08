@@ -46,13 +46,9 @@ Building and installing CMake
 The easiest way to install CMake is from source. Head over to the CMake downloads page (https://cmake.org/download/) and get the latest “Unix/Linux Source” *.tar.gz file. Make sure to set the --prefix flag correctly, otherwise you won’t have permissions to install files at the default location.
 
     $ tar -xf cmake*.tar.gz
-
     $ cd cmake*
-
     $ ./configure --prefix=$HOME
-
     $ make
-
     $ make install
 
 You should now have the most up-to-date installation of cmake. Check the version by typing:
@@ -71,7 +67,6 @@ Be careful with the option "--disable-parallel", since sometimes you do need a p
 Compile and install:
 
     $ make
-
     $ make install
 
 All of the important HDF5 tools will be at $HOME/bin and libraries/include files at: $HOME/lib and $HOME/include.
