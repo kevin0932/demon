@@ -24,8 +24,10 @@ Feel free to drop a line to the email: [kevin.qixuan.zhangATgmail.com]() if more
 ---
 # FAQs (for the problems I met during my thesis, mainly on the installation or setups)
 
+## DeMoN Intrinsic Adjustment
+Details are described in the thesis as well as the script coming with DeMoN. There is also [an closed GitHub issue](https://github.com/lmb-freiburg/demon/issues/15) discussing the process.
 
-
+##
 
 ---
 # The rest is the original README content from DeMoN
