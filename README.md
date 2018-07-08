@@ -19,7 +19,8 @@ Feel free to drop a line to the email: kevin.qixuan.zhangATgmail.com if more exp
 
 
 ---
-The rest is the original README contend from DeMoN
+The rest is the original README content from DeMoN
+
 ---
 
 # DeMoN: Depth and Motion Network
