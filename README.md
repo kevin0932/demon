@@ -20,6 +20,14 @@ Feel free to drop a line to the email: [kevin.qixuan.zhangATgmail.com]() if more
 ---
 # Data Formats and Compatibility
 
+## DeMoN
+As described in the paper, DeMoN adopts 6-parameter representation for relative motion predictions, i.e., 3-element angle-axis representation for relative rotation, and x-,y-,z-values for relative translations. Such relative pose representation corresponds to the extrinsic parameters in the camera matrices, which should be the same with COLMAP. For angle-axis representations, there are codes in the scripts that do the conversion to other formats.
+
+The inputs to DeMoN are images of any types but their size should be adapted to 256*192 with the intrinsic adjustment process. The outputs of DeMoN are defaultly stored in HDF5 files. Be aware that the depth prediction has already scaled with DeMoN estimated scale factors and DeMoN defaultly does not store/output the scale factor predictions. Here, the code has been adapted so that those DeMoN estimated scale factors are outputed!
+
+## COLMAP
+
+## Theia
 
 ---
 # FAQs (for the problems I met during my thesis, mainly on the installation or setups)
