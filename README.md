@@ -18,6 +18,16 @@ Please ignore the duplicated scripts in other folders if there are any.
 Feel free to drop a line to the email: [kevin.qixuan.zhangATgmail.com]() if more explanations of the scripts are needed.
 
 ---
+# Data Formats and Compatibility
+
+
+---
+# FAQs (for the problems I met during my thesis, mainly on the installation or setups)
+
+
+
+
+---
 The rest is the original README content from DeMoN
 
 ---
