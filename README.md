@@ -30,7 +30,7 @@ Details are described in the thesis as well as the script coming with DeMoN. The
 ## Library Configuration on Ubuntu 16
 For different libraries' configuration on the same Ubuntu 16 machine, different versions of GCC/G++ compilters and CMAKE tools may be required for their incompatibility and update history!
 
-For example, the tensorflow library may should be dealt with if you use the default GCC5 compilter, by setting corresponding configuration flags to disable incompatible CXX11_ABI version usage (--cxxopt="-D_GLIBCXX_USE_CXX11_ABI=0" ). See details in the official tutorial.
+For example, the tensorflow library (I used v1.4 or v1.3) may be dealt with if you use the default GCC5 compilter, by setting corresponding configuration flags to disable incompatible CXX11_ABI version usage (--cxxopt="-D_GLIBCXX_USE_CXX11_ABI=0" ). See details in the official tutorial.
 
 Besides, for the dependency library lmbspecialops of DeMoN, it should be compiled with GCC 4 and later cmake version (e.g. >=3.2) with easiest effort. Otherwise, the CXX11_ABI should be dealt with if you use GCC 5.
 
