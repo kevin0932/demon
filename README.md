@@ -1,22 +1,21 @@
-# thesis submission: README
+# Thesis Submission: README
 This is the modified DeMoN version for my master thesis "Global Structure-from-Motion from Learned Relative Poses", at CVG, ETH Zurich.
 
-It is based on three major frameworks (forked repos can be found via links attached):
+It is based on three major frameworks (forked repos can be found via links attached and please use the branches named "thesis_submission"):
   1. DeMoN (https://github.com/kevin0932/demon.git)
   2. COLMAP (https://github.com/kevin0932/colmap.git)
   3. TheiaSfM (https://github.com/kevin0932/TheiaSfM.git)
 
-Please checkout the branch "thesis_submission" and find the code for thesis submission. (The rest branches are just experimental/prototype scripts).
+Please checkout the branch "thesis_submission" and find the code/scripts for thesis submission. (The rest branches are just experimental/prototype scripts).
 
-Major scripts for thesis pipeline and experiments can be found in the folder "thesis_scripts" of demon:
+Major scripts for the thesis pipeline and experiments can be found in the folder "thesis_scripts" of demon:
   1. Folder "framework" includes all the code for the thesis pipeline and please find the complete pipeline script at the file "globalSfM_from_DeMoN_complete_pipeline.sh" (with descriptions on other scripts);
   2. Folder "experiment_scripts_for_ETH3D" includes some scripts for experiments with ETH3D datasets;
   3. Folder "experiments" includes the preliminary experiments that were done in the beginning of the thesis, mainly including the trials on DeMoN learnt depth/flow.
 
 Please ignore the duplicated scripts in other folders if there are any.
 
-Feel free to drop a line to the email: kevin.qixuan.zhangATgmail.com if more explanations of the scripts are needed.
-
+Feel free to drop a line to the email: [kevin.qixuan.zhangATgmail.com]() if more explanations of the scripts are needed.
 
 ---
 The rest is the original README content from DeMoN
