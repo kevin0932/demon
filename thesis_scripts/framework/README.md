@@ -12,7 +12,7 @@ $dataset_name is the folder name that stores the input datasets under the specif
 Please set your directory path accordingly.
 
 please organize your input dataset like "Sample_Dataset_Folder" (in the same directory)
-* --Sample_Dataset_Folder
+* Sample_Dataset_Folder
 *   --demon_prediction_exhaustive_pairs	->	DeMoN predictions will be stored here
 *   --dense_results_by_COLMAP		->	dense reconstruction by COLMAP if you need it (should be run manually if you want to use it as reference)
 *   --DenseSIFT				->	our results will be stored accordingly in this folder
