@@ -12,12 +12,12 @@ $dataset_name is the folder name that stores the input datasets under the specif
 Please set your directory path accordingly.
 
 please organize your input dataset like "Sample_Dataset_Folder" (in the same directory)
-###	--Sample_Dataset_Folder
-###		--demon_prediction_exhaustive_pairs	->	DeMoN predictions will be stored here
-###		--dense_results_by_COLMAP		->	dense reconstruction by COLMAP if you need it (should be run manually if you want to use it as reference)
-###		--DenseSIFT				->	our results will be stored accordingly in this folder
-###		--original_images			->	original image files in either .JPG or .png
-###		--sparse				->	COLMAP sparse results from original images (it can be used as accurate reference if COLMAP makes reasonable reconstructions)
+        --Sample_Dataset_Folder
+            --demon_prediction_exhaustive_pairs	->	DeMoN predictions will be stored here
+            --dense_results_by_COLMAP		->	dense reconstruction by COLMAP if you need it (should be run manually if you want to use it as reference)
+            --DenseSIFT				->	our results will be stored accordingly in this folder
+            --original_images			->	original image files in either .JPG or .png
+            --sparse				->	COLMAP sparse results from original images (it can be used as accurate reference if COLMAP makes reasonable reconstructions)
 
 Please make the .sh scripts and this script executable (chmod +x scriptfile) if they are not executable.
 
