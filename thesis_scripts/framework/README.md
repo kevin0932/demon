@@ -1,9 +1,9 @@
 To run the pipeline or experiments, please make sure that all the scripts are run under the same environment that satisfies all the dependencies!
 
 Our experiments are done in the following environments:
-    Ubuntu 16.04
-    python 3 in anaconda with vtk, demon installed
-    Dependencies of DeMoN, Theia and Colmap should be satisfied!
+    - Ubuntu 16.04
+    - python 3 in anaconda with vtk, demon installed
+    - Dependencies of DeMoN, Theia and Colmap should be satisfied!
 
 Feature extraction and matching are run in Colmap. They can be done in either GUI or Command-Line interface. Currently-called executables are located in the build folder (/home/kevin/devel_lib/SfM/colmap/release/src/exe/feature_extractor) and feel free to change the path accordingly or just call the one in the system if you install it into your system folder.
 
