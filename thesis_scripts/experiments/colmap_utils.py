@@ -1,3 +1,5 @@
+###### utility functions to interact with COLMAP 2.0, from Benjamin ######
+###### it should be placed in the same directory as the experiment scripts for portability ######
 """Functions for reading COLMAP 2.0 data"""
 
 import numpy as np
