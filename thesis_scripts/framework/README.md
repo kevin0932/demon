@@ -35,7 +35,7 @@ Please modify theia global SfM setup in the file "base_theia_flag_file.txt"
 The script file "globalSfM_from_DeMoN_complete_pipeline.sh" records all the functional scripts involved in the pipeline. Please find a brief introduction of major components below or in the comments of the corresponding .sh files.
 
 * auto_resize_and_adjust_intrinsics_to_get_input_images.sh
-** preprocess the input images: #please change the initial intrinsics accordingly# in the file "DeMoN_resize_input_images_intrinsicsAdjusted.py" under the folder "examples" of demon
+  - preprocess the input images: #please change the initial intrinsics accordingly# in the file "DeMoN_resize_input_images_intrinsicsAdjusted.py" under the folder "examples" of demon
 
 
 * auto_exhaustivePairs_prediction_to_hdf5.sh
