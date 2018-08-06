@@ -23,6 +23,12 @@ For all the experiments, DeMoN predictions should be made and saved locally so t
 ## SUN3D
 * corresponding scripts are stored in the directory "Scripts_for_data_from_scratch_SUN3D"
 
+# Experiment on Theia global reconstruction after substitution of DeMoN estimated relative poses
+
+# Experiment on establishing feature tracks from DeMoN depth and relative poses
+
+# Experiment on establishing feature tracks from optical flow
+
 # Filter_image_pairs_in_HDF5_file_by_some_conditions.py
 A test script to filter image pairs according to different conditions (view angle differences, view overlap ratios, camera positions, "left-right" consistency scores)
 
