@@ -17,7 +17,7 @@ Major scripts for the thesis pipeline and experiments can be found in the folder
   2. Folder "experiments" includes the preliminary experiments that were done in the beginning of the thesis, mainly including the trials on DeMoN learnt depth/flow.
   3. Folder "experiment_scripts_for_ETH3D" includes some statistics scripts for experiments with ETH3D datasets in the last stage of the thesis;
 
-Please ignore the duplicated scripts in other folders if there are any.
+Please ignore the scripts that are not mentioned in any README files and the duplicated scripts in other folders. Those are mainly prototyping and testing scripts for my thesis.
 
 Feel free to drop a line to the email: [kevin.qixuan.zhangATgmail.com]() if more explanations of the scripts are needed.
 
