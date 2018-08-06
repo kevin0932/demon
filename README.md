@@ -8,7 +8,7 @@ It is based on three major frameworks (forked repos can be found via links attac
 
 Please checkout the branch "thesis_submission" and find the code/scripts for thesis submission. (The rest branches are just experimental/prototype scripts).
 
-Major scripts for the thesis pipeline and experiments can be found in the folder "thesis_scripts" of demon:
+Major scripts for the thesis pipeline and experiments can be found in the folder "thesis_scripts" of demon (separate README files for each folder):
   1. Folder "framework" includes all the code for the thesis pipeline and please find the complete pipeline script at the file "globalSfM_from_DeMoN_complete_pipeline.sh" (with descriptions on other scripts);
   2. Folder "experiment_scripts_for_ETH3D" includes some scripts for experiments with ETH3D datasets;
   3. Folder "experiments" includes the preliminary experiments that were done in the beginning of the thesis, mainly including the trials on DeMoN learnt depth/flow.
@@ -73,7 +73,7 @@ You should now have the most up-to-date installation of cmake. Check the version
 Download the latest ‘configure’ version of HDF5 (https://support.hdfgroup.org/HDF5/release/obtainsrc.html#conf). After extacting the tarball run configure with the following options:
 
     $ ./configure --disable-parallel --without-szlib --without-pthread --prefix=$HOME
-    
+
 Be careful with the option "--disable-parallel", since sometimes you do need a parallel version of HDF5, which may be required when you want to setup some libraries with support of OpenMP/OpenMPI!     
 
 Compile and install:
@@ -122,7 +122,7 @@ The network estimates the depth and relative camera motion for pairs of images; 
 ![Teaser](teaser.png)
 
 If you use this code for research please cite:
-   
+
     @InProceedings{UZUMIDB17,
       author       = "B. Ummenhofer and H. Zhou and J. Uhrig and N. Mayer and E. Ilg and A. Dosovitskiy and T. Brox",
       title        = "DeMoN: Depth and Motion Network for Learning Monocular Stereo",
@@ -202,7 +202,7 @@ python3 example.py # opens a window with the depth map (and the point cloud if v
 ## Data reader op & evaluation
 
 The data reader op and the evaluation code have additional dependencies.
-The code for the data reader is in the ```multivih5datareaderop``` directory. 
+The code for the data reader is in the ```multivih5datareaderop``` directory.
 See the corresponding [readme](multivih5datareaderop/README.md) for more details.
 
 For the evaluation see the example [```examples/evaluation.py```](examples/evaluation.py).
@@ -223,4 +223,3 @@ Note that the evaluation code also depends on the data reader op.
 ## License
 
 DeMoN is under the [GNU General Public License v3.0](LICENSE.txt)
-

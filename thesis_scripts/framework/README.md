@@ -40,7 +40,8 @@ Please modify theia global SfM setup in the file "base_theia_flag_file.txt"
 The script file "globalSfM_from_DeMoN_complete_pipeline.sh" records all the functional scripts involved in the pipeline. Please find a brief introduction of major components below or in the comments of the corresponding .sh files.
 
 * auto_resize_and_adjust_intrinsics_to_get_input_images.sh
-  - preprocess the input images: #please change the initial intrinsics accordingly# in the file "DeMoN_resize_input_images_intrinsicsAdjusted.py" under the folder "examples" of demon
+  - preprocess the input images
+  - #please change the initial intrinsics accordingly# in the file "DeMoN_resize_input_images_intrinsicsAdjusted.py" under the folder "examples" of demon
 
 * auto_exhaustivePairs_prediction_to_hdf5.sh
   - DeMoN inference exhaustively on all possible image pairs and save results into .hdf5 file
@@ -49,7 +50,7 @@ The script file "globalSfM_from_DeMoN_complete_pipeline.sh" records all the func
   - save relative pose predictions to text file
 
 * auto_visualinspection.sh
-  - (mandatory but useless in the final pipeline) manually select the image pairs that will be considered:just for the compatibility with old scripts
+  - (mandatory but useless in the final pipeline) manually select the image pairs that will be considered: just for the compatibility with old scripts
 
 * auto_retrieve_good_image_pairs_and_save_optical_flow_files.sh
   - retrieve "good" image pairs that DeMoN will mostly give reliable predictions [thresholds should be tuned!]
