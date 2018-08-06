@@ -28,6 +28,7 @@ For all the experiments, DeMoN predictions should be made and saved locally so t
 * substitute pre-saved COLMAP relative poses into pre-saved theia matchfile: "TheiaSfM" applications/read_colmap_relativeRt_to_theia_output_matchfile.cc
 * substitute DeMoN estimated relative poses into pre-saved theia matchfile: "TheiaSfM" applications/read_DeMoN_prediction_hdf5_to_theia_output_matchfile.cc
 * trial to also consider using prediction confidence score as the weights for later Theia motion averaging: "TheiaSfM" applications/read_DeMoN_prediction_hdf5_to_theia_output_matchfile_WeightedMotionAveraging.cc
+* after the substitution of corresponding relative poses, just run TheiaSfM normally according to your need
 
 # Experiment on establishing feature tracks from DeMoN depth and relative poses
 
