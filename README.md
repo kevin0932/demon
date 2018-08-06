@@ -3,6 +3,9 @@ This is the modified DeMoN version for my master thesis "Global Structure-from-M
 
 It is based on three major frameworks (forked repos can be found via links attached and please use the branches named "thesis_submission"):
   1. DeMoN (https://github.com/kevin0932/demon.git)
+    * detailed README files
+      - https://github.com/kevin0932/demon/blob/thesis_submission/thesis_scripts/framework/README.md
+      - https://github.com/kevin0932/demon/tree/thesis_submission/thesis_scripts/experiments/README.md
   2. COLMAP (https://github.com/kevin0932/colmap.git)
   3. TheiaSfM (https://github.com/kevin0932/TheiaSfM.git)
 
