@@ -17,7 +17,7 @@ For all the experiments, DeMoN predictions should be made and saved locally so t
 * as described in the thesis, the depth maps can be scaled by either the ground truth translation lengths or the ground truth depth maps (the COLMAP results are used here as accurate depth maps)
 
 # Repeat the depth map fusion experiments with other datasets
-## ETH3D
+## (Thesis Page 21, Experiment 3.3.2) ETH3D
 * raw depth maps fusion: ETH3D_scale_experiment_v1.py
 * filtering by eometric/photometric consistency: multi-view ETH3D_depth_experiment_v6_PointCloudNoiseRemoval.py
 ## SUN3D
