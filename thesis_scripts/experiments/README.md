@@ -23,7 +23,11 @@ For all the experiments, DeMoN predictions should be made and saved locally so t
 ## SUN3D
 * corresponding scripts are stored in the directory "Scripts_for_data_from_scratch_SUN3D"
 
-# Experiment on Theia global reconstruction after substitution of DeMoN estimated relative poses
+# Experiment on Theia global reconstruction after substitution of COLMAP/GroundTruth/DeMoN estimated relative poses (Please use corresponding executables after compilation)
+* convert standard COLMAP database file into TheiaSfM matchfile: "TheiaSfM" applications/read_standard_colmap_DB_content_withOptimizedCameras.cc
+* substitute pre-saved COLMAP relative poses into pre-saved theia matchfile: "TheiaSfM" applications/read_colmap_relativeRt_to_theia_output_matchfile.cc
+* substitute DeMoN estimated relative poses into pre-saved theia matchfile: "TheiaSfM" applications/read_DeMoN_prediction_hdf5_to_theia_output_matchfile.cc
+* trial to also consider using prediction confidence score as the weights for later Theia motion averaging: "TheiaSfM" applications/read_DeMoN_prediction_hdf5_to_theia_output_matchfile_WeightedMotionAveraging.cc
 
 # Experiment on establishing feature tracks from DeMoN depth and relative poses
 
@@ -34,3 +38,6 @@ A test script to filter image pairs according to different conditions (view angl
 
 # colmap_util.py
 Utility functions to interact with COLMAP 2.0, from Benjamin. it should be placed in the same directory as the experiment scripts for portability.
+
+# "COLMAP" scripts/python/visualize_optical_flow_mappings.py
+python script to visualise DeMoN optical flow maps
