@@ -16,9 +16,12 @@ For all the experiments, DeMoN predictions should be made and saved locally so t
 * the script is run with South-Building datasets and the output is just the point cloud .PLY file and the VTK visualisation
 * as described in the thesis, the depth maps can be scaled by either the ground truth translation lengths or the ground truth depth maps (the COLMAP results are used here as accurate depth maps)
 
-# Repeat the depth map fusion experiments with ETH3D datasets
+# Repeat the depth map fusion experiments with other datasets
+## ETH3D
 * raw depth maps fusion: ETH3D_scale_experiment_v1.py
 * filtering by eometric/photometric consistency: multi-view ETH3D_depth_experiment_v6_PointCloudNoiseRemoval.py
+## SUN3D
+* corresponding scripts are stored in the directory "Scripts_for_data_from_scratch_SUN3D"
 
 # Filter_image_pairs_in_HDF5_file_by_some_conditions.py
 A test script to filter image pairs according to different conditions (view angle differences, view overlap ratios, camera positions, "left-right" consistency scores)
