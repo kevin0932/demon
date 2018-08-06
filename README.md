@@ -8,10 +8,10 @@ It is based on three major frameworks (forked repos can be found via links attac
 
 Please checkout the branch "thesis_submission" and find the code/scripts for thesis submission. (The rest branches are just experimental/prototype scripts).
 
-Major scripts for the thesis pipeline and experiments can be found in the folder "thesis_scripts" of demon (**separate README files for each folder**):
+Major scripts for the thesis pipeline and experiments can be found in the folder "thesis_scripts" of demon (**Separate README Files**):
   1. Folder "framework" includes all the code for the thesis pipeline and please find the complete pipeline script at the file "globalSfM_from_DeMoN_complete_pipeline.sh" (with descriptions on other scripts);
-  2. Folder "experiment_scripts_for_ETH3D" includes some scripts for experiments with ETH3D datasets;
-  3. Folder "experiments" includes the preliminary experiments that were done in the beginning of the thesis, mainly including the trials on DeMoN learnt depth/flow.
+  2. Folder "experiments" includes the preliminary experiments that were done in the beginning of the thesis, mainly including the trials on DeMoN learnt depth/flow.
+  3. Folder "experiment_scripts_for_ETH3D" includes some statistics scripts for experiments with ETH3D datasets in the last stage of the thesis;
 
 Please ignore the duplicated scripts in other folders if there are any.
 
