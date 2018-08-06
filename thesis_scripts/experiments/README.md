@@ -23,16 +23,16 @@ For all the experiments, DeMoN predictions should be made and saved locally so t
 ## SUN3D
 * corresponding scripts are stored in the directory "Scripts_for_data_from_scratch_SUN3D"
 
-# Experiment on Theia global reconstruction after substitution of COLMAP/GroundTruth/DeMoN estimated relative poses (Please use corresponding executables after compilation)
+# (Thesis Page 37, Experiment 5.1.1) Experiment on Theia global reconstruction after substitution of COLMAP/GroundTruth/DeMoN estimated relative poses (Please use corresponding executables after compilation)
 * convert standard COLMAP database file into TheiaSfM matchfile: "TheiaSfM" applications/read_standard_colmap_DB_content_withOptimizedCameras.cc
 * substitute pre-saved COLMAP relative poses into pre-saved theia matchfile: "TheiaSfM" applications/read_colmap_relativeRt_to_theia_output_matchfile.cc
 * substitute DeMoN estimated relative poses into pre-saved theia matchfile: "TheiaSfM" applications/read_DeMoN_prediction_hdf5_to_theia_output_matchfile.cc
 * trial to also consider using prediction confidence score as the weights for later Theia motion averaging: "TheiaSfM" applications/read_DeMoN_prediction_hdf5_to_theia_output_matchfile_WeightedMotionAveraging.cc
 * after the substitution of corresponding relative poses, just run TheiaSfM normally according to your need
 
-# Experiment on establishing feature tracks from DeMoN depth and relative poses
+# (Thesis Page 40, Experiment 5.1.2 method 1) Experiment on establishing feature tracks from DeMoN depth and relative poses
 
-# Experiment on establishing feature tracks from optical flow
+# (Thesis Page 42, Experiment 5.1.2 method 2) Experiment on establishing feature tracks from optical flow
 
 # Filter_image_pairs_in_HDF5_file_by_some_conditions.py
 A test script to filter image pairs according to different conditions (view angle differences, view overlap ratios, camera positions, "left-right" consistency scores)
