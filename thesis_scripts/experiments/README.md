@@ -31,7 +31,10 @@ For all the experiments, DeMoN predictions should be made and saved locally so t
 * after the substitution of corresponding relative poses, just run TheiaSfM normally according to your need
 
 # (Thesis Page 40, Experiment 5.1.2 method 1) Experiment on establishing feature tracks from DeMoN depth and relative poses
-* Scripts_for_low_resolution_opticalflow_depth/SouthBuilding/
+* Scripts_for_low_resolution_opticalflow_depth/SouthBuilding/FloatingPixel_LowReso_DeMoN_Predict_DB_JohanFreiburg_PoseBased_DeMoNRt_correctionScaled.py
+* Scripts_for_low_resolution_opticalflow_depth/SouthBuilding/FloatingPixel_LowReso_DeMoN_Predict_DB_JohanFreiburg_PoseBased_ColmapRt.py
+
+
 
 # (Thesis Page 42, Experiment 5.1.2 method 2) Experiment on establishing feature tracks from optical flow
 * Scripts_for_low_resolution_opticalflow_depth/SouthBuilding/DoubleInterpolationOnlySaveAveragePixels_FloatingPixel_LowReso_DeMoN_Predict_DB_JohanFreiburg_PurelyOpticalFlowBasedMatches_ColmapRt.py
